@@ -19,7 +19,9 @@ Qoodle is a web application for creating, managing, and exporting Moodle quiz qu
 ### Frontend
 - **UI Framework:** Bootstrap 5.3.8
 - **Icons:** FontAwesome 6.5.1
-- **JavaScript:** Vanilla JS (minimal, progressive enhancement)
+- **JavaScript:** Vanilla JS with defer loading (no DOMContentLoaded needed)
+- **Markdown:** Python markdown 3.10.1 with extensions (nl2br, fenced_code, tables, sane_lists)
+- **Asset Compression:** django-compressor for minification and concatenation
 
 ### Development Tools
 - **Testing:** pytest-django
@@ -37,19 +39,29 @@ qoodle-ui/
 │   ├── common/               # Shared utilities and base models
 │   │   ├── models.py         # UUIDModel abstract base
 │   │   ├── templates/        # Base templates (base.html)
-│   │   └── static/           # Common CSS/JS
-│   └── subjects/             # Subject hierarchy management
-│       ├── models.py         # Subject model
-│       ├── views.py          # CRUD views
-│       ├── forms.py          # Forms
-│       ├── templates/        # Subject templates
-│       └── tests.py          # Test suite
+│   │   ├── static/           # Common CSS/JS
+│   │   └── templatetags/     # Custom template tags
+│   ├── subjects/             # Subject hierarchy management
+│   │   ├── models.py         # Subject model
+│   │   ├── views.py          # CRUD views
+│   │   ├── forms.py          # Forms
+│   │   ├── templates/        # Subject templates
+│   │   └── tests.py          # Test suite
+│   └── questions/            # Multilingual quiz questions
+│       ├── models.py         # Question and Choice models
+│       ├── views.py          # CRUD and preview views
+│       ├── forms.py          # Custom multilingual forms
+│       ├── templates/        # Question templates
+│       ├── static/           # Question-specific JS
+│       ├── templatetags/     # Markdown and dict filters
+│       └── tests.py          # 27 tests, 91% coverage
 ├── qoodle/                   # Django project settings
 │   ├── settings.py           # Configuration
 │   ├── urls.py              # Root URL routing
 │   └── wsgi.py              # WSGI entry point
 ├── openspec/                 # OpenSpec change management
-│   └── changes/             # Feature specifications
+│   ├── changes/             # Active specifications
+│   └── archive/             # Archived specifications
 ├── pyproject.toml           # Poetry dependencies
 └── pytest.ini               # Test configuration
 ```
@@ -99,11 +111,70 @@ Hierarchical subject organization for quiz questions.
 - `get_children()` - Return immediate child subjects
 - `get_ancestors()` - Return all parent subjects up to root
 - `get_descendants()` - Return all child subjects recursively
-- `question_count` - Property returning question count (currently 0)
+- `get_question_count()` - Return count of questions directly assigned to this subject
+
+**Relationships:**
+- `questions` - Reverse ForeignKey to Question model (one-to-many)
 
 **Constraints:**
 - Unique constraint on (parent, name) - prevents duplicate names at same level
 - ON DELETE PROTECT - prevents deletion of subjects with children
+
+### Question Model
+
+**Location:** `apps.questions.models.Question`
+
+Multilingual quiz questions with support for variable substitution.
+
+**Fields:**
+- `id` (UUID) - Primary key
+- `subject` (ForeignKey to Subject) - Subject this question belongs to
+- `title` (CharField) - Short descriptive title (max 200 chars, default "no title")
+- `text` (JSONField) - Question text in multiple languages
+- `created_at`, `updated_at` (DateTimeField) - Timestamps
+
+**Text JSON Structure:**
+```json
+{
+    "none": "Language-independent text",
+    "en": "English text",
+    "pt": "Portuguese text"
+}
+```
+
+**Key Methods:**
+- `__str__()` - Returns title
+- `get_text(language_code)` - Get text with intelligent fallback (requested → none → first alphabetically)
+- `available_languages()` - Return set of language codes used
+- `get_all_texts()` - Return dict of all language versions
+- `choice_count` - Property returning number of choices
+- `correct_choice` - Property returning first choice (order=0)
+
+**Constraints:**
+- ON DELETE PROTECT for subject (prevent deletion of subjects with questions)
+- Validates JSON structure with `validate_multilingual_text()`
+
+### Choice Model
+
+**Location:** `apps.questions.models.Choice`
+
+Multiple choice options for questions. **Convention:** First choice (order=0) is always the correct answer.
+
+**Fields:**
+- `id` (UUID) - Primary key
+- `question` (ForeignKey to Question) - Parent question
+- `text` (JSONField) - Choice text in multiple languages
+- `order` (PositiveIntegerField) - Display order (0 = correct answer)
+- `created_at`, `updated_at` (DateTimeField) - Timestamps
+
+**Key Methods:**
+- `get_text(language_code)` - Get text with same fallback logic as Question
+- `is_correct` - Property that returns True if order=0
+
+**Constraints:**
+- ON DELETE CASCADE for question (choices deleted with question)
+- Ordered by: order, created_at
+- Validates JSON structure with `validate_multilingual_text()`
 
 ## URL Structure
 
@@ -117,6 +188,14 @@ Hierarchical subject organization for quiz questions.
 - `/subjects/create/?parent=<uuid>` - Create sub-subject
 - `/subjects/<uuid>/edit/` - Edit subject
 - `/subjects/<uuid>/delete/` - Delete subject
+
+### Questions
+- `/questions/` - List all questions (with filters)
+- `/questions/create/` - Create new question
+- `/questions/create/?subject=<uuid>` - Create with pre-selected subject
+- `/questions/<uuid>/` - Preview question in all languages
+- `/questions/<uuid>/edit/` - Edit question and choices
+- `/questions/<uuid>/delete/` - Delete question
 
 ## User Interface
 
@@ -202,16 +281,25 @@ poetry run pytest --cov=apps --cov-report=html
 
 ## Static Files
 
+### Organization
+- **App-Specific:** Each app has `static/appname/` directory
+  - `apps/common/static/common/js/main.js` - Shared functionality (alert auto-dismiss)
+  - `apps/questions/static/questions/js/question_form.js` - Choice management
+  - `apps/questions/static/questions/js/question_list.js` - Auto-filter
+- **Compression:** All CSS/JS wrapped in `{% compress %}` tags
+- **Defer Loading:** JavaScript loaded with `defer` attribute (no DOMContentLoaded needed)
+
 ### Development
 - Static files served directly from app directories
 - No collectstatic needed
 - STORAGES backend: `StaticFilesStorage`
+- Compressor disabled (DEBUG=True)
 
 ### Production
 - WhiteNoise for static file serving
 - STORAGES backend: `CompressedManifestStaticFilesStorage`
 - Run `python manage.py collectstatic` before deployment
-- django-compressor for CSS/JS minification
+- django-compressor minifies and concatenates CSS/JS
 
 ## Database
 
@@ -283,21 +371,42 @@ ALLOWED_HOSTS=domain.com,www.domain.com
 ## Features
 
 ### Implemented ✅
-- Hierarchical subject management (001-hierarchical-subjects)
-- UUID-based models
-- Bootstrap UI framework
-- Comprehensive testing setup
+
+**Hierarchical Subject Management** (001-hierarchical-subjects)
+- Tree-based subject organization
+- Parent-child relationships with PROTECT constraint
+- Question count display on subjects
+
+**Multilingual Questions** (002-multilingual-questions)
+- Question and Choice models with JSONField multilingual support
+- Marker format input (==en==, ==pt==) converted to JSON automatically
+- Intelligent language fallback (requested → none → first available)
+- Markdown rendering with line breaks, code blocks, tables
+- Custom JavaScript choice management (add/delete/move)
+- 27 tests with 91% model coverage
+- First choice (order=0) is always correct answer by convention
+- Title field for easier question identification
+- Subject filtering with sub-subject inclusion option
+- Auto-submit filters (no Apply button needed)
+
+**Development Infrastructure**
+- UUID-based models with UUIDModel base class
+- Bootstrap 5.3.8 UI framework
+- Django-compressor for static file optimization
+- Comprehensive testing setup (pytest-django)
+- OpenSpec change management workflow
 
 ### In Progress 🚧
 - None currently
 
 ### Planned 📋
-- Question management with variable substitution
-- Multilingual question support
-- Question variant generation
-- Moodle XML export
+- Question variant generation with variable substitution
+- Moodle XML export functionality
 - User authentication and permissions
-- Question bank management
+- Question bank organization and tagging
+- Rich text editor option (alternative to markdown)
+- Question import from various formats
+- Choice randomization for quiz display
 
 ## Configuration
 
@@ -315,6 +424,7 @@ ALLOWED_HOSTS=domain.com,www.domain.com
 - django (^6.0)
 - django-compressor (^4.5)
 - whitenoise (^6.8)
+- markdown (^3.10)
 
 **Development:**
 - pytest (^8.3)
@@ -360,7 +470,9 @@ When REST API is needed:
 2. **SQLite in Development:** Not suitable for production multi-user scenarios
 3. **Simple Hierarchy:** No django-mptt, may have performance issues with deep trees
 4. **No Real-time Updates:** Page refresh required to see changes
-5. **No Question Counting:** Subject.question_count always returns 0
+5. **Basic JSON Search:** SQLite has limited JSON querying capabilities (use PostgreSQL for production)
+6. **No Question Variants:** Variable substitution not yet implemented
+7. **No Export:** Moodle XML export functionality pending
 
 ## Future Architectural Considerations
 
