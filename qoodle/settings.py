@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Local apps
     "apps.common",
     "apps.subjects",
+    "apps.questions",
 ]
 
 MIDDLEWARE = [

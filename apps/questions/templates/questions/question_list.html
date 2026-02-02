@@ -1,0 +1,152 @@
+{% extends "common/base.html" %}
+{% load static %}
+
+{% block title %}Questions - Qoodle{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="section-title">
+                <i class="fa-solid fa-question-circle text-primary"></i>
+                Questions
+            </h1>
+            <a href="{% url 'questions:create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Create Question
+            </a>
+        </div>
+
+        {# Subject Filter #}
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-8">
+                        <label for="subject" class="form-label">Filter by Subject</label>
+                        <select name="subject" id="subject" class="form-select">
+                            <option value="">-- All Subjects --</option>
+                            {% for subject in subjects %}
+                                <option value="{{ subject.pk }}" {% if selected_subject.pk == subject.pk %}selected{% endif %}>
+                                    {{ subject.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="include_sub" id="include_sub"
+                                   {% if include_sub %}checked{% endif %}>
+                            <label class="form-check-label" for="include_sub">
+                                Include sub-subjects
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fa-solid fa-filter"></i> Apply Filter
+                        </button>
+                        <a href="{% url 'questions:list' %}" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-times"></i> Clear Filter
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if questions %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Subject</th>
+                                    <th class="text-center">Choices</th>
+                                    <th class="text-center">Languages</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in questions %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ question.get_text|truncatewords:15 }}</strong>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'questions:list' %}?subject={{ question.subject.pk }}" class="text-decoration-none">
+                                            <i class="fa-solid fa-folder text-primary"></i>
+                                            {{ question.subject.name }}
+                                        </a>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">{{ question.choice_count }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <small class="text-muted">
+                                            {{ question.available_languages|join:", " }}
+                                        </small>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'questions:preview' question.pk %}" 
+                                               class="btn btn-outline-info"
+                                               title="Preview question">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'questions:edit' question.pk %}" 
+                                               class="btn btn-outline-primary"
+                                               title="Edit question">
+                                                <i class="fa-solid fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'questions:delete' question.pk %}" 
+                                               class="btn btn-outline-danger"
+                                               title="Delete question">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {# Pagination #}
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fa-solid fa-info-circle"></i>
+                <strong>No questions yet.</strong>
+                {% if selected_subject %}
+                    No questions found for the selected subject.
+                    <a href="{% url 'questions:create' %}?subject={{ selected_subject.pk }}">Create one now</a>.
+                {% else %}
+                    Create your first question to get started.
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

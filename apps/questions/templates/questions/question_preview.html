@@ -1,0 +1,143 @@
+{% extends "common/base.html" %}
+{% load static %}
+{% load question_tags %}
+
+{% block title %}Preview Question - Qoodle{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="section-title">
+                <i class="fa-solid fa-eye text-primary"></i>
+                Question Preview
+            </h1>
+            <div>
+                <a href="{% url 'questions:edit' question.pk %}" class="btn btn-primary">
+                    <i class="fa-solid fa-edit"></i> Edit
+                </a>
+                <a href="{% url 'questions:list' %}" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+
+        {# Question Info #}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-folder text-primary"></i>
+                    Subject: {{ question.subject.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Created:</strong> {{ question.created_at|date:"Y-m-d H:i" }}</p>
+                <p class="mb-1"><strong>Updated:</strong> {{ question.updated_at|date:"Y-m-d H:i" }}</p>
+                <p class="mb-0"><strong>Number of Choices:</strong> {{ question.choice_count }}</p>
+            </div>
+        </div>
+
+        {# Language Versions #}
+        <h4 class="mb-3">
+            <i class="fa-solid fa-language text-info"></i>
+            Available Languages: 
+            <span class="badge bg-info">{{ languages|length }}</span>
+        </h4>
+
+        <div class="row">
+            {% for lang in languages %}
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100 {% if lang == 'none' %}border-primary{% endif %}">
+                        <div class="card-header {% if lang == 'none' %}bg-primary text-white{% else %}bg-light{% endif %}">
+                            <h5 class="mb-0">
+                                {% if lang == 'none' %}
+                                    <i class="fa-solid fa-globe"></i>
+                                    Language Independent
+                                {% else %}
+                                    <i class="fa-solid fa-flag"></i>
+                                    {{ lang|upper }}
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {# Question Text #}
+                            <div class="mb-4">
+                                <h6 class="text-muted">Question:</h6>
+                                <p class="lead">
+                                    {% if lang in question.text.keys %}
+                                        {{ question.text|get_item:lang }}
+                                    {% else %}
+                                        <em class="text-muted">
+                                            {{ question.get_text }}
+                                            <small class="badge bg-warning">Using fallback</small>
+                                        </em>
+                                    {% endif %}
+                                </p>
+                            </div>
+
+                            {# Choices #}
+                            <div>
+                                <h6 class="text-muted">Choices:</h6>
+                                <div class="list-group">
+                                    {% for choice in question.choices.all %}
+                                        <div class="list-group-item {% if choice.is_correct %}list-group-item-success{% endif %}">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <span class="badge bg-secondary me-2">{{ choice.order }}</span>
+                                                    {% if choice.is_correct %}
+                                                        <i class="fa-solid fa-check-circle text-success"></i>
+                                                    {% endif %}
+                                                    {% if lang in choice.text.keys %}
+                                                        {{ choice.text|get_item:lang }}
+                                                    {% else %}
+                                                        <em>{{ choice.get_text }}</em>
+                                                        <small class="badge bg-warning ms-1">Fallback</small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# Raw JSON Data #}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-code text-secondary"></i>
+                    Raw JSON Data
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Question Text:</h6>
+                <pre class="bg-light p-3 rounded"><code>{{ question.text|safe }}</code></pre>
+
+                <h6 class="mt-3">Choices:</h6>
+                {% for choice in question.choices.all %}
+                    <div class="mb-2">
+                        <strong>Choice {{ choice.order }} {% if choice.is_correct %}(Correct){% endif %}:</strong>
+                        <pre class="bg-light p-2 rounded"><code>{{ choice.text|safe }}</code></pre>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'questions:edit' question.pk %}" class="btn btn-primary">
+                <i class="fa-solid fa-edit"></i> Edit Question
+            </a>
+            <a href="{% url 'questions:delete' question.pk %}" class="btn btn-danger">
+                <i class="fa-solid fa-trash"></i> Delete Question
+            </a>
+            <a href="{% url 'questions:list' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

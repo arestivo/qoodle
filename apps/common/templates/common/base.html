@@ -42,6 +42,11 @@
                             <i class="fa-solid fa-folder-tree"></i> Subjects
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'questions:list' %}">
+                            <i class="fa-solid fa-question-circle"></i> Questions
+                        </a>
+                    </li>
                     {% block nav_items %}
                     {# Additional navigation items can be added here #}
                     {% endblock %}
