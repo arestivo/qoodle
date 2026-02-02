@@ -23,6 +23,11 @@ class Question(UUIDModel):
     """Quiz question with multilingual support."""
     
     subject = ForeignKey(Subject, on_delete=PROTECT, related_name="questions")
+    title = CharField(
+        max_length=200,
+        default="no title",
+        help_text="Short title to identify this question"
+    )
     text = JSONField(
         help_text="Question text in multiple languages",
         validators=[validate_multilingual_text]
@@ -38,10 +43,12 @@ class Question(UUIDModel):
 
 **Fields:**
 - `subject` - ForeignKey to Subject (PROTECT on delete)
+- `title` - CharField for easier identification (mandatory, default "no title")
 - `text` - JSONField containing language code → text mappings
 - Standard UUIDModel fields (id, created_at, updated_at)
 
 **Methods:**
+- `__str__()` - Returns the title for easy identification
 - `get_text(language_code)` - Get text for specific language with fallback
 - `available_languages()` - Return set of all language codes used
 - `get_all_texts()` - Return dict of all language versions
@@ -189,19 +196,40 @@ def validate_multilingual_text(value):
 
 ### 6. Forms
 
+**MultilingualTextField**
+```python
+class MultilingualTextField(forms.CharField):
+    """Custom field using marker format for multilingual text."""
+    
+    # Users input text with markers:
+    # ==en==
+    # English text
+    # ==pt==
+    # Portuguese text
+    
+    def to_python(self, value):
+        """Convert marker format to JSON dict."""
+        # Parses ==lang== markers and builds JSON dict
+        # Plain text without markers → {"none": text}
+    
+    def prepare_value(self, value):
+        """Convert JSON dict to marker format for display."""
+        # Reverses conversion for editing
+```
+
 **QuestionForm**
 ```python
 class QuestionForm(forms.ModelForm):
     """Form for creating/editing questions."""
     
+    text = MultilingualTextField(
+        widget=forms.Textarea,
+        help_text="Use ==en==, ==pt== markers for languages"
+    )
+    
     class Meta:
         model = Question
-        fields = ["subject", "text"]
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add language-specific text fields dynamically
-        # or use JavaScript for multi-language input
+        fields = ["title", "subject", "text"]
 ```
 
 **ChoiceInlineFormSet**
@@ -209,9 +237,9 @@ class QuestionForm(forms.ModelForm):
 ChoiceFormSet = inlineformset_factory(
     Question,
     Choice,
-    fields=["text", "order"],
-    extra=2,
-    can_delete=True,
+    fields=["text"],  # Order managed by position, not form field
+    extra=0,
+    can_delete=False,  # Handled via JavaScript
     min_num=2,
     validate_min=True,
 )
@@ -220,34 +248,91 @@ ChoiceFormSet = inlineformset_factory(
 ### 7. Templates
 
 **questions/question_list.html**
-- Subject filter dropdown
-- Checkbox: "Include questions from sub-subjects"
-- Table with columns: Question (preview), Subject, Choices, Created, Actions
+- Subject filter dropdown (auto-submits on change)
+- Checkbox: "Include questions from sub-subjects" (auto-submits)
+- Table with columns: Title (with text preview), Subject, Choices, Languages, Actions
+- Clear filter button (no Apply button needed)
 - Pagination
 
 **questions/question_form.html**
+- Title input field (first)
 - Subject selector
-- Language tabs for question text input
-  - Tab per language + "Language Independent"
-  - Add new language button
-- Inline choice formset
-  - Each choice has language tabs
-  - Add/remove choice buttons
+- Question text textarea with marker format help text
+- Inline choice formset with JavaScript controls:
+  - Add choice button
+  - Delete choice button (minimum 2 enforced)
+  - Move up/down buttons
+  - Dynamic correct answer badge on first choice
+  - Automatic form field renumbering on reorder
 - Save/Cancel buttons
 
 **questions/question_preview.html**
+- Title displayed prominently in card header
+- Subject shown with link to filtered question list
 - Card layout with language columns
-- Each card shows one language version
-- Question text + all choices
-- Highlight the first choice (correct answer) in green
-- Highlight: "Language Independent", "Fallback from X", etc.
+- Each card shows one language version with **markdown rendering**
+- Question text + all choices (markdown formatted)
+- First choice highlighted in green as correct answer
+- Fallback indicators: "Language Independent", "Using fallback"
 
 **questions/question_confirm_delete.html**
 - Warning about cascade deletion of choices
-- Show question text and choice count
+- Show question title and text
+- Show choice count
 - Confirm/Cancel
 
-### 8. URLs
+### 8. Markdown Support
+
+Question and choice text supports markdown rendering:
+
+**Template Tag:**
+```python
+@register.filter
+def markdown(text):
+    """Convert markdown to HTML."""
+    return mark_safe(markdown_lib.markdown(
+        text,
+        extensions=['nl2br', 'fenced_code', 'tables', 'sane_lists']
+    ))
+```
+
+**Features:**
+- Line breaks preserved with `nl2br` extension
+- Code blocks with syntax highlighting
+- Tables for structured data
+- Lists with proper formatting
+- Safe HTML output
+
+### 9. Subject Integration
+
+Subjects now display question counts and link to filtered questions:
+
+**Subject Model:**
+```python
+def get_question_count(self) -> int:
+    """Return count of questions directly assigned to this subject."""
+    return self.questions.count()
+```
+
+**Subject List View:**
+- Each subject shows question count badge
+- Badge is clickable link to filtered question list
+- Count displayed for all hierarchy levels
+
+### 10. Static Files Organization
+
+**App-Specific JavaScript:**
+- `apps/questions/static/questions/js/question_form.js` - Choice management
+- `apps/questions/static/questions/js/question_list.js` - Auto-filter
+- `apps/common/static/common/js/main.js` - Shared functionality
+
+**Django Compressor:**
+- All JS/CSS wrapped in `{% compress %}` tags
+- Scripts loaded with `defer` attribute
+- No `DOMContentLoaded` wrappers needed
+- Files minified and concatenated in production
+
+### 11. URLs
 
 ```
 /questions/ - List all questions (with filters)
@@ -259,17 +344,24 @@ ChoiceFormSet = inlineformset_factory(
 /questions/<uuid>/delete/ - Delete question
 ```
 
-### 9. Admin Configuration
+### 12. Admin Configuration
 
 ```python
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ["get_text_preview", "subject", "choice_count", "created_at"]
+    list_display = ["title", "subject", "choice_count", "created_at"]
     list_filter = ["subject", "created_at"]
-    search_fields = ["text"]
+    search_fields = ["title", "text"]
     
-    def get_text_preview(self, obj):
-        return obj.get_text()[:100]
+    fieldsets = [
+        ("Question Information", {
+            "fields": ["title", "subject", "text"]
+        }),
+        ("Metadata", {
+            "fields": ["id", "created_at", "updated_at"],
+            "classes": ["collapse"]
+        })
+    ]
 
 @admin.register(Choice)
 class ChoiceAdmin(admin.ModelAdmin):
@@ -277,7 +369,7 @@ class ChoiceAdmin(admin.ModelAdmin):
     list_filter = ["question__subject"]
 ```
 
-### 10. Database Considerations
+### 13. Database Considerations
 
 **Indexes:**
 ```python
@@ -295,7 +387,7 @@ class Question(UUIDModel):
 - Consider adding GIN index on JSON fields in production
 - May need custom migration for JSON indexing
 
-### 11. Testing Strategy
+### 14. Testing Strategy
 
 **Model Tests:**
 - Question creation with valid/invalid JSON
@@ -398,14 +490,20 @@ class QuestionTranslation(models.Model):
 
 ## Success Metrics
 
-- All tests pass with >80% coverage
-- Can create question with 2-5 choices
-- Can input text in multiple languages
+✅ **Achieved:**
+- 27 tests passing with 91% model coverage
+- Questions have mandatory title field
+- Marker format (==lang==) for easy multilingual input
+- Markdown rendering with line breaks, code blocks, tables
+- Can create question with 2+ choices using custom JS controls
 - Language fallback works correctly in all scenarios
-- Can filter questions by subject (with sub-subjects)
-- Preview displays all language versions
-- Admin interface works smoothly
-- Code passes black, ruff, mypy checks
+- Auto-filter by subject with sub-subjects checkbox
+- Preview displays all language versions with markdown
+- Custom JavaScript choice management (add/delete/move)
+- Admin interface shows title and searches both title and text
+- Question counts integrated with subject list
+- Django compressor with deferred script loading
+- Code organized by app in static folders
 
 ## Timeline Estimate
 
@@ -424,11 +522,12 @@ Deferred to future iterations:
 - Multiple correct answers support
 - Variable substitution in question/choice text
 - Question types (true/false, short answer, etc.)
-- Rich text editor for question/choice text
+- Rich text editor for question/choice text (currently markdown)
 - Image/media attachments
 - Question difficulty levels
 - Question tags/categories beyond subjects
 - Auto-translation suggestions
-- Question import from various formats
+- Question import from various formats (Moodle XML, CSV, etc.)
+- Question export to Moodle XML with variants
 - Analytics and usage tracking
 - Question versioning
