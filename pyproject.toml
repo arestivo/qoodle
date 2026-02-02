@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "qoodle"
+version = "0.1.0"
+description = "Moodle Quiz Question Generator with parametric variables and multilingual support"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^6.0"
+django-compressor = "^4.5"
+whitenoise = "^6.8"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+pytest-django = "^4.9"
+pytest-cov = "^6.0"
+black = "^25.1"
+ruff = "^0.9"
+mypy = "^1.15"
+django-stubs = "^5.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "qoodle.settings"
+python_files = ["test_*.py", "*_test.py"]
+testpaths = ["apps"]
+addopts = "--cov=apps --cov-report=html --cov-report=term-missing"
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main"]
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.django-stubs]
+django_settings_module = "qoodle.settings"

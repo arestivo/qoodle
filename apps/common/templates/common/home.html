@@ -1,0 +1,102 @@
+{% extends "common/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - Qoodle{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4">
+                <i class="fa-solid fa-graduation-cap text-primary"></i>
+                Welcome to Qoodle
+            </h1>
+            <p class="lead text-muted">
+                Moodle Quiz Question Generator with Parametric Variables
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa-solid fa-plus-circle text-primary"></i>
+                            Create Questions
+                        </h5>
+                        <p class="card-text">
+                            Design parametric quiz questions with dynamic variable substitution
+                            for multiple question variants.
+                        </p>
+                        <a href="#" class="btn btn-primary">Get Started</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa-solid fa-folder-tree text-success"></i>
+                            Organize by Subject
+                        </h5>
+                        <p class="card-text">
+                            Structure your questions hierarchically by subject and topic
+                            for easy management.
+                        </p>
+                        <a href="#" class="btn btn-success">Browse Subjects</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa-solid fa-language text-info"></i>
+                            Multilingual Support
+                        </h5>
+                        <p class="card-text">
+                            Create questions in multiple languages with seamless translation
+                            management.
+                        </p>
+                        <a href="#" class="btn btn-info">Manage Languages</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa-solid fa-file-export text-warning"></i>
+                            Export to Moodle
+                        </h5>
+                        <p class="card-text">
+                            Generate multiple question variants and export them to Moodle XML
+                            format with one click.
+                        </p>
+                        <a href="#" class="btn btn-warning">Export Questions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-5" role="alert">
+            <h5 class="alert-heading">
+                <i class="fa-solid fa-info-circle"></i> Getting Started
+            </h5>
+            <p>
+                This application helps teachers create parametric quiz questions that can
+                generate multiple variants automatically. Features include:
+            </p>
+            <ul class="mb-0">
+                <li>Variable substitution with configurable ranges and steps</li>
+                <li>Hierarchical subject organization</li>
+                <li>Multilingual question support</li>
+                <li>Moodle XML export</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
