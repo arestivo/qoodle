@@ -54,6 +54,10 @@ class Subject(UUIDModel):
         """Return immediate child subjects."""
         return self.children.all()
 
+    def get_question_count(self) -> int:
+        """Return count of questions directly assigned to this subject."""
+        return self.questions.count()
+
     def get_ancestors(self):
         """
         Return all parent subjects up to the root.
@@ -78,16 +82,6 @@ class Subject(UUIDModel):
             descendants.append(child)
             descendants.extend(child.get_descendants())
         return descendants
-
-    @property
-    def question_count(self) -> int:
-        """
-        Return the number of questions in this subject.
-
-        For now, returns 0 as questions are not yet implemented.
-        """
-        # TODO: Implement when Question model is created
-        return 0
 
     @property
     def depth(self) -> int:

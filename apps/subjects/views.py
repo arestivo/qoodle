@@ -21,7 +21,7 @@ class SubjectListView(ListView):
     context_object_name = "subjects"
 
     def get_queryset(self) -> QuerySet[Subject]:
-        """Return all subjects with their parents prefetched."""
+        """Return all subjects with their parents and children prefetched."""
         return Subject.objects.select_related("parent").prefetch_related("children")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:

@@ -71,53 +71,54 @@
 
                     <div id="choice-formset">
                         {% for choice_form in choice_formset %}
-                            <div class="card mb-3 choice-form">
+                            <div class="card mb-3 choice-form" data-choice-index="{{ forloop.counter0 }}">
                                 <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-2">
-                                            <label for="{{ choice_form.order.id_for_label }}" class="form-label">
-                                                Order
-                                                {% if forloop.first %}
-                                                    <span class="badge bg-success">✓ Correct</span>
-                                                {% endif %}
-                                            </label>
-                                            {{ choice_form.order }}
-                                            {% if choice_form.order.errors %}
-                                                <div class="invalid-feedback d-block">
-                                                    {{ choice_form.order.errors }}
-                                                </div>
-                                            {% endif %}
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-secondary me-2 choice-number">{{ forloop.counter }}</span>
+                                            <span class="badge bg-success correct-badge" {% if not forloop.first %}style="display: none;"{% endif %}>
+                                                <i class="fa-solid fa-check"></i> Correct Answer
+                                            </span>
                                         </div>
-                                        <div class="col-md-8">
-                                            <label for="{{ choice_form.text.id_for_label }}" class="form-label">
-                                                Choice Text
-                                            </label>
-                                            {{ choice_form.text }}
-                                            {% if choice_form.text.errors %}
-                                                <div class="invalid-feedback d-block">
-                                                    {{ choice_form.text.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-2 d-flex align-items-end">
-                                            {% if choice_form.instance.pk %}
-                                                {{ choice_form.DELETE }}
-                                                <label for="{{ choice_form.DELETE.id_for_label }}" class="form-check-label">
-                                                    Delete
-                                                </label>
-                                            {% endif %}
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-secondary move-up" {% if forloop.first %}disabled{% endif %}>
+                                                <i class="fa-solid fa-arrow-up"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary move-down" {% if forloop.last %}disabled{% endif %}>
+                                                <i class="fa-solid fa-arrow-down"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger delete-choice">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
                                         </div>
                                     </div>
+                                    
+                                    <div class="mb-2">
+                                        <label for="{{ choice_form.text.id_for_label }}" class="form-label">
+                                            Choice Text <span class="text-danger">*</span>
+                                        </label>
+                                        {{ choice_form.text }}
+                                        {% if choice_form.text.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ choice_form.text.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
                                     {{ choice_form.id }}
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
 
-                    <div class="alert alert-warning">
+                    <button type="button" id="add-choice" class="btn btn-success mb-3">
+                        <i class="fa-solid fa-plus"></i> Add Choice
+                    </button>
+
+                    <div class="alert alert-info">
                         <i class="fa-solid fa-info-circle"></i>
-                        <strong>Reminder:</strong> The first choice (order=0) is always the correct answer. 
-                        Set order values to control the sequence.
+                        <strong>Reminder:</strong> The first choice is always the correct answer. 
+                        Use the move buttons to reorder choices.
                     </div>
 
                     <div class="d-flex justify-content-between mt-4">
@@ -133,4 +134,166 @@
         </div>
     </div>
 </div>
+
+{# Template for new choices #}
+<template id="choice-template">
+    <div class="card mb-3 choice-form" data-choice-index="__prefix__">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-secondary me-2 choice-number"></span>
+                    <span class="badge bg-success correct-badge" style="display: none;"><i class="fa-solid fa-check"></i> Correct Answer</span>
+                </div>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary move-up">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary move-down">
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger delete-choice">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-2">
+                <label for="id_choices-__prefix__-text" class="form-label">
+                    Choice Text <span class="text-danger">*</span>
+                </label>
+                <textarea name="choices-__prefix__-text" class="form-control choice-text" rows="3" 
+                    placeholder="==en==&#10;Nine&#10;&#10;==pt==&#10;Nove&#10;&#10;Or just: 9" 
+                    id="id_choices-__prefix__-text"></textarea>
+            </div>
+            
+            <input type="hidden" name="choices-__prefix__-id" id="id_choices-__prefix__-id">
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formset = document.getElementById('choice-formset');
+    const addButton = document.getElementById('add-choice');
+    const totalForms = document.getElementById('id_choices-TOTAL_FORMS');
+    const template = document.getElementById('choice-template');
+    
+    let formIndex = parseInt(totalForms.value);
+    
+    // Renumber form fields to match DOM order
+    function renumberForms() {
+        const choices = formset.querySelectorAll('.choice-form');
+        choices.forEach((choice, index) => {
+            // Update all input/textarea names and IDs
+            const inputs = choice.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                const id = input.getAttribute('id');
+                
+                if (name) {
+                    // Replace choices-X- with choices-{index}-
+                    const newName = name.replace(/choices-\d+-/, `choices-${index}-`);
+                    input.setAttribute('name', newName);
+                }
+                
+                if (id) {
+                    const newId = id.replace(/choices-\d+-/, `choices-${index}-`);
+                    input.setAttribute('id', newId);
+                }
+            });
+            
+            // Update label for attributes
+            const labels = choice.querySelectorAll('label');
+            labels.forEach(label => {
+                const forAttr = label.getAttribute('for');
+                if (forAttr) {
+                    const newFor = forAttr.replace(/choices-\d+-/, `choices-${index}-`);
+                    label.setAttribute('for', newFor);
+                }
+            });
+        });
+        
+        // Update total forms count
+        totalForms.value = choices.length;
+    }
+    
+    // Update choice numbering and correct badge
+    function updateChoiceNumbers() {
+        const choices = formset.querySelectorAll('.choice-form');
+        choices.forEach((choice, index) => {
+            // Update number badge
+            const numberBadge = choice.querySelector('.choice-number');
+            if (numberBadge) numberBadge.textContent = index + 1;
+            
+            // Show/hide correct answer badge
+            const correctBadge = choice.querySelector('.correct-badge');
+            if (correctBadge) {
+                correctBadge.style.display = index === 0 ? 'inline-block' : 'none';
+            }
+            
+            // Enable/disable move buttons
+            const moveUp = choice.querySelector('.move-up');
+            const moveDown = choice.querySelector('.move-down');
+            if (moveUp) moveUp.disabled = index === 0;
+            if (moveDown) moveDown.disabled = index === choices.length - 1;
+        });
+        
+        // Renumber forms after updating
+        renumberForms();
+    }
+    
+    // Add new choice
+    addButton.addEventListener('click', function() {
+        const newForm = template.content.cloneNode(true);
+        const formDiv = newForm.querySelector('.choice-form');
+        
+        // Replace __prefix__ with actual index
+        formDiv.innerHTML = formDiv.innerHTML.replace(/__prefix__/g, formIndex);
+        formDiv.dataset.choiceIndex = formIndex;
+        
+        formset.appendChild(formDiv);
+        formIndex++;
+        
+        updateChoiceNumbers();
+        attachChoiceEvents(formDiv);
+    });
+    
+    // Attach events to a choice form
+    function attachChoiceEvents(choiceForm) {
+        // Move up
+        choiceForm.querySelector('.move-up').addEventListener('click', function() {
+            const prev = choiceForm.previousElementSibling;
+            if (prev) {
+                formset.insertBefore(choiceForm, prev);
+                updateChoiceNumbers();
+            }
+        });
+        
+        // Move down
+        choiceForm.querySelector('.move-down').addEventListener('click', function() {
+            const next = choiceForm.nextElementSibling;
+            if (next) {
+                formset.insertBefore(next, choiceForm);
+                updateChoiceNumbers();
+            }
+        });
+        
+        // Delete
+        choiceForm.querySelector('.delete-choice').addEventListener('click', function() {
+            if (formset.querySelectorAll('.choice-form').length <= 2) {
+                alert('You must have at least 2 choices.');
+                return;
+            }
+            choiceForm.remove();
+            updateChoiceNumbers();
+        });
+    }
+    
+    // Attach events to existing choices
+    formset.querySelectorAll('.choice-form').forEach(attachChoiceEvents);
+    
+    // Initial numbering
+    updateChoiceNumbers();
+});
+</script>
 {% endblock %}

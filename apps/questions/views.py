@@ -96,21 +96,79 @@ class QuestionCreateView(CreateView):
         return context
 
     def form_valid(self, form: QuestionForm) -> HttpResponse:
-        """Save question and choices together."""
-        context = self.get_context_data()
-        choice_formset = context["choice_formset"]
+        """Save question and choices with custom handling."""
+        # Save the question first
+        self.object = form.save()
 
-        if choice_formset.is_valid():
-            self.object = form.save()
-            choice_formset.instance = self.object
-            choice_formset.save()
-            messages.success(
-                self.request,
-                f"Question created successfully with {self.object.choice_count} choices!",
-            )
-            return super().form_valid(form)
+        # Process choices from POST data
+        choices_data = self._extract_choices_from_post()
+
+        if len(choices_data) < 2:
+            messages.error(self.request, "You must provide at least 2 choices.")
+            return self.render_to_response(self.get_context_data(form=form))
+
+        # Save choices in order
+        self._save_choices(choices_data)
+
+        messages.success(
+            self.request,
+            f"Question created successfully with {len(choices_data)} choices!",
+        )
+        return HttpResponse(status=302, headers={"Location": str(self.success_url)})
+
+    def _extract_choices_from_post(self):
+        """Extract choice data from POST in order."""
+        choices = []
+        i = 0
+        while f"choices-{i}-text" in self.request.POST:
+            text = self.request.POST.get(f"choices-{i}-text")
+            choice_id = self.request.POST.get(f"choices-{i}-id")
+
+            if text and text.strip():  # Only include non-empty choices
+                choices.append(
+                    {
+                        "id": choice_id if choice_id else None,
+                        "text": text,
+                        "order": len(choices),  # Order based on position
+                    }
+                )
+            i += 1
+        return choices
+
+    def _save_choices(self, choices_data):
+        """Save choices and delete any not included."""
+        # Get existing choice IDs that should be kept (filter out None and empty strings)
+        submitted_ids = [c["id"] for c in choices_data if c["id"]]
+
+        # Delete choices not in submission
+        if submitted_ids:
+            self.object.choices.exclude(id__in=submitted_ids).delete()
         else:
-            return self.render_to_response(context)
+            # If no submitted IDs, delete all existing choices
+            self.object.choices.all().delete()
+
+        # Create or update choices in order
+        for i, choice_data in enumerate(choices_data):
+            if choice_data["id"]:
+                # Update existing - fetch instance and update
+                try:
+                    choice = Choice.objects.get(id=choice_data["id"], question=self.object)
+                    choice.text = self._parse_multilingual_text(choice_data["text"])
+                    choice.order = i
+                    choice.save()
+                except Choice.DoesNotExist:
+                    # If choice doesn't exist, create it
+                    Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+            else:
+                # Create new
+                Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+
+    def _parse_multilingual_text(self, text):
+        """Parse text using MultilingualTextField logic."""
+        from apps.questions.forms import MultilingualTextField
+
+        field = MultilingualTextField()
+        return field.to_python(text)
 
 
 class QuestionUpdateView(UpdateView):
@@ -119,7 +177,10 @@ class QuestionUpdateView(UpdateView):
     model = Question
     form_class = QuestionForm
     template_name = "questions/question_form.html"
-    success_url = reverse_lazy("questions:list")
+
+    def get_success_url(self) -> str:
+        """Return preview URL after successful update."""
+        return reverse_lazy("questions:preview", kwargs={"pk": self.object.pk})
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add formset to context."""
@@ -135,18 +196,76 @@ class QuestionUpdateView(UpdateView):
         return context
 
     def form_valid(self, form: QuestionForm) -> HttpResponse:
-        """Save question and choices together."""
-        context = self.get_context_data()
-        choice_formset = context["choice_formset"]
+        """Save question and choices with custom handling."""
+        # Save the question first
+        self.object = form.save()
 
-        if choice_formset.is_valid():
-            self.object = form.save()
-            choice_formset.instance = self.object
-            choice_formset.save()
-            messages.success(self.request, "Question updated successfully!")
-            return super().form_valid(form)
+        # Process choices from POST data
+        choices_data = self._extract_choices_from_post()
+
+        if len(choices_data) < 2:
+            messages.error(self.request, "You must provide at least 2 choices.")
+            return self.render_to_response(self.get_context_data(form=form))
+
+        # Save choices in order
+        self._save_choices(choices_data)
+
+        messages.success(self.request, "Question updated successfully!")
+        return HttpResponse(status=302, headers={"Location": str(self.get_success_url())})
+
+    def _extract_choices_from_post(self):
+        """Extract choice data from POST in order."""
+        choices = []
+        i = 0
+        while f"choices-{i}-text" in self.request.POST:
+            text = self.request.POST.get(f"choices-{i}-text")
+            choice_id = self.request.POST.get(f"choices-{i}-id")
+
+            if text and text.strip():  # Only include non-empty choices
+                choices.append(
+                    {
+                        "id": choice_id if choice_id else None,
+                        "text": text,
+                        "order": len(choices),  # Order based on position
+                    }
+                )
+            i += 1
+        return choices
+
+    def _save_choices(self, choices_data):
+        """Save choices and delete any not included."""
+        # Get existing choice IDs that should be kept (filter out None and empty strings)
+        submitted_ids = [c["id"] for c in choices_data if c["id"]]
+
+        # Delete choices not in submission
+        if submitted_ids:
+            self.object.choices.exclude(id__in=submitted_ids).delete()
         else:
-            return self.render_to_response(context)
+            # If no submitted IDs, delete all existing choices
+            self.object.choices.all().delete()
+
+        # Create or update choices in order
+        for i, choice_data in enumerate(choices_data):
+            if choice_data["id"]:
+                # Update existing - fetch instance and update
+                try:
+                    choice = Choice.objects.get(id=choice_data["id"], question=self.object)
+                    choice.text = self._parse_multilingual_text(choice_data["text"])
+                    choice.order = i
+                    choice.save()
+                except Choice.DoesNotExist:
+                    # If choice doesn't exist, create it
+                    Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+            else:
+                # Create new
+                Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+
+    def _parse_multilingual_text(self, text):
+        """Parse text using MultilingualTextField logic."""
+        from apps.questions.forms import MultilingualTextField
+
+        field = MultilingualTextField()
+        return field.to_python(text)
 
 
 class QuestionPreviewView(DetailView):

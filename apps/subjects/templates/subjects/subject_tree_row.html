@@ -20,7 +20,7 @@
         <a href="{% url 'questions:list' %}?subject={{ subject.pk }}" 
            class="badge bg-secondary text-decoration-none"
            title="View questions for this subject">
-            {{ subject.question_count }}
+            {{ subject.get_question_count }}
         </a>
     </td>
     <td class="text-end">

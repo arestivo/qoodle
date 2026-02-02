@@ -1,6 +1,7 @@
 """Admin configuration for the subjects app."""
 
 from django.contrib import admin
+from django.db import models
 
 from apps.subjects.models import Subject
 
@@ -31,6 +32,11 @@ class SubjectAdmin(admin.ModelAdmin):
     ]
 
     def get_queryset(self, request):
-        """Optimize queryset with select_related."""
+        """Optimize queryset with select_related and annotate question count."""
         qs = super().get_queryset(request)
-        return qs.select_related("parent")
+        return qs.select_related("parent").annotate(question_count=models.Count("questions"))
+
+    @admin.display(description="Questions")
+    def question_count(self, obj):
+        """Display the number of questions for this subject."""
+        return obj.question_count

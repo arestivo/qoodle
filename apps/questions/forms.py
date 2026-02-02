@@ -131,35 +131,29 @@ class ChoiceForm(forms.ModelForm):
         label="Choice Text",
         widget=forms.Textarea(
             attrs={
-                "class": "form-control",
+                "class": "form-control choice-text",
                 "rows": 3,
                 "placeholder": "==en==\nNine\n\n==pt==\nNove\n\nOr just: 9",
             }
         ),
         help_text="Enter text with language markers or plain text.",
+        required=True,
     )
 
     class Meta:
         model = Choice
-        fields = ["text", "order"]
-        widgets = {
-            "order": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "min": 0,
-                }
-            ),
-        }
+        fields = ["text"]  # Removed order - will be set by position
 
 
 # Inline formset for editing choices within question form
+# Note: We'll handle deletion and ordering manually via JavaScript
 ChoiceFormSet = inlineformset_factory(
     Question,
     Choice,
     form=ChoiceForm,
-    fields=["text", "order"],
+    fields=["text"],  # Order removed - determined by position
     extra=0,
-    can_delete=True,
+    can_delete=False,  # We'll handle deletion via JavaScript
     min_num=2,
     validate_min=True,
 )
