@@ -63,16 +63,16 @@
                             {# Question Text #}
                             <div class="mb-4">
                                 <h6 class="text-muted">Question:</h6>
-                                <p class="lead">
+                                <div class="lead">
                                     {% if lang in question.text.keys %}
-                                        {{ question.text|get_item:lang }}
+                                        {{ question.text|get_item:lang|markdown }}
                                     {% else %}
                                         <em class="text-muted">
-                                            {{ question.get_text }}
+                                            {{ question.get_text|markdown }}
                                             <small class="badge bg-warning">Using fallback</small>
                                         </em>
                                     {% endif %}
-                                </p>
+                                </div>
                             </div>
 
                             {# Choices #}
@@ -82,15 +82,15 @@
                                     {% for choice in question.choices.all %}
                                         <div class="list-group-item {% if choice.is_correct %}list-group-item-success{% endif %}">
                                             <div class="d-flex justify-content-between align-items-start">
-                                                <div>
+                                                <div class="flex-grow-1">
                                                     <span class="badge bg-secondary me-2">{{ choice.order }}</span>
                                                     {% if choice.is_correct %}
                                                         <i class="fa-solid fa-check-circle text-success"></i>
                                                     {% endif %}
                                                     {% if lang in choice.text.keys %}
-                                                        {{ choice.text|get_item:lang }}
+                                                        {{ choice.text|get_item:lang|markdown }}
                                                     {% else %}
-                                                        <em>{{ choice.get_text }}</em>
+                                                        <em>{{ choice.get_text|markdown }}</em>
                                                         <small class="badge bg-warning ms-1">Fallback</small>
                                                     {% endif %}
                                                 </div>

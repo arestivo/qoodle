@@ -17,7 +17,11 @@
         {% endif %}
     </td>
     <td class="text-center">
-        <span class="badge bg-secondary">{{ subject.question_count }}</span>
+        <a href="{% url 'questions:list' %}?subject={{ subject.pk }}" 
+           class="badge bg-secondary text-decoration-none"
+           title="View questions for this subject">
+            {{ subject.question_count }}
+        </a>
     </td>
     <td class="text-end">
         <div class="btn-group btn-group-sm gap-1" role="group">

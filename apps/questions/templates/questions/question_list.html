@@ -11,8 +11,8 @@
                 <i class="fa-solid fa-question-circle text-primary"></i>
                 Questions
             </h1>
-            <a href="{% url 'questions:create' %}" class="btn btn-primary">
-                <i class="fa-solid fa-plus"></i> Create Question
+            <a href="{% url 'questions:create' %}{% if selected_subject %}?subject={{ selected_subject.pk }}{% endif %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Create Question{% if selected_subject %} in {{ selected_subject.name }}{% endif %}
             </a>
         </div>
 

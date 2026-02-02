@@ -170,6 +170,10 @@ class QuestionPreviewView(DetailView):
         for choice in self.object.choices.all():
             languages.update(choice.text.keys() if choice.text else set())
 
+        # Only show "none" if there are no other language-specific versions
+        if len(languages) > 1 and "none" in languages:
+            languages.discard("none")
+
         context["languages"] = sorted(languages)
         return context
 
