@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "compressor",
     # Local apps
     "apps.common",
+    "apps.subjects",
 ]
 
 MIDDLEWARE = [

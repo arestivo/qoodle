@@ -1,0 +1,46 @@
+{# Recursive template for displaying subject tree rows #}
+<tr>
+    <td>
+        <span style="padding-left: {{ depth }}rem;">
+            {% if depth > 0 %}
+                <i class="fa-solid fa-level-up-alt fa-rotate-90 text-muted me-1" style="font-size: 0.85rem;"></i>
+            {% else %}
+                <i class="fa-solid fa-folder text-primary me-1"></i>
+            {% endif %}
+            {{ subject.name }}
+        </span>
+        {% if subject.description %}
+            <br>
+            <small class="text-muted" style="padding-left: {{ depth|add:1.5 }}rem;">
+                {{ subject.description|truncatewords:15 }}
+            </small>
+        {% endif %}
+    </td>
+    <td class="text-center">
+        <span class="badge bg-secondary">{{ subject.question_count }}</span>
+    </td>
+    <td class="text-end">
+        <div class="btn-group btn-group-sm gap-1" role="group">
+            <a href="{% url 'subjects:create' %}?parent={{ subject.pk }}" 
+               class="btn btn-outline-success"
+               title="Create sub-subject">
+                <i class="fa-solid fa-plus"></i>
+            </a>
+            <a href="{% url 'subjects:edit' subject.pk %}" 
+               class="btn btn-outline-primary"
+               title="Edit subject">
+                <i class="fa-solid fa-edit"></i>
+            </a>
+            <a href="{% url 'subjects:delete' subject.pk %}" 
+               class="btn btn-outline-danger"
+               title="Delete subject">
+                <i class="fa-solid fa-trash"></i>
+            </a>
+        </div>
+    </td>
+</tr>
+
+{# Recursively render children #}
+{% for child in subject.get_children %}
+    {% include "subjects/subject_tree_row.html" with subject=child depth=depth|add:1 %}
+{% endfor %}
