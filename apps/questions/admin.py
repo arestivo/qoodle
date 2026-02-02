@@ -17,9 +17,9 @@ class ChoiceInline(admin.TabularInline):
 class QuestionAdmin(admin.ModelAdmin):
     """Admin interface for Question model."""
 
-    list_display = ["get_text_preview", "subject", "choice_count", "created_at"]
+    list_display = ["title", "subject", "choice_count", "created_at"]
     list_filter = ["subject", "created_at"]
-    search_fields = ["text"]
+    search_fields = ["title", "text"]
     readonly_fields = ["id", "created_at", "updated_at"]
     inlines = [ChoiceInline]
 
@@ -27,7 +27,7 @@ class QuestionAdmin(admin.ModelAdmin):
         (
             "Question Information",
             {
-                "fields": ["subject", "text"],
+                "fields": ["title", "subject", "text"],
             },
         ),
         (
@@ -38,15 +38,6 @@ class QuestionAdmin(admin.ModelAdmin):
             },
         ),
     ]
-
-    def get_text_preview(self, obj):
-        """Return truncated question text for list display."""
-        try:
-            return obj.get_text()[:100]
-        except (ValueError, KeyError):
-            return "(No text)"
-
-    get_text_preview.short_description = "Question"
 
     def get_queryset(self, request):
         """Optimize queryset with select_related."""

@@ -57,16 +57,17 @@ class QuestionModelTests(TestCase):
 
     def test_question_creation(self):
         """Test creating a basic question."""
-        question = Question.objects.create(subject=self.subject, text={"none": "What is 4 + 5?"})
+        question = Question.objects.create(subject=self.subject, title="Addition Question", text={"none": "What is 4 + 5?"})
         self.assertIsInstance(question.id, uuid.UUID)
         self.assertEqual(question.subject, self.subject)
+        self.assertEqual(question.title, "Addition Question")
         self.assertEqual(question.text, {"none": "What is 4 + 5?"})
         self.assertIsNotNone(question.created_at)
 
     def test_question_str_representation(self):
         """Test string representation of question."""
-        question = Question.objects.create(subject=self.subject, text={"en": "What is the answer?"})
-        self.assertIn("What is the answer?", str(question))
+        question = Question.objects.create(subject=self.subject, title="Test Question", text={"en": "What is the answer?"})
+        self.assertEqual(str(question), "Test Question")
 
     def test_get_text_specific_language(self):
         """Test retrieving text in specific language."""

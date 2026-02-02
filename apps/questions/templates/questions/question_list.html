@@ -56,7 +56,7 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Question</th>
+                                    <th>Title</th>
                                     <th>Subject</th>
                                     <th class="text-center">Choices</th>
                                     <th class="text-center">Languages</th>
@@ -67,7 +67,9 @@
                                 {% for question in questions %}
                                 <tr>
                                     <td>
-                                        <strong>{{ question.get_text|truncatewords:15 }}</strong>
+                                        <strong>{{ question.title }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ question.get_text|truncatewords:10 }}</small>
                                     </td>
                                     <td>
                                         <a href="{% url 'questions:list' %}?subject={{ question.subject.pk }}" class="text-decoration-none">

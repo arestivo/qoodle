@@ -43,6 +43,11 @@ class Question(UUIDModel):
         related_name="questions",
         help_text="Subject this question belongs to",
     )
+    title = models.CharField(
+        max_length=200,
+        default="no title",
+        help_text="Short title to identify this question",
+    )
     text = models.JSONField(
         help_text="Question text in multiple languages (JSON)",
         validators=[validate_multilingual_text],
@@ -58,10 +63,7 @@ class Question(UUIDModel):
 
     def __str__(self) -> str:
         """Return string representation of the question."""
-        try:
-            return self.get_text()[:100]
-        except (ValueError, KeyError):
-            return f"Question {self.id}"
+        return self.title
 
     def get_absolute_url(self) -> str:
         """Return the URL for this question."""

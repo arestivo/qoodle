@@ -114,8 +114,14 @@ class QuestionForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ["subject", "text"]
+        fields = ["title", "subject", "text"]
         widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g., Addition of single-digit numbers",
+                }
+            ),
             "subject": forms.Select(
                 attrs={
                     "class": "form-select",
