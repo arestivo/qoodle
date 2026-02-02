@@ -1,5 +1,5 @@
 {% extends "common/base.html" %}
-{% load static %}
+{% load static compress %}
 
 {% block title %}Questions - Qoodle{% endblock %}
 
@@ -48,16 +48,6 @@
                 </form>
             </div>
         </div>
-
-        <script>
-            // Auto-submit form when subject is selected or checkbox is toggled
-            document.getElementById('subject').addEventListener('change', function() {
-                document.getElementById('filterForm').submit();
-            });
-            document.getElementById('include_sub').addEventListener('change', function() {
-                document.getElementById('filterForm').submit();
-            });
-        </script>
 
         {% if questions %}
             <div class="card">
@@ -156,4 +146,8 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'questions/js/question_list.js' %}" defer></script>
 {% endblock %}
