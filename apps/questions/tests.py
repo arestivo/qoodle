@@ -1,5 +1,6 @@
 """Tests for the questions app."""
 
+import json
 import uuid
 
 from django.core.exceptions import ValidationError
@@ -1170,3 +1171,168 @@ class ValidationRulesPreviewTests(TestCase):
         preview = response.context["preview_instance"]
         self.assertIn("error", preview)
         self.assertTrue(preview.get("validation_error"))
+
+
+class ValidationRulesIntegrationTests(TestCase):
+    """Integration tests for validation rules through views (Phase 5)."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.subject = Subject.objects.create(name="Math")
+
+    def test_question_create_with_validation_rules(self):
+        """Test creating a question with validation rules via form."""
+        from django.urls import reverse
+
+        url = reverse("questions:create")
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Triangle Inequality Question",
+            "text": '{"none": "Triangle with sides {{a}}, {{b}}, {{c}}"}',
+            "variables_json": json.dumps(
+                {
+                    "a": {"type": "num", "min": 1, "max": 20, "precision": 1},
+                    "b": {"type": "num", "min": 1, "max": 20, "precision": 1},
+                    "c": {"type": "num", "min": 1, "max": 20, "precision": 1},
+                }
+            ),
+            "validation_rules_json": json.dumps(
+                [
+                    "a + b > c",
+                    "b + c > a",
+                    "a + c > b",
+                ]
+            ),
+            # Add required choices
+            "choices-0-text": '{"none": "Valid triangle"}',
+            "choices-0-is_correct": "on",
+            "choices-1-text": '{"none": "Invalid triangle"}',
+        }
+
+        response = self.client.post(url, form_data)
+
+        # Should redirect on success
+        self.assertEqual(response.status_code, 302)
+
+        # Verify question created with validation rules
+        question = Question.objects.get(title="Triangle Inequality Question")
+        self.assertEqual(len(question.validation_rules), 3)
+        self.assertIn("a + b > c", question.validation_rules)
+
+        # Verify variables can be generated with rules
+        variables = question.generate_variables()
+        self.assertIn("a", variables)
+        self.assertIn("b", variables)
+        self.assertIn("c", variables)
+
+        # Verify triangle inequality holds
+        a, b, c = variables["a"], variables["b"], variables["c"]
+        self.assertGreater(a + b, c)
+        self.assertGreater(b + c, a)
+        self.assertGreater(a + c, b)
+
+    def test_question_update_with_validation_rules(self):
+        """Test updating an existing question to add validation rules."""
+        # Create question without validation rules
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Simple Question",
+            text={"none": "What is {{a}} + {{b}}?"},
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+        )
+
+        # Add choices to the question
+        Choice.objects.create(question=question, text={"none": "Correct"}, order=0)
+        Choice.objects.create(question=question, text={"none": "Incorrect"}, order=1)
+
+        from django.urls import reverse
+
+        url = reverse("questions:edit", args=[question.pk])
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Updated Question",
+            "text": '{"none": "What is {{a}} + {{b}}?"}',
+            "variables_json": json.dumps(
+                {
+                    "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                    "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                }
+            ),
+            "validation_rules_json": json.dumps(["a > b"]),  # Add validation rule
+            # Include existing choices
+            "choices-0-text": '{"none": "Correct"}',
+            "choices-0-is_correct": "on",
+            "choices-1-text": '{"none": "Incorrect"}',
+        }
+
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, 302)
+
+        # Verify validation rule was added
+        question.refresh_from_db()
+        self.assertEqual(question.validation_rules, ["a > b"])
+
+        # Verify rule is enforced
+        variables = question.generate_variables()
+        self.assertGreater(variables["a"], variables["b"])
+
+    def test_question_preview_with_validation_rules(self):
+        """Test that preview respects validation rules."""
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Ordered Numbers",
+            text={"none": "Numbers: {{x}}, {{y}}, {{z}}"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 50, "precision": 1},
+                "y": {"type": "num", "min": 1, "max": 50, "precision": 1},
+                "z": {"type": "num", "min": 1, "max": 50, "precision": 1},
+            },
+            validation_rules=["x < y", "y < z"],  # Enforce ordering
+        )
+
+        from django.urls import reverse
+
+        url = reverse("questions:preview", args=[question.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        # Should have successfully generated variables
+        preview = response.context["preview_instance"]
+        self.assertNotIn("error", preview)
+        self.assertIn("variables", preview)
+
+        # Verify ordering is maintained
+        x = preview["variables"]["x"]
+        y = preview["variables"]["y"]
+        z = preview["variables"]["z"]
+        self.assertLess(x, y)
+        self.assertLess(y, z)
+
+    def test_question_preview_validation_error(self):
+        """Test that preview shows error when validation rules fail."""
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Impossible Question",
+            text={"none": "Value: {{n}}"},
+            variables={
+                "n": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+            validation_rules=["n > 20"],  # Impossible with range 1-10
+        )
+
+        from django.urls import reverse
+
+        url = reverse("questions:preview", args=[question.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        # Should show error
+        preview = response.context["preview_instance"]
+        self.assertIn("error", preview)
+        self.assertTrue(preview.get("validation_error"))
+        self.assertEqual(preview.get("error_type"), "validation_rules")

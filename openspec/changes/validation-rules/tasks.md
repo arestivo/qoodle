@@ -135,11 +135,11 @@
 
 ## Phase 5: Testing & Documentation
 
-### P5.1: Write comprehensive integration tests
-- [ ] Test `test_question_create_with_validation_rules` - create via form
-- [ ] Test `test_question_update_with_validation_rules` - update existing
-- [ ] Test `test_question_preview_with_validation_rules` - preview respects rules
-- [ ] Test `test_question_preview_validation_error` - error shown when rules fail
+### P5.1: Write comprehensive integration tests ✅
+- [x] Test `test_question_create_with_validation_rules` - create via form
+- [x] Test `test_question_update_with_validation_rules` - update existing
+- [x] Test `test_question_preview_with_validation_rules` - preview respects rules
+- [x] Test `test_question_preview_validation_error` - error shown when rules fail
 
 ### P5.2: Manual browser testing
 - [ ] Create question with simple rule (a > b)
