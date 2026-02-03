@@ -1,75 +1,97 @@
 schema: spec-driven
-
-# Project context
-# This is injected into the AI context for every spec generation.
-context: |
+context: >
   # Project: Qoodle - Moodle Quiz Question Generator (Django 6.0.1)
-  
+
+
   ## Tech Stack
+
   - **Backend:** Python 3.12+, Django 6.0.1
+
   - **Package Manager:** Poetry (NEVER use pip or requirements.txt)
+
   - **Database:** SQLite (development), PostgreSQL (production-ready)
+
   - **Frontend:** Bootstrap 5.3.8, FontAwesome 6.5.1, Vanilla JS with defer
+
   - **Testing:** pytest-django (target: >80% coverage)
+
   - **Static Files:** django-compressor, WhiteNoise
-  - **Markdown:** Python markdown 3.10.1 (nl2br, fenced_code, tables, sane_lists)
-  
+
+  - **Markdown:** Python markdown 3.10.1 (nl2br, fenced_code, tables,
+  sane_lists)
+
+
   ## Project Structure Conventions
+
   - All Django apps in `apps/` directory
+
   - Each app has its own `templates/appname/` and `static/appname/` folders
+
   - NO global `templates/` or `static/` directories at project root
+
   - Base templates in `apps/common/templates/common/base.html`
+
   - All models extend `UUIDModel` (UUID primary keys)
+
   - Type hints and docstrings required
-  
+
+
   ## Implemented Features
-  - **Subjects (001):** Hierarchical organization with parent-child relationships
-  - **Questions (002):** Multilingual questions with marker format (==en==, ==pt==)
+
+  - **Subjects (001):** Hierarchical organization with parent-child
+  relationships
+
+  - **Questions (002):** Multilingual questions with marker format (==en==,
+  ==pt==)
     - JSONField for language storage with fallback logic
     - Markdown rendering for question/choice text
     - Custom JavaScript choice management (add/delete/move)
     - First choice (order=0) is always correct answer by convention
-  
-  ## Development Conventions
-  - All `python` commands MUST be prefixed with `poetry run`
-  - PEP 8 compliant with black and ruff
-  - Comprehensive type hints (mypy)
-  - Tests in `apps/appname/tests.py` (NOT tests/ directory)
-  
-  ## Skills Available
-  - `django-expert`: Django 6+ patterns and best practices
-  - `frontend-design`: Bootstrap 5.3.8 and responsive design
-  - `openspec`: Change management workflow
 
-# Per-artifact rules
-# These are strict constraints the AI must follow when generating these specific files.
+  ## Development Conventions
+
+  - All `python` commands MUST be prefixed with `poetry run`
+
+  - PEP 8 compliant with black and ruff
+
+  - Comprehensive type hints (mypy)
+
+  - Tests in `apps/appname/tests.py` (NOT tests/ directory)
+
+
+  ## Skills Available
+
+  - `django-expert`: Django 6+ patterns and best practices
+
+  - `frontend-design`: Bootstrap 5.3.8 and responsive design
+
+  - `openspec`: Change management workflow
 rules:
   proposal:
-    - Must include "Context" section explaining how this builds on existing features
+    - Must include "Context" section explaining how this builds on existing
+      features
     - Must verify if a new dependency is needed (check `pyproject.toml` first)
     - Verification Plan must include a specific management command or test case
     - Include risks specific to Django/Python ecosystem
     - Reference relevant Django documentation when applicable
-  
   tasks:
     - Tasks must be atomic (one view, one model method, one template)
     - Every implementation task must have a corresponding verification step
     - Explicitly state which Django app (`apps/name`) is being modified
     - All Python commands must use `poetry run` prefix
-    - Template tasks must specify the exact template path (apps/appname/templates/appname/file.html)
+    - Template tasks must specify the exact template path
+      (apps/appname/templates/appname/file.html)
     - Migration tasks must include both makemigrations and migrate commands
-  
   specs:
     - Use Given/When/Then format for test scenarios
     - Include specific model field types and constraints
     - Document URL patterns with example UUIDs
     - Specify exact Bootstrap 5.3.8 components to use
     - Include django-compressor {% compress %} tags for CSS/JS
-  
   design:
     - Must include database schema changes (models, fields, relationships)
     - Must include URL routing patterns
     - Must specify template inheritance hierarchy
     - Document any new template tags or filters needed
     - Include static file organization (which app's static folder)
-
+defaultSchema: spec-driven
