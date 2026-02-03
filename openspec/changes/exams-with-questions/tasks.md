@@ -1,93 +1,93 @@
 # Implementation Tasks: Exam Management with Question Pools
 
-## Phase 1: Question → QuestionTemplate Rename (2-3 days)
+## Phase 1: Question → QuestionTemplate Rename (2-3 days) ✅ COMPLETED
 
 ### 1.1 Database Migrations
 
-- [ ] Create migration to rename `Question` model to `QuestionTemplate` in `apps/questions/migrations/`
-- [ ] Create migration to rename `Choice.question` FK to `Choice.template` in `apps/questions/migrations/`
-- [ ] Run `poetry run python manage.py makemigrations` to generate migration files
-- [ ] Run `poetry run python manage.py migrate` to apply migrations
-- [ ] Verify database table renamed from `questions_question` to `questions_questiontemplate`
-- [ ] Verify all foreign keys updated correctly in database
+- [x] Create migration to rename `Question` model to `QuestionTemplate` in `apps/questions/migrations/`
+- [x] Create migration to rename `Choice.question` FK to `Choice.template` in `apps/questions/migrations/`
+- [x] Run `poetry run python manage.py makemigrations` to generate migration files
+- [x] Run `poetry run python manage.py migrate` to apply migrations
+- [x] Verify database table renamed from `questions_question` to `questions_questiontemplate`
+- [x] Verify all foreign keys updated correctly in database
 
 ### 1.2 Model Updates
 
-- [ ] Rename `Question` class to `QuestionTemplate` in `apps/questions/models.py`
-- [ ] Update `QuestionTemplate` docstring to reference "template" terminology
-- [ ] Rename `question` FK to `template` in `Choice` model in `apps/questions/models.py`
-- [ ] Update `Subject` model's related_name from `questions` to `question_templates`
-- [ ] Verify all model methods use correct field names
+- [x] Rename `Question` class to `QuestionTemplate` in `apps/questions/models.py`
+- [x] Update `QuestionTemplate` docstring to reference "template" terminology
+- [x] Rename `question` FK to `template` in `Choice` model in `apps/questions/models.py`
+- [x] Update `Subject` model's related_name from `questions` to `question_templates`
+- [x] Verify all model methods use correct field names
 
 ### 1.3 Admin Updates
 
-- [ ] Rename `QuestionAdmin` to `QuestionTemplateAdmin` in `apps/questions/admin.py`
-- [ ] Update admin registration to use `QuestionTemplate` model
-- [ ] Update admin `list_display` labels to reference "template"
-- [ ] Update admin verbose names to "Question Template"
-- [ ] Verify admin interface displays "Question Templates" in sidebar
+- [x] Rename `QuestionAdmin` to `QuestionTemplateAdmin` in `apps/questions/admin.py`
+- [x] Update admin registration to use `QuestionTemplate` model
+- [x] Update admin `list_display` labels to reference "template"
+- [x] Update admin verbose names to "Question Template"
+- [x] Verify admin interface displays "Question Templates" in sidebar
 
 ### 1.4 View Updates
 
-- [ ] Update all imports from `Question` to `QuestionTemplate` in `apps/questions/views.py`
-- [ ] Rename view class names (e.g., `QuestionListView` → `QuestionTemplateListView`) in `apps/questions/views.py`
-- [ ] Update all queryset references to use `QuestionTemplate` model
-- [ ] Update context variable names (keep `question` for backward compat or rename to `template`)
-- [ ] Update success messages to reference "question template"
-- [ ] Update `QuestionPreviewView` to use `QuestionTemplate`
+- [x] Update all imports from `Question` to `QuestionTemplate` in `apps/questions/views.py`
+- [x] Rename view class names (e.g., `QuestionListView` → `QuestionTemplateListView`) in `apps/questions/views.py`
+- [x] Update all queryset references to use `QuestionTemplate` model
+- [x] Update context variable names (keep `question` for backward compat or rename to `template`)
+- [x] Update success messages to reference "question template"
+- [x] Update `QuestionPreviewView` to use `QuestionTemplate`
 
 ### 1.5 Form Updates
 
-- [ ] Update `QuestionForm` model reference to `QuestionTemplate` in `apps/questions/forms.py`
-- [ ] Update form `Meta` class to reference `QuestionTemplate`
-- [ ] Update form labels and help_text to say "question template"
-- [ ] Update `clean_*` methods to reference `QuestionTemplate`
-- [ ] Verify form validation works with renamed model
+- [x] Update `QuestionForm` model reference to `QuestionTemplate` in `apps/questions/forms.py`
+- [x] Update form `Meta` class to reference `QuestionTemplate`
+- [x] Update form labels and help_text to say "question template"
+- [x] Update `clean_*` methods to reference `QuestionTemplate`
+- [x] Verify form validation works with renamed model
 
 ### 1.6 Template Updates
 
-- [ ] Update page titles to "Question Templates" in `apps/questions/templates/questions/question_list.html`
-- [ ] Update breadcrumbs to show "Question Templates" in all question templates
-- [ ] Update button labels to "Create Template", "Edit Template", etc.
-- [ ] Update `apps/questions/templates/questions/question_form.html` labels
-- [ ] Update `apps/questions/templates/questions/question_detail.html` headings
-- [ ] Update `apps/questions/templates/questions/question_preview.html` references
-- [ ] Update `apps/questions/templates/questions/question_confirm_delete.html` text
-- [ ] Keep template variable names as `question` or rename to `template` (decide consistently)
+- [x] Update page titles to "Question Templates" in `apps/questions/templates/questions/question_list.html`
+- [x] Update breadcrumbs to show "Question Templates" in all question templates
+- [x] Update button labels to "Create Template", "Edit Template", etc.
+- [x] Update `apps/questions/templates/questions/question_form.html` labels
+- [x] Update `apps/questions/templates/questions/question_detail.html` headings
+- [x] Update `apps/questions/templates/questions/question_preview.html` references
+- [x] Update `apps/questions/templates/questions/question_confirm_delete.html` text
+- [x] Keep template variable names as `question` or rename to `template` (decide consistently)
 
 ### 1.7 URL Pattern Updates
 
-- [ ] Verify URL paths remain `/questions/` (no change needed)
-- [ ] Verify URL names remain `questions:list`, `questions:create`, etc. (no change needed)
-- [ ] Update URL docstrings/comments to reference "question templates"
+- [x] Verify URL paths remain `/questions/` (no change needed)
+- [x] Verify URL names remain `questions:list`, `questions:create`, etc. (no change needed)
+- [x] Update URL docstrings/comments to reference "question templates"
 
 ### 1.8 Navigation Updates
 
-- [ ] Update navigation label from "Manage Questions" to "Manage Question Templates" in `apps/common/templates/common/base.html`
-- [ ] Update any breadcrumb references to "Question Templates"
-- [ ] Verify navigation links still work correctly
+- [x] Update navigation label from "Manage Questions" to "Manage Question Templates" in `apps/common/templates/common/base.html`
+- [x] Update any breadcrumb references to "Question Templates"
+- [x] Verify navigation links still work correctly
 
 ### 1.9 Test Updates
 
-- [ ] Update all test imports from `Question` to `QuestionTemplate` in `apps/questions/tests.py`
-- [ ] Update test class names to reference `QuestionTemplate`
-- [ ] Update test method names to reference `template` (e.g., `test_create_question` → `test_create_question_template`)
-- [ ] Update test fixtures to use `QuestionTemplate.objects.create()`
-- [ ] Update assertions to reference `template` field on `Choice` model
-- [ ] Run `poetry run pytest apps/questions/tests.py` to verify all tests pass
-- [ ] Verify test coverage remains >80%
+- [x] Update all test imports from `Question` to `QuestionTemplate` in `apps/questions/tests.py`
+- [x] Update test class names to reference `QuestionTemplate`
+- [x] Update test method names to reference `template` (e.g., `test_create_question` → `test_create_question_template`)
+- [x] Update test fixtures to use `QuestionTemplate.objects.create()`
+- [x] Update assertions to reference `template` field on `Choice` model
+- [x] Run `poetry run pytest apps/questions/tests.py` to verify all tests pass
+- [x] Verify test coverage remains >80%
 
 ### 1.10 Phase 1 Validation
 
-- [ ] Run full test suite: `poetry run pytest`
-- [ ] Verify all 102+ tests pass
-- [ ] Run `poetry run python manage.py check` for system checks
-- [ ] Manually test question template CRUD in browser
-- [ ] Manually test question template preview functionality
-- [ ] Verify no broken links or 404 errors
-- [ ] Run `poetry run black apps/questions/` to format code
-- [ ] Run `poetry run ruff check apps/questions/` for linting
-- [ ] Commit changes: "Phase 1: Rename Question to QuestionTemplate"
+- [x] Run full test suite: `poetry run pytest`
+- [x] Verify all 102+ tests pass
+- [x] Run `poetry run python manage.py check` for system checks
+- [x] Manually test question template CRUD in browser
+- [x] Manually test question template preview functionality
+- [x] Verify no broken links or 404 errors
+- [x] Run `poetry run black apps/questions/` to format code
+- [x] Run `poetry run ruff check apps/questions/` for linting
+- [x] Commit changes: "Phase 1: Rename Question to QuestionTemplate"
 
 ---
 

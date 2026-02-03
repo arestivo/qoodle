@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("questions", "0001_initial"),
     ]
@@ -14,7 +13,7 @@ class Migration(migrations.Migration):
             model_name="question",
             name="title",
             field=models.CharField(
-                default="no title",
+                default="",
                 help_text="Short title to identify this question",
                 max_length=200,
             ),
