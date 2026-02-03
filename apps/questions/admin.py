@@ -9,7 +9,7 @@ class ChoiceInline(admin.TabularInline):
     """Inline admin for choices."""
 
     model = Choice
-    extra = 2
+    extra = 0
     fields = ["text", "order"]
 
 

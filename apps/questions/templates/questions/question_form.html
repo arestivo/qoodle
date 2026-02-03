@@ -81,7 +81,7 @@
                                 Define variables to create parametric questions with randomized values. Use <code>{% templatetag openvariable %}variable{% templatetag closevariable %}</code> syntax in your question or choice text.
                             </p>
                             
-                            <div class="alert alert-info py-2 small mb-3">
+                            <div class="alert alert-info py-2 small mb-3 alert-permanent">
                                 <strong><i class="fa-solid fa-lightbulb"></i> Quick Guide:</strong>
                                 <ul class="mb-0 mt-1">
                                     <li><strong>Numeric:</strong> Random numbers (e.g., <code>x</code> from 1-10)</li>
@@ -292,7 +292,7 @@
                    title="Number of items to select">
         </div>
     </div>
-    <small class="text-muted">Items: apple, banana, cherry (comma-separated). Access with {{var[0]}}, {{var[1]}}, etc.</small>
+    <small class="text-muted">Items: apple, banana, cherry (comma-separated). Access with {% templatetag openvariable %}var[0]{% templatetag closevariable %}, {% templatetag openvariable %}var[1]{% templatetag closevariable %}, etc.</small>
 </template>
 
 {# Template for expression type fields #}
