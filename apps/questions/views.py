@@ -375,11 +375,21 @@ class QuestionPreviewView(DetailView):
                 "question_texts": rendered_texts,
                 "choices": rendered_choices,
             }
-        except Exception as e:
-            # If variable generation fails, include error
+        except ValidationError as e:
+            # Validation rules could not be satisfied after max attempts
             context["preview_instance"] = {
                 "seed": seed,
+                "validation_error": True,
                 "error": str(e),
+                "error_type": "validation_rules",
+            }
+        except Exception as e:
+            # Other errors (e.g., invalid variable expressions)
+            context["preview_instance"] = {
+                "seed": seed,
+                "validation_error": False,
+                "error": str(e),
+                "error_type": "general",
             }
 
         return context

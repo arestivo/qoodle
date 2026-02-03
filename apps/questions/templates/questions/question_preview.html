@@ -60,10 +60,61 @@
             <div class="card mb-4">
                 <div class="card-body">
                     {% if preview_instance.error %}
-                        <div class="alert alert-danger alert-permanent">
-                            <i class="fa-solid fa-exclamation-triangle"></i>
-                            <strong>Error:</strong> {{ preview_instance.error }}
-                        </div>
+                        {% if preview_instance.validation_error %}
+                            {# Specific error for validation rules failure #}
+                            <div class="alert alert-danger alert-permanent">
+                                <h5 class="alert-heading">
+                                    <i class="fa-solid fa-exclamation-triangle"></i>
+                                    Unable to Generate Valid Variables
+                                </h5>
+                                <p class="mb-2"><strong>Error:</strong> {{ preview_instance.error }}</p>
+                                <hr>
+                                <div class="mb-2">
+                                    <strong>Validation Rules:</strong>
+                                    <ul class="mb-0">
+                                        {% for rule in question.validation_rules %}
+                                            <li><code>{{ rule }}</code></li>
+                                        {% empty %}
+                                            <li><em>No validation rules defined</em></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <hr>
+                                <p class="mb-0">
+                                    <strong>Suggestions:</strong>
+                                </p>
+                                <ul class="mb-2">
+                                    <li>Review your validation rules for conflicts or impossible conditions</li>
+                                    <li>Check that all variables used in rules are defined in the Variables section</li>
+                                    <li>Ensure variable ranges allow for valid solutions</li>
+                                    <li>Consider adjusting the max_validation_attempts parameter if rules are rarely satisfied</li>
+                                </ul>
+                                <a href="{% url 'questions:edit' question.pk %}" class="btn btn-primary">
+                                    <i class="fa-solid fa-edit"></i> Edit Question
+                                </a>
+                            </div>
+                        {% else %}
+                            {# General error (e.g., invalid variable expressions) #}
+                            <div class="alert alert-danger alert-permanent">
+                                <h5 class="alert-heading">
+                                    <i class="fa-solid fa-exclamation-triangle"></i>
+                                    Error Generating Preview
+                                </h5>
+                                <p class="mb-2"><strong>Error:</strong> {{ preview_instance.error }}</p>
+                                <hr>
+                                <p class="mb-0">
+                                    <strong>Possible Causes:</strong>
+                                </p>
+                                <ul class="mb-2">
+                                    <li>Invalid variable expression syntax</li>
+                                    <li>Undefined variables in question or choice text</li>
+                                    <li>Division by zero or other runtime errors</li>
+                                </ul>
+                                <a href="{% url 'questions:edit' question.pk %}" class="btn btn-primary">
+                                    <i class="fa-solid fa-edit"></i> Edit Question
+                                </a>
+                            </div>
+                        {% endif %}
                     {% else %}
                         {# Show generated variables if any #}
                         {% if preview_instance.variables %}

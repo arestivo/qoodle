@@ -1052,3 +1052,121 @@ class ValidationRulesFormTests(TestCase):
         initial_rules = form.initial.get("validation_rules_json")
         self.assertIsNotNone(initial_rules)
         self.assertEqual(initial_rules, ["a > 0", "a < 100"])
+
+
+class ValidationRulesPreviewTests(TestCase):
+    """Tests for validation rules in preview view (Phase 4)."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.subject = Subject.objects.create(name="Math")
+
+    def test_preview_with_valid_rules(self):
+        """Test that preview works when validation rules can be satisfied."""
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Valid Rules Question",
+            text={"none": "What is {{a}} + {{b}}?"},
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+            validation_rules=["a > b"],  # Should succeed eventually
+        )
+
+        from django.urls import reverse
+
+        url = reverse("questions:preview", args=[question.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("preview_instance", response.context)
+
+        # Should have successfully generated variables
+        preview = response.context["preview_instance"]
+        self.assertNotIn("error", preview)
+        self.assertIn("variables", preview)
+        self.assertIn("a", preview["variables"])
+        self.assertIn("b", preview["variables"])
+        self.assertGreater(preview["variables"]["a"], preview["variables"]["b"])
+
+    def test_preview_with_impossible_rules(self):
+        """Test that preview shows helpful error when rules can't be satisfied."""
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Impossible Rules Question",
+            text={"none": "Test"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 5, "precision": 1},
+            },
+            validation_rules=["x > 10", "x < 3"],  # Impossible with range 1-5
+        )
+
+        from django.urls import reverse
+
+        url = reverse("questions:preview", args=[question.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("preview_instance", response.context)
+
+        # Should have error information
+        preview = response.context["preview_instance"]
+        self.assertIn("error", preview)
+        self.assertTrue(preview.get("validation_error", False))
+        self.assertEqual(preview.get("error_type"), "validation_rules")
+
+    def test_preview_without_validation_rules(self):
+        """Test that preview works normally when no validation rules are set."""
+        question = Question.objects.create(
+            subject=self.subject,
+            title="No Rules Question",
+            text={"none": "What is {{a}}?"},
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+            validation_rules=[],  # No rules
+        )
+
+        from django.urls import reverse
+
+        url = reverse("questions:preview", args=[question.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("preview_instance", response.context)
+
+        # Should work without errors
+        preview = response.context["preview_instance"]
+        self.assertNotIn("error", preview)
+        self.assertIn("variables", preview)
+
+    def test_preview_with_conflicting_rules(self):
+        """Test preview with rules that conflict with variable ranges."""
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Conflicting Rules",
+            text={"none": "{{a}}, {{b}}, {{c}}"},
+            variables={
+                "a": {"type": "num", "min": 1, "max": 100, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 100, "precision": 1},
+                "c": {"type": "num", "min": 1, "max": 100, "precision": 1},
+            },
+            validation_rules=[
+                "a > b",
+                "b > c",
+                "c > a",  # Creates circular dependency: a > b > c > a (impossible)
+            ],
+        )
+
+        from django.urls import reverse
+
+        url = reverse("questions:preview", args=[question.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        # Should show validation error
+        preview = response.context["preview_instance"]
+        self.assertIn("error", preview)
+        self.assertTrue(preview.get("validation_error"))

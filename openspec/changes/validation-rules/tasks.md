@@ -107,31 +107,31 @@
 - [ ] Show visual feedback for common errors
 - [ ] Keep validation non-blocking (server validates authoritatively)
 
-## Phase 4: Preview & Error Handling
+## Phase 4: Preview & Error Handling ✅
 
-### P4.1: Update question_preview.html to display rules
-- [ ] Add validation rules section to preview template
-- [ ] Display rules as list if present
-- [ ] Show "No validation rules" if empty
-- [ ] Format rules with code styling
+### P4.1: Update question_preview.html to display rules ✅
+- [x] Add validation rules section to preview template
+- [x] Display rules as list if present
+- [x] Show "No validation rules" if empty
+- [x] Format rules with code styling
 
-### P4.2: Handle validation errors in QuestionPreviewView
-- [ ] Wrap question rendering in try/except for ValidationError
-- [ ] Catch validation retry limit errors
-- [ ] Render error template with helpful message
-- [ ] Suggest reviewing rules and variables
+### P4.2: Handle validation errors in QuestionPreviewView ✅
+- [x] Wrap question rendering in try/except for ValidationError
+- [x] Catch validation retry limit errors
+- [x] Render error template with helpful message
+- [x] Suggest reviewing rules and variables
 
-### P4.3: Create error message template
-- [ ] Design user-friendly error message
-- [ ] Include: number of attempts made, suggestion to review rules
-- [ ] Add link back to edit question
-- [ ] Show which rules failed (if traceable)
+### P4.3: Create error message template ✅
+- [x] Design user-friendly error message
+- [x] Include: number of attempts made, suggestion to review rules
+- [x] Add link back to edit question
+- [x] Show which rules failed (if traceable)
 
-### P4.4: Test error scenarios
-- [ ] Test impossible rules (a > 10 and a < 5)
-- [ ] Test rules with undefined variables
-- [ ] Test conflicting rules
-- [ ] Verify error messages are clear and helpful
+### P4.4: Test error scenarios ✅
+- [x] Test impossible rules (a > 10 and a < 5)
+- [x] Test rules with undefined variables
+- [x] Test conflicting rules
+- [x] Verify error messages are clear and helpful
 
 ## Phase 5: Testing & Documentation
 
