@@ -43,93 +43,125 @@
             </div>
         </div>
 
-        {# Language Versions #}
-        <h4 class="mb-3">
-            <i class="fa-solid fa-language text-info"></i>
-            Available Languages: 
-            <span class="badge bg-info">{{ languages|length }}</span>
-        </h4>
+        {# Preview with Regenerate Button #}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="fa-solid fa-eye text-info"></i>
+                Preview
+            </h4>
+                {% if question.variables %}
+            <button type="button" class="btn btn-sm btn-primary" onclick="window.location.reload()">
+                <i class="fa-solid fa-sync-alt"></i> Regenerate
+            </button>
+                {% endif %}
+        </div>
 
-        <div class="row">
-            {% for lang in languages %}
-                <div class="col-lg-6 mb-4">
-                    <div class="card h-100 {% if lang == 'none' %}border-primary{% endif %}">
-                        <div class="card-header {% if lang == 'none' %}bg-primary text-white{% else %}bg-light{% endif %}">
-                            <h5 class="mb-0">
-                                {% if lang == 'none' %}
-                                    <i class="fa-solid fa-globe"></i>
-                                    Language Independent
-                                {% else %}
-                                    <i class="fa-solid fa-flag"></i>
-                                    {{ lang|upper }}
-                                {% endif %}
-                            </h5>
+        {% if preview_instance %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    {% if preview_instance.error %}
+                        <div class="alert alert-danger">
+                            <i class="fa-solid fa-exclamation-triangle"></i>
+                            <strong>Error:</strong> {{ preview_instance.error }}
                         </div>
-                        <div class="card-body">
-                            {# Question Text #}
-                            <div class="mb-4">
-                                <h6 class="text-muted">Question:</h6>
-                                <div class="lead">
-                                    {% if lang in question.text.keys %}
-                                        {{ question.text|get_item:lang|markdown }}
-                                    {% else %}
-                                        <em class="text-muted">
-                                            {{ question.get_text|markdown }}
-                                            <small class="badge bg-warning">Using fallback</small>
-                                        </em>
-                                    {% endif %}
-                                </div>
+                    {% else %}
+                        {# Show generated variables if any #}
+                        {% if preview_instance.variables %}
+                            <div class="alert alert-light border">
+                                <h6 class="text-muted mb-2">
+                                    <i class="fa-solid fa-dice"></i>
+                                    Generated Variables (seed: {{ preview_instance.seed }}):
+                                </h6>
+                                <code>
+                                    {% for key, value in preview_instance.variables.items %}
+                                        <strong>{{ key }}</strong>: 
+                                        {% if value is not None %}
+                                            {% if value is iterable and value is not string %}
+                                                [{{ value|join:", " }}]
+                                            {% else %}
+                                                {{ value }}
+                                            {% endif %}
+                                        {% else %}
+                                            null
+                                        {% endif %}
+                                        {% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </code>
                             </div>
+                        {% endif %}
 
-                            {# Choices #}
-                            <div>
-                                <h6 class="text-muted">Choices:</h6>
-                                <div class="list-group">
-                                    {% for choice in question.choices.all %}
-                                        <div class="list-group-item {% if choice.is_correct %}list-group-item-success{% endif %}">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div class="flex-grow-1">
-                                                    <span class="badge bg-secondary me-2">{{ choice.order }}</span>
-                                                    {% if choice.is_correct %}
-                                                        <i class="fa-solid fa-check-circle text-success"></i>
-                                                    {% endif %}
-                                                    {% if lang in choice.text.keys %}
-                                                        {{ choice.text|get_item:lang|markdown }}
-                                                    {% else %}
-                                                        <em>{{ choice.get_text|markdown }}</em>
-                                                        <small class="badge bg-warning ms-1">Fallback</small>
-                                                    {% endif %}
+                        {# Show question in each language #}
+                        <div class="row">
+                            {% for lang in languages %}
+                                <div class="col-lg-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">
+                                                {% if lang == 'none' %}
+                                                    <i class="fa-solid fa-globe"></i> Language Independent
+                                                {% else %}
+                                                    <i class="fa-solid fa-flag"></i> {{ lang|upper }}
+                                                {% endif %}
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <strong>Question:</strong>
+                                                <div class="lead">{{ preview_instance.question_texts|get_item:lang|markdown }}</div>
+                                            </div>
+                                            <div>
+                                                <strong>Choices:</strong>
+                                                <div class="list-group">
+                                                    {% for choice in preview_instance.choices %}
+                                                        <div class="list-group-item {% if choice.is_correct %}list-group-item-success{% endif %}">
+                                                            <span class="badge bg-secondary me-2">{{ choice.order }}</span>
+                                                            {% if choice.is_correct %}
+                                                                <i class="fa-solid fa-check-circle text-success"></i>
+                                                            {% endif %}
+                                                            {{ choice.texts|get_item:lang|markdown }}
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    {% endfor %}
-                                </div>
+                                    </div>
+                                {% endfor %}
                             </div>
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
-            {% endfor %}
-        </div>
+        {% endif %}
 
         {# Raw JSON Data #}
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="fa-solid fa-code text-secondary"></i>
-                    Raw JSON Data
+                    <button class="btn btn-link text-decoration-none text-secondary p-0 w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#rawDataCollapse" aria-expanded="false" aria-controls="rawDataCollapse">
+                        <i class="fa-solid fa-code"></i>
+                        Raw JSON Data
+                        <i class="fa-solid fa-chevron-down float-end"></i>
+                    </button>
                 </h5>
             </div>
-            <div class="card-body">
-                <h6>Question Text:</h6>
-                <pre class="bg-light p-3 rounded"><code>{{ question.text|safe }}</code></pre>
+            <div class="collapse" id="rawDataCollapse">
+                <div class="card-body">
+                    {% if question.variables %}
+                        <h6>Variables:</h6>
+                        <pre class="bg-light p-3 rounded"><code>{{ question.variables|safe }}</code></pre>
+                    {% endif %}
 
-                <h6 class="mt-3">Choices:</h6>
-                {% for choice in question.choices.all %}
-                    <div class="mb-2">
-                        <strong>Choice {{ choice.order }} {% if choice.is_correct %}(Correct){% endif %}:</strong>
-                        <pre class="bg-light p-2 rounded"><code>{{ choice.text|safe }}</code></pre>
-                    </div>
-                {% endfor %}
+                    <h6>Question Text:</h6>
+                    <pre class="bg-light p-3 rounded"><code>{{ question.text|safe }}</code></pre>
+
+                    <h6 class="mt-3">Choices:</h6>
+                    {% for choice in question.choices.all %}
+                        <div class="mb-2">
+                            <strong>Choice {{ choice.order }} {% if choice.is_correct %}(Correct){% endif %}:</strong>
+                            <pre class="bg-light p-2 rounded"><code>{{ choice.text|safe }}</code></pre>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
