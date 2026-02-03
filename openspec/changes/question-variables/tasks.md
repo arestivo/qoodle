@@ -70,16 +70,16 @@
 
 ### Phase 3: Forms
 
-- [ ] **F3.1:** Add `variables_json` field to QuestionForm in `apps/questions/forms.py`
+- [x] **F3.1:** Add `variables_json` field to QuestionForm in `apps/questions/forms.py`
   - Type: `forms.JSONField(required=False, widget=forms.HiddenInput())`
   - Will be populated by JavaScript from UI
   
-- [ ] **F3.2:** Add `clean_variables_json()` method to QuestionForm
+- [x] **F3.2:** Add `clean_variables_json()` method to QuestionForm
   - Validate JSON structure
   - Return dict or empty dict if None
   - Raise ValidationError for malformed JSON
 
-- [ ] **F3.3:** Override `save()` method in QuestionForm
+- [x] **F3.3:** Override `save()` method in QuestionForm
   - Extract `variables_json` from cleaned_data
   - Assign to `instance.variables` before calling model clean()
   - Call `super().save(commit)`

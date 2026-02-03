@@ -1,5 +1,6 @@
 """Forms for the questions app."""
 
+import json
 import re
 
 from django import forms
@@ -111,6 +112,12 @@ class QuestionForm(forms.ModelForm):
         ),
         help_text="Enter text with language markers (e.g., ==en==, ==pt==) or plain text for language-independent content.",
     )
+    
+    variables_json = forms.JSONField(
+        required=False,
+        widget=forms.HiddenInput(),
+        help_text="Variable definitions for parametric questions (populated by JavaScript)",
+    )
 
     class Meta:
         model = Question
@@ -128,6 +135,56 @@ class QuestionForm(forms.ModelForm):
                 }
             ),
         }
+
+    def clean_variables_json(self):
+        """
+        Validate variables_json field.
+
+        Returns:
+            Dict or empty dict if None
+
+        Raises:
+            ValidationError: If malformed JSON
+        """
+        value = self.cleaned_data.get("variables_json")
+        
+        if value is None or value == "":
+            return {}
+        
+        if isinstance(value, dict):
+            return value
+        
+        # If it's a string, try to parse it
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if not isinstance(parsed, dict):
+                    raise ValidationError("Variables must be a JSON object/dict")
+                return parsed
+            except json.JSONDecodeError as e:
+                raise ValidationError(f"Invalid JSON: {e}")
+        
+        raise ValidationError("Variables must be a JSON object")
+
+    def save(self, commit=True):
+        """
+        Save the question with variables.
+
+        Extracts variables_json from cleaned_data and assigns to instance.variables
+        before calling model validation.
+        """
+        instance = super().save(commit=False)
+        
+        # Assign variables from form field to model
+        if "variables_json" in self.cleaned_data:
+            variables = self.cleaned_data["variables_json"]
+            instance.variables = variables if variables else None
+        
+        if commit:
+            instance.full_clean()  # This calls the model's clean() method
+            instance.save()
+        
+        return instance
 
 
 class ChoiceForm(forms.ModelForm):
