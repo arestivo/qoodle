@@ -2,81 +2,70 @@
 
 ### Phase 1: Database & Models
 
-- [ ] **M1.1:** Add `variables` JSONField to Question model in `apps/questions/models.py`
+- [x] **M1.1:** Add `variables` JSONField to Question model in `apps/questions/models.py`
   - Field: `variables = models.JSONField(null=True, blank=True, default=dict)`
   - Help text: "Variable definitions for parametric questions"
   
-- [ ] **M1.2:** Create and run migration for variables field
+- [x] **M1.2:** Create and run migration for variables field
   - Run: `poetry run python manage.py makemigrations questions`
   - Run: `poetry run python manage.py migrate`
   - Verify: Check migration file created in `apps/questions/migrations/`
 
-- [ ] **M1.3:** Create `VariableGenerator` helper class in `apps/questions/models.py`
+- [x] **M1.3:** Create `VariableGenerator` helper class in `apps/questions/models.py`
   - Method: `generate_num(min_val, max_val, precision=1) -> float`
   - Method: `generate_string(min_len, max_len) -> str`
   - Method: `generate_set(items: list, size: int) -> list`
   - Method: `evaluate_expression(formula: str, context: dict) -> Any`
   - All methods with type hints and docstrings
 
-- [ ] **M1.4:** Add `generate_variables()` method to Question model
+- [x] **M1.4:** Add `generate_variables()` method to Question model
   - Signature: `def generate_variables(self, seed: int = None) -> dict`
-  - Implements topological sort for expression dependencies
+  - Evaluates variables in definition order (expressions can only reference earlier variables)
   - Uses VariableGenerator for each variable type
   - Returns dict of variable_name: value
   
-- [ ] **M1.5:** Add `_substitute_variables()` method to Question model
+- [x] **M1.5:** Add `_substitute_variables()` method to Question model
   - Signature: `def _substitute_variables(self, text: str, variables: dict) -> str`
   - Uses regex `r'\{\{(.+?)\}\}'` to find variable references
   - Evaluates expressions within `{{...}}`
   - Returns error placeholders for failed evaluations
 
-- [ ] **M1.6:** Extend `get_text()` method in Question model
+- [x] **M1.6:** Extend `get_text()` method in Question model
   - Add `variables: dict = None` parameter
   - Call `_substitute_variables()` after language fallback if variables provided
   - Update docstring with examples
 
-- [ ] **M1.7:** Add `render_text()` convenience method to Question model
+- [x] **M1.7:** Add `render_text()` convenience method to Question model
   - Signature: `def render_text(self, language_code: str = None, seed: int = None) -> str`
   - Calls `generate_variables(seed)` if `self.variables` exists
   - Calls `get_text(language_code, variables)`
   - Applies markdown rendering
   - Returns final HTML
 
-- [ ] **M1.8:** Mirror `get_text()` and `render_text()` methods in Choice model
+- [x] **M1.8:** Mirror `get_text()` and `render_text()` methods in Choice model
   - Add variables parameter to `get_text()`
   - Add `render_text()` method
   - Share variables from parent Question
 
 ### Phase 2: Validation
 
-- [ ] **V2.1:** Add `_validate_variable_definition()` method to Question model
+- [x] **V2.1:** Add `_validate_variable_definition()` method to Question model
   - Validates JSON structure for each variable type
   - Checks required fields (min/max for num, items/size for set, etc.)
   - Raises ValidationError with descriptive messages
   
-- [ ] **V2.2:** Add `_topological_sort_variables()` method to Question model
-  - Signature: `def _topological_sort_variables(self) -> list`
-  - Builds dependency graph from expression variables
-  - Performs topological sort (Kahn's algorithm)
-  - Returns sorted list of variable names
-  
-- [ ] **V2.3:** Add `_validate_no_circular_dependencies()` method to Question model
-  - Uses `_topological_sort_variables()` to detect cycles
-  - Raises ValidationError with cycle path if found
-  - Example error: "Circular dependency detected: a → b → c → a"
-
-- [ ] **V2.4:** Add `_validate_text_references()` method to Question model
+- [x] **V2.2:** Add `_validate_text_references()` method to Question model
   - Finds all `{{...}}` references in question text (all languages)
   - Finds all `{{...}}` references in choice text
   - Extracts variable names from references
   - Validates all referenced variables exist in `self.variables`
   - Raises ValidationError listing undefined variables
 
-- [ ] **V2.5:** Override `clean()` method in Question model
+- [x] **V2.3:** Override `clean()` method in Question model
   - Call `super().clean()`
   - Return early if `self.variables` is None or empty
-  - Call all validation methods: _validate_variable_definition, _validate_no_circular_dependencies, _validate_text_references
-  - Try test-evaluation of all expressions with sample data
+  - Call validation methods: _validate_variable_definition, _validate_text_references
+  - Try test-evaluation with seed=0 to catch runtime errors (including circular dependencies)
   - Catch and re-raise exceptions with context
 
 ### Phase 3: Forms

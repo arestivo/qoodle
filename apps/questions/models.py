@@ -226,8 +226,8 @@ class Question(UUIDModel):
         """
         Generate values for all variables defined in this question.
 
-        Handles dependencies between variables using topological sort.
-        Variables of type 'expression' can reference other variables.
+        Variables are evaluated in definition order. Expression variables
+        can only reference variables defined earlier in the dict.
 
         Args:
             seed: Optional random seed for reproducibility
@@ -236,7 +236,7 @@ class Question(UUIDModel):
             Dict mapping variable names to generated values
 
         Raises:
-            ValidationError: If circular dependency or invalid definition detected
+            ValidationError: If invalid definition or missing dependency
 
         Example:
             variables = {"a": {"type": "num", "min": 1, "max": 10, "precision": 1},
@@ -250,68 +250,41 @@ class Question(UUIDModel):
         if seed is not None:
             random.seed(seed)
 
-        # Topological sort to handle dependencies
         generated = {}
-        remaining = dict(self.variables)
-        max_iterations = len(remaining) + 1
-        iteration = 0
 
-        while remaining and iteration < max_iterations:
-            iteration += 1
-            made_progress = False
+        # Evaluate variables in order
+        for var_name, var_def in self.variables.items():
+            var_type = var_def.get("type")
 
-            for var_name in list(remaining.keys()):
-                var_def = remaining[var_name]
-                var_type = var_def.get("type")
+            try:
+                if var_type == "num":
+                    value = VariableGenerator.generate_num(
+                        var_def.get("min", 0),
+                        var_def.get("max", 100),
+                        var_def.get("precision", 1),
+                    )
+                elif var_type == "string":
+                    value = VariableGenerator.generate_string(
+                        var_def.get("min_length", 1),
+                        var_def.get("max_length", 10),
+                    )
+                elif var_type == "set":
+                    value = VariableGenerator.generate_set(
+                        var_def.get("items", []),
+                        var_def.get("size", 1),
+                    )
+                elif var_type == "expression":
+                    value = VariableGenerator.evaluate_expression(
+                        var_def.get("formula", ""),
+                        generated,
+                    )
+                else:
+                    raise ValidationError(f"Unknown variable type: {var_type}")
 
-                # Check if dependencies are satisfied
-                if var_type == "expression":
-                    # Extract variable names from formula
-                    formula = var_def.get("formula", "")
-                    dependencies = set(re.findall(r"\b([a-zA-Z_]\w*)\b", formula))
-                    # Filter to only include our defined variables
-                    dependencies = {d for d in dependencies if d in self.variables}
+                generated[var_name] = value
 
-                    # Skip if dependencies not yet generated
-                    if not all(d in generated for d in dependencies):
-                        continue
-
-                # Generate value based on type
-                try:
-                    if var_type == "num":
-                        value = VariableGenerator.generate_num(
-                            var_def.get("min", 0),
-                            var_def.get("max", 100),
-                            var_def.get("precision", 1),
-                        )
-                    elif var_type == "string":
-                        value = VariableGenerator.generate_string(
-                            var_def.get("min_length", 1),
-                            var_def.get("max_length", 10),
-                        )
-                    elif var_type == "set":
-                        value = VariableGenerator.generate_set(
-                            var_def.get("items", []),
-                            var_def.get("size", 1),
-                        )
-                    elif var_type == "expression":
-                        value = VariableGenerator.evaluate_expression(
-                            var_def.get("formula", ""),
-                            generated,
-                        )
-                    else:
-                        raise ValidationError(f"Unknown variable type: {var_type}")
-
-                    generated[var_name] = value
-                    del remaining[var_name]
-                    made_progress = True
-
-                except (ValueError, ValidationError) as e:
-                    raise ValidationError(f"Error generating variable '{var_name}': {e}")
-
-            # If no progress made, we have a circular dependency
-            if not made_progress and remaining:
-                raise ValidationError(f"Circular dependency detected in variables: {list(remaining.keys())}")
+            except (ValueError, ValidationError) as e:
+                raise ValidationError(f"Error generating variable '{var_name}': {e}")
 
         return generated
 
@@ -427,6 +400,170 @@ class Question(UUIDModel):
             text = markdown_lib.markdown(text)
 
         return text
+
+    def _validate_variable_definition(self) -> None:
+        """
+        Validate variable definitions structure and required fields.
+
+        Raises:
+            ValidationError: If any variable definition is invalid
+        """
+        if not self.variables:
+            return
+
+        for var_name, var_def in self.variables.items():
+            # Check var_name is valid Python identifier
+            if not var_name.isidentifier():
+                raise ValidationError(f"Variable name '{var_name}' is not a valid Python identifier")
+
+            # Check type exists
+            if "type" not in var_def:
+                raise ValidationError(f"Variable '{var_name}' missing 'type' field")
+
+            var_type = var_def["type"]
+
+            # Validate based on type
+            if var_type == "num":
+                if "min" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'min' field")
+                if "max" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'max' field")
+                if not isinstance(var_def["min"], (int, float)):
+                    raise ValidationError(f"Variable '{var_name}': 'min' must be a number")
+                if not isinstance(var_def["max"], (int, float)):
+                    raise ValidationError(f"Variable '{var_name}': 'max' must be a number")
+                if var_def["min"] > var_def["max"]:
+                    raise ValidationError(f"Variable '{var_name}': 'min' cannot be greater than 'max'")
+                if "precision" in var_def and not isinstance(var_def["precision"], (int, float)):
+                    raise ValidationError(f"Variable '{var_name}': 'precision' must be a number")
+
+            elif var_type == "string":
+                if "min_length" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'min_length' field")
+                if "max_length" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'max_length' field")
+                if not isinstance(var_def["min_length"], int):
+                    raise ValidationError(f"Variable '{var_name}': 'min_length' must be an integer")
+                if not isinstance(var_def["max_length"], int):
+                    raise ValidationError(f"Variable '{var_name}': 'max_length' must be an integer")
+                if var_def["min_length"] < 0:
+                    raise ValidationError(f"Variable '{var_name}': 'min_length' cannot be negative")
+                if var_def["min_length"] > var_def["max_length"]:
+                    raise ValidationError(f"Variable '{var_name}': 'min_length' cannot be greater than 'max_length'")
+
+            elif var_type == "set":
+                if "items" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'items' field")
+                if "size" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'size' field")
+                if not isinstance(var_def["items"], list):
+                    raise ValidationError(f"Variable '{var_name}': 'items' must be a list")
+                if not isinstance(var_def["size"], int):
+                    raise ValidationError(f"Variable '{var_name}': 'size' must be an integer")
+                if var_def["size"] < 0:
+                    raise ValidationError(f"Variable '{var_name}': 'size' cannot be negative")
+                if var_def["size"] > len(var_def["items"]):
+                    raise ValidationError(f"Variable '{var_name}': 'size' ({var_def['size']}) cannot exceed items count ({len(var_def['items'])})")
+
+            elif var_type == "expression":
+                if "formula" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'formula' field")
+                if not isinstance(var_def["formula"], str):
+                    raise ValidationError(f"Variable '{var_name}': 'formula' must be a string")
+                if not var_def["formula"].strip():
+                    raise ValidationError(f"Variable '{var_name}': 'formula' cannot be empty")
+
+            else:
+                raise ValidationError(f"Variable '{var_name}': unknown type '{var_type}'")
+
+    def _validate_text_references(self) -> None:
+        """
+        Validate that all {{variable}} references in text exist in variables definition.
+
+        Checks both question text (all languages) and all choice texts.
+
+        Raises:
+            ValidationError: If undefined variables are referenced
+        """
+        if not self.text:
+            return
+
+        # Collect all {{...}} references from question text
+        all_references = set()
+        pattern = r"\{\{([^}]+)\}\}"
+
+        # Check question text in all languages
+        for lang_text in self.text.values():
+            matches = re.findall(pattern, lang_text)
+            for match in matches:
+                # Extract variable names from the match
+                var_names = re.findall(r"\b([a-zA-Z_]\w*)\b", match)
+                all_references.update(var_names)
+
+        # Check choice texts (if question has been saved and has choices)
+        if self.pk:
+            for choice in self.choices.all():
+                for lang_text in choice.text.values():
+                    matches = re.findall(pattern, lang_text)
+                    for match in matches:
+                        var_names = re.findall(r"\b([a-zA-Z_]\w*)\b", match)
+                        all_references.update(var_names)
+
+        # Filter out safe builtins that are allowed in expressions
+        safe_builtins = {
+            "abs",
+            "round",
+            "min",
+            "max",
+            "int",
+            "float",
+            "str",
+            "len",
+            "sum",
+        }
+        all_references -= safe_builtins
+
+        # Check if all referenced variables are defined
+        if all_references:
+            defined_vars = set(self.variables.keys()) if self.variables else set()
+            undefined = all_references - defined_vars
+
+            if undefined:
+                raise ValidationError(f"Undefined variables referenced in text: {sorted(undefined)}")
+
+    def clean(self) -> None:
+        """
+        Validate the question including variable definitions.
+
+        Called by Django's model validation before save.
+
+        Raises:
+            ValidationError: If any validation fails
+        """
+        super().clean()
+
+        # Skip validation if no variables defined
+        if not self.variables:
+            return
+
+        # Run all validation methods
+        try:
+            self._validate_variable_definition()
+            self._validate_text_references()
+
+            # Try test-evaluation with seed=0 to catch any runtime errors
+            test_vars = self.generate_variables(seed=0)
+
+            # Try substitution on all text variants
+            for lang_text in self.text.values():
+                self._substitute_variables(lang_text, test_vars)
+
+        except ValidationError:
+            # Re-raise ValidationErrors as-is
+            raise
+        except Exception as e:
+            # Wrap other exceptions in ValidationError
+            raise ValidationError(f"Variable validation error: {e}")
 
     @property
     def choice_count(self) -> int:
