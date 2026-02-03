@@ -327,3 +327,89 @@ if (variablesJsonInput && variablesJsonInput.value) {
         console.error('Failed to parse existing variables:', e);
     }
 }
+
+// ==================== VALIDATION RULES MANAGEMENT ====================
+
+const rulesList = document.getElementById('validation-rules-list');
+const addRuleBtn = document.getElementById('add-rule-btn');
+const ruleTemplate = document.getElementById('validation-rule-template');
+const validationRulesInput = document.getElementById('id_validation_rules_json');
+
+// Add a new validation rule row
+function addValidationRule(expression = '') {
+    if (!ruleTemplate || !rulesList) return;
+    
+    const clone = ruleTemplate.content.cloneNode(true);
+    const row = clone.querySelector('.validation-rule-row');
+    
+    // Set expression if provided
+    if (expression) {
+        const input = clone.querySelector('.rule-expression');
+        input.value = expression;
+    }
+    
+    // Attach events
+    const removeBtn = clone.querySelector('.remove-rule');
+    removeBtn.addEventListener('click', function() {
+        row.remove();
+    });
+    
+    rulesList.appendChild(clone);
+}
+
+// Serialize all validation rules to array
+function serializeValidationRules() {
+    if (!rulesList) return [];
+    
+    const rules = [];
+    const rows = rulesList.querySelectorAll('.validation-rule-row');
+    
+    rows.forEach(row => {
+        const expression = row.querySelector('.rule-expression').value.trim();
+        if (expression) {
+            rules.push(expression);
+        }
+    });
+    
+    return rules;
+}
+
+// Load existing validation rules
+function loadValidationRules(rulesArray) {
+    if (!Array.isArray(rulesArray)) return;
+    
+    // Clear existing
+    if (rulesList) {
+        rulesList.innerHTML = '';
+    }
+    
+    // Add each rule
+    rulesArray.forEach(expression => {
+        addValidationRule(expression);
+    });
+}
+
+// Add rule button click
+if (addRuleBtn) {
+    addRuleBtn.addEventListener('click', function() {
+        addValidationRule();
+    });
+}
+
+// Form submit - serialize rules to hidden input
+if (questionForm && validationRulesInput) {
+    questionForm.addEventListener('submit', function(e) {
+        const rules = serializeValidationRules();
+        validationRulesInput.value = JSON.stringify(rules);
+    });
+}
+
+// Load existing rules on page load
+if (validationRulesInput && validationRulesInput.value) {
+    try {
+        const existing = JSON.parse(validationRulesInput.value);
+        loadValidationRules(existing);
+    } catch (e) {
+        console.error('Failed to parse existing validation rules:', e);
+    }
+}

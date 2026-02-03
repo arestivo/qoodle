@@ -295,6 +295,11 @@ class Question(UUIDModel):
         default=dict,
         help_text="Variable definitions for parametric questions (JSON)",
     )
+    validation_rules = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of validation expressions (e.g., ['a > b', 'a + b > c'])",
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -320,21 +325,27 @@ class Question(UUIDModel):
         """Return dict of all language versions."""
         return dict(self.text) if self.text else {}
 
-    def generate_variables(self, seed: int = None) -> dict[str, Any]:
+    def generate_variables(
+        self, seed: int = None, max_validation_attempts: int = 100
+    ) -> dict[str, Any]:
         """
         Generate values for all variables defined in this question.
 
         Variables are evaluated in definition order. Expression variables
         can only reference variables defined earlier in the dict.
 
+        If validation_rules are defined, variables are regenerated until
+        all rules pass (up to max_validation_attempts).
+
         Args:
             seed: Optional random seed for reproducibility
+            max_validation_attempts: Maximum attempts to generate valid variables (default: 100)
 
         Returns:
             Dict mapping variable names to generated values
 
         Raises:
-            ValidationError: If invalid definition or missing dependency
+            ValidationError: If invalid definition, missing dependency, or unable to satisfy validation rules
 
         Example:
             variables = {"a": {"type": "num", "min": 1, "max": 10, "precision": 1},
@@ -348,6 +359,28 @@ class Question(UUIDModel):
         if seed is not None:
             random.seed(seed)
 
+        # Generate and validate variables
+        for attempt in range(max_validation_attempts):
+            generated = self._generate_variables_once()
+
+            if self._validate_rules(generated):
+                return generated
+
+        # If we couldn't generate valid variables after max attempts
+        raise ValidationError(
+            f"Unable to generate valid variables after {max_validation_attempts} attempts. Validation rules may be too restrictive or incompatible with variable definitions."
+        )
+
+    def _generate_variables_once(self) -> dict[str, Any]:
+        """
+        Generate values for variables one time without validation.
+
+        Returns:
+            Dict mapping variable names to generated values
+
+        Raises:
+            ValidationError: If invalid definition or missing dependency
+        """
         generated = {}
 
         # Evaluate variables in order
@@ -385,6 +418,47 @@ class Question(UUIDModel):
                 raise ValidationError(f"Error generating variable '{var_name}': {e}")
 
         return generated
+
+    def _validate_rules(self, variables: dict[str, Any]) -> bool:
+        """
+        Check if generated variables pass all validation rules.
+
+        Args:
+            variables: Dictionary of generated variable values
+
+        Returns:
+            bool: True if all rules pass, False otherwise
+        """
+        if not self.validation_rules:
+            return True
+
+        # Safe built-in functions allowed in rules
+        safe_builtins = {
+            "abs": abs,
+            "round": round,
+            "min": min,
+            "max": max,
+            "int": int,
+            "float": float,
+            "str": str,
+            "len": len,
+            "sum": sum,
+        }
+
+        # Create evaluation context with generated variables
+        context = {**safe_builtins, **variables}
+
+        for rule in self.validation_rules:
+            try:
+                # Evaluate rule with restricted builtins
+                result = eval(rule, {"__builtins__": {}}, context)
+                if not result:
+                    return False
+            except Exception:
+                # If rule evaluation fails, treat as validation failure
+                return False
+
+        return True
 
     def _substitute_variables(self, text: str, variables: dict[str, Any]) -> str:
         """

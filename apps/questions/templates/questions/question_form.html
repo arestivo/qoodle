@@ -101,6 +101,37 @@
 
                     {{ form.variables_json }}
 
+                    <h5 class="mb-3 mt-4">
+                        <i class="fa-solid fa-check-circle"></i>
+                        Validation Rules (Optional)
+                    </h5>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <p class="text-muted small mb-2">
+                                Add validation rules to ensure generated variable values meet specific criteria. Rules are Python expressions evaluated after variable generation.
+                            </p>
+                            
+                            <div class="alert alert-info py-2 small mb-3 alert-permanent">
+                                <strong><i class="fa-solid fa-lightbulb"></i> Examples:</strong>
+                                <ul class="mb-0 mt-1">
+                                    <li><code>a &gt; b</code> - Ensure variable a is greater than b</li>
+                                    <li><code>a + b &gt; c</code> - Triangle inequality for sides</li>
+                                    <li><code>result % 1 == 0</code> - Ensure result is an integer</li>
+                                    <li><code>a + b &lt; 100</code> - Keep sum under 100</li>
+                                </ul>
+                            </div>
+                            
+                            <div id="validation-rules-list"></div>
+                            
+                            <button type="button" id="add-rule-btn" class="btn btn-outline-primary btn-sm mt-2">
+                                <i class="fa-solid fa-plus"></i> Add Rule
+                            </button>
+                        </div>
+                    </div>
+
+                    {{ form.validation_rules_json }}
+
                     <hr class="my-4">
 
                     <h5 class="mb-3">
@@ -300,6 +331,29 @@
     <input type="text" class="form-control form-control-sm var-formula" placeholder="e.g., x + y * 2" required
            title="Python expression referencing other variables">
     <small class="text-muted">Python expression (e.g., a + b, x * 2, round(y / 3, 1)). Can reference earlier variables.</small>
+</template>
+
+{# Template for validation rule row #}
+<template id="validation-rule-template">
+    <div class="card mb-2 validation-rule-row">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-start">
+                <div class="col-md-11">
+                    <label class="form-label small mb-1">Rule Expression</label>
+                    <input type="text" class="form-control form-control-sm rule-expression" 
+                           placeholder="e.g., a > b, a + b > c, result % 1 == 0"
+                           title="Python expression that must evaluate to True">
+                    <small class="text-muted">Must be a valid Python expression (e.g., a &gt; b, a + b &gt; c)</small>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small mb-1 invisible">Remove</label>
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-rule">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 {% endblock %}

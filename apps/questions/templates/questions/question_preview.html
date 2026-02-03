@@ -151,7 +151,20 @@
                         <pre class="bg-light p-3 rounded"><code>{{ question.variables|safe }}</code></pre>
                     {% endif %}
 
-                    <h6>Question Text:</h6>
+                    {% if question.validation_rules %}
+                        <h6 class="mt-3">Validation Rules:</h6>
+                        <ul class="list-unstyled bg-light p-3 rounded">
+                            {% for rule in question.validation_rules %}
+                                <li><code>{{ rule }}</code></li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        {% if question.variables %}
+                            <p class="text-muted small">No validation rules defined</p>
+                        {% endif %}
+                    {% endif %}
+
+                    <h6 class="mt-3">Question Text:</h6>
                     <pre class="bg-light p-3 rounded"><code>{{ question.text|safe }}</code></pre>
 
                     <h6 class="mt-3">Choices:</h6>

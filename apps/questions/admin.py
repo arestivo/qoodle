@@ -33,9 +33,9 @@ class QuestionAdmin(admin.ModelAdmin):
         (
             "Variables (Optional)",
             {
-                "fields": ["variables"],
+                "fields": ["variables", "validation_rules"],
                 "classes": ["collapse"],
-                "description": "Define variables for parametric questions. Use {{variable}} syntax in text.",
+                "description": "Define variables for parametric questions. Use {{variable}} syntax in text. Add validation rules to ensure generated values are valid.",
             },
         ),
         (

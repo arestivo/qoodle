@@ -119,9 +119,15 @@ class QuestionForm(forms.ModelForm):
         help_text="Variable definitions for parametric questions (populated by JavaScript)",
     )
 
+    validation_rules_json = forms.JSONField(
+        required=False,
+        widget=forms.HiddenInput(),
+        help_text="Validation rules for generated variables (populated by JavaScript)",
+    )
+
     class Meta:
         model = Question
-        fields = ["title", "subject", "text", "variables_json"]
+        fields = ["title", "subject", "text", "variables_json", "validation_rules_json"]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -143,6 +149,10 @@ class QuestionForm(forms.ModelForm):
         # Populate variables_json field from instance.variables for edit mode
         if self.instance and self.instance.pk and self.instance.variables:
             self.initial["variables_json"] = self.instance.variables
+
+        # Populate validation_rules_json field from instance.validation_rules for edit mode
+        if self.instance and self.instance.pk and self.instance.validation_rules:
+            self.initial["validation_rules_json"] = self.instance.validation_rules
 
     def clean_variables_json(self):
         """
@@ -174,12 +184,53 @@ class QuestionForm(forms.ModelForm):
 
         raise ValidationError("Variables must be a JSON object")
 
+    def clean_validation_rules_json(self):
+        """
+        Validate validation_rules_json field.
+
+        Returns:
+            List or empty list if None
+
+        Raises:
+            ValidationError: If malformed JSON or invalid syntax
+        """
+        value = self.cleaned_data.get("validation_rules_json")
+
+        if value is None or value == "":
+            return []
+
+        if isinstance(value, list):
+            rules = value
+        elif isinstance(value, str):
+            # If it's a string, try to parse it
+            try:
+                rules = json.loads(value)
+                if not isinstance(rules, list):
+                    raise ValidationError("Validation rules must be a JSON array/list")
+            except json.JSONDecodeError as e:
+                raise ValidationError(f"Invalid JSON: {e}")
+        else:
+            raise ValidationError("Validation rules must be a JSON array/list")
+
+        # Validate each rule is a string
+        for i, rule in enumerate(rules):
+            if not isinstance(rule, str):
+                raise ValidationError(f"Rule {i + 1} must be a string")
+
+            # Test syntax by attempting to compile
+            try:
+                compile(rule, "<string>", "eval")
+            except SyntaxError as e:
+                raise ValidationError(f"Rule {i + 1} has invalid syntax: {e}")
+
+        return rules
+
     def save(self, commit=True):
         """
-        Save the question with variables.
+        Save the question with variables and validation rules.
 
-        Extracts variables_json from cleaned_data and assigns to instance.variables
-        before calling model validation.
+        Extracts variables_json and validation_rules_json from cleaned_data
+        and assigns to instance before calling model validation.
         """
         instance = super().save(commit=False)
 
@@ -187,6 +238,11 @@ class QuestionForm(forms.ModelForm):
         if "variables_json" in self.cleaned_data:
             variables = self.cleaned_data["variables_json"]
             instance.variables = variables if variables else None
+
+        # Assign validation rules from form field to model
+        if "validation_rules_json" in self.cleaned_data:
+            rules = self.cleaned_data["validation_rules_json"]
+            instance.validation_rules = rules if rules else []
 
         if commit:
             try:

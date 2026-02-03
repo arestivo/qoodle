@@ -597,6 +597,171 @@ class VariableValidationTests(TestCase):
         self.assertIn("undefined", error_message)
 
 
+class ValidationRulesTests(TestCase):
+    """Test cases for validation rules functionality."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.subject = Subject.objects.create(name="Math")
+
+    def test_validate_rules_all_pass(self):
+        """Test that validation passes when all rules return True."""
+        question = Question.objects.create(
+            title="Test",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={
+                "a": {"type": "num", "min": 5, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 4, "precision": 1},
+            },
+            validation_rules=["a > b", "a + b > 0"],
+        )
+
+        variables = question.generate_variables(seed=42)
+        self.assertIn("a", variables)
+        self.assertIn("b", variables)
+        self.assertGreater(variables["a"], variables["b"])
+
+    def test_validate_rules_one_fails(self):
+        """Test that validation fails when one rule returns False."""
+        question = Question.objects.create(
+            title="Test",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+        )
+
+        variables = {"a": 5}
+
+        # Rule that should pass
+        question.validation_rules = ["a > 0"]
+        self.assertTrue(question._validate_rules(variables))
+
+        # Rule that should fail
+        question.validation_rules = ["a > 10"]
+        self.assertFalse(question._validate_rules(variables))
+
+    def test_validate_rules_empty(self):
+        """Test that validation passes when no rules are defined."""
+        question = Question.objects.create(
+            title="Test",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={"a": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+            validation_rules=[],
+        )
+
+        variables = {"a": 5}
+        self.assertTrue(question._validate_rules(variables))
+
+    def test_validate_rules_syntax_error(self):
+        """Test that invalid rule syntax is treated as validation failure."""
+        question = Question.objects.create(
+            title="Test",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={"a": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+        )
+
+        variables = {"a": 5}
+
+        # Invalid syntax should return False (not raise exception)
+        question.validation_rules = ["a >>>> b"]
+        self.assertFalse(question._validate_rules(variables))
+
+    def test_generate_variables_with_validation(self):
+        """Test successful variable generation with validation rules."""
+        question = Question.objects.create(
+            title="Test",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={
+                "a": {"type": "num", "min": 5, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 4, "precision": 1},
+            },
+            validation_rules=["a > b"],
+        )
+
+        # Should generate valid variables
+        variables = question.generate_variables(seed=42)
+        self.assertGreater(variables["a"], variables["b"])
+
+    def test_generate_variables_max_retries(self):
+        """Test that ValidationError is raised after max attempts."""
+        question = Question.objects.create(
+            title="Test",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={
+                "a": {"type": "num", "min": 1, "max": 5, "precision": 1},
+            },
+            validation_rules=["a > 10"],  # Impossible rule
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            question.generate_variables(seed=42, max_validation_attempts=10)
+
+        error_message = str(cm.exception)
+        self.assertIn("10 attempts", error_message)
+        self.assertIn("too restrictive", error_message)
+
+    def test_validation_rule_undefined_variable(self):
+        """Test that rule referencing undefined variable fails validation."""
+        question = Question.objects.create(
+            title="Test",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={"a": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+            validation_rules=["b > 0"],  # 'b' is not defined
+        )
+
+        variables = {"a": 5}
+        self.assertFalse(question._validate_rules(variables))
+
+    def test_complex_validation_rules(self):
+        """Test complex validation rules like triangle inequality and integer results."""
+        # Triangle inequality
+        question = Question.objects.create(
+            title="Triangle",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "c": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+            validation_rules=[
+                "a + b > c",
+                "b + c > a",
+                "c + a > b",
+            ],
+        )
+
+        variables = question.generate_variables(seed=42)
+        # Verify triangle inequality
+        self.assertGreater(variables["a"] + variables["b"], variables["c"])
+        self.assertGreater(variables["b"] + variables["c"], variables["a"])
+        self.assertGreater(variables["c"] + variables["a"], variables["b"])
+
+        # Integer result validation
+        question2 = Question.objects.create(
+            title="Integer Result",
+            text={"none": "Test"},
+            subject=self.subject,
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "result": {"type": "expression", "formula": "a / b"},
+            },
+            validation_rules=["result % 1 == 0"],  # Ensure integer result
+        )
+
+        variables2 = question2.generate_variables(seed=43)
+        self.assertEqual(variables2["result"] % 1, 0)
+
+
 class VariableIntegrationTests(TestCase):
     """Integration tests for variables (Phase 7, T7.4)."""
 
@@ -795,3 +960,95 @@ class VariableFormTests(TestCase):
             initial_variables = json.loads(initial_variables)
 
         self.assertIn("x", initial_variables)
+
+
+class ValidationRulesFormTests(TestCase):
+    """Form tests for validation rules."""
+
+    def setUp(self):
+        """Set up test data."""
+        from apps.questions.forms import QuestionForm
+
+        self.form_class = QuestionForm
+        self.subject = Subject.objects.create(name="Mathematics")
+
+    def test_validation_rules_field_valid_input(self):
+        """Test that form accepts valid validation rules."""
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Test Question",
+            "text": '{"none": "What is {{a}} + {{b}}?"}',
+            "variables_json": '{"a": {"type": "num", "min": 1, "max": 10, "precision": 1}, "b": {"type": "num", "min": 1, "max": 10, "precision": 1}}',
+            "validation_rules_json": '["a > b", "a + b > 0"]',
+        }
+
+        form = self.form_class(data=form_data)
+        self.assertTrue(form.is_valid(), form.errors)
+
+        question = form.save()
+        self.assertEqual(len(question.validation_rules), 2)
+        self.assertIn("a > b", question.validation_rules)
+
+    def test_validation_rules_field_invalid_syntax(self):
+        """Test that form rejects invalid syntax in rules."""
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Test Question",
+            "text": '{"none": "Test"}',
+            "variables_json": "{}",
+            "validation_rules_json": '["a >>>> b"]',  # Invalid syntax
+        }
+
+        form = self.form_class(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("validation_rules_json", form.errors)
+
+    def test_validation_rules_serialization(self):
+        """Test that validation rules JSON encoding/decoding works."""
+        # Test with list input
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Test Question",
+            "text": '{"none": "Test"}',
+            "variables_json": "{}",
+            "validation_rules_json": ["a > 0", "b < 100"],  # List directly
+        }
+
+        form = self.form_class(data=form_data)
+        self.assertTrue(form.is_valid(), form.errors)
+
+        question = form.save()
+        self.assertEqual(question.validation_rules, ["a > 0", "b < 100"])
+
+    def test_validation_rules_empty(self):
+        """Test that empty validation rules list is handled correctly."""
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Test Question",
+            "text": '{"none": "Test"}',
+            "variables_json": "{}",
+            "validation_rules_json": "",  # Empty
+        }
+
+        form = self.form_class(data=form_data)
+        self.assertTrue(form.is_valid(), form.errors)
+
+        question = form.save()
+        self.assertEqual(question.validation_rules, [])
+
+    def test_validation_rules_edit_mode_loads(self):
+        """Test that form loads existing validation rules in edit mode."""
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Existing Question",
+            text={"none": "Test"},
+            variables={"a": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+            validation_rules=["a > 0", "a < 100"],
+        )
+
+        form = self.form_class(instance=question)
+
+        # Form should have initial data for validation_rules_json
+        initial_rules = form.initial.get("validation_rules_json")
+        self.assertIsNotNone(initial_rules)
+        self.assertEqual(initial_rules, ["a > 0", "a < 100"])
