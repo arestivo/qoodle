@@ -189,8 +189,24 @@ class QuestionForm(forms.ModelForm):
             instance.variables = variables if variables else None
 
         if commit:
-            instance.full_clean()  # This calls the model's clean() method
-            instance.save()
+            try:
+                instance.full_clean()  # This calls the model's clean() method
+                instance.save()
+            except ValidationError as e:
+                # Add model validation errors to form errors
+                if hasattr(e, "error_dict"):
+                    # Multiple field errors
+                    for field, errors in e.error_dict.items():
+                        for error in errors:
+                            if field == "__all__":
+                                self.add_error(None, error)
+                            else:
+                                self.add_error(field, error)
+                else:
+                    # Single error or list of errors
+                    self.add_error(None, e)
+                # Re-raise to prevent saving
+                raise
 
         return instance
 

@@ -2,7 +2,7 @@
 
 ### Requirement: Variable Definition Storage
 
-Questions must be able to define multiple variables of different types, stored as structured data that can be validated and evaluated.
+Questions SHALL be able to define multiple variables of different types, stored as structured data that can be validated and evaluated.
 
 #### Scenario: Define numeric variable with constraints
 - **GIVEN** a teacher is creating a question
@@ -32,7 +32,7 @@ Questions must be able to define multiple variables of different types, stored a
 
 ### Requirement: Variable Substitution in Text
 
-Question and choice text must support `{{variable}}` delimiter syntax for variable substitution with expression evaluation.
+Question and choice text MUST support `{{variable}}` delimiter syntax for variable substitution with expression evaluation.
 
 #### Scenario: Simple variable substitution in question text
 - **GIVEN** a question has variable `a=5` defined
@@ -63,7 +63,7 @@ Question and choice text must support `{{variable}}` delimiter syntax for variab
 
 ### Requirement: Variable Type Validation
 
-Each variable type must enforce its specific constraints during definition and generation.
+Each variable type MUST enforce its specific constraints during definition and generation.
 
 #### Scenario: Numeric variable respects min/max bounds
 - **GIVEN** a numeric variable defined with min=5, max=10
@@ -94,7 +94,7 @@ Each variable type must enforce its specific constraints during definition and g
 
 ### Requirement: Expression Variable Evaluation
 
-Expression variables must evaluate Python expressions in the context of other defined variables.
+Expression variables MUST evaluate Python expressions in the context of other defined variables.
 
 #### Scenario: Expression evaluates with numeric variables
 - **GIVEN** variables `a=5` and `b=3` are defined
@@ -125,7 +125,7 @@ Expression variables must evaluate Python expressions in the context of other de
 
 ### Requirement: Circular Dependency Detection
 
-The system must detect and prevent circular dependencies in expression variables.
+The system MUST detect and prevent circular dependencies in expression variables.
 
 #### Scenario: Direct circular dependency
 - **GIVEN** expression variable `a` has formula="b"
@@ -153,7 +153,7 @@ The system must detect and prevent circular dependencies in expression variables
 
 ### Requirement: Text Reference Validation
 
-Question and choice text must only reference defined variables, and all references must be validated.
+Question and choice text MUST only reference defined variables, and all references MUST be validated.
 
 #### Scenario: Valid variable reference
 - **GIVEN** question has variable `answer` defined
@@ -184,7 +184,7 @@ Question and choice text must only reference defined variables, and all referenc
 
 ### Requirement: Variable Generation Determinism
 
-Variable generation should support seeding for reproducible results during testing and preview.
+Variable generation SHALL support seeding for reproducible results during testing and preview.
 
 #### Scenario: Generate variables with seed
 - **GIVEN** a question with numeric variable `a` (min=1, max=100)
@@ -205,7 +205,7 @@ Variable generation should support seeding for reproducible results during testi
 
 ### Requirement: Multilingual Integration
 
-Variable substitution must work correctly with the existing multilingual text system.
+Variable substitution MUST work correctly with the existing multilingual text system.
 
 #### Scenario: Variables in language-specific text
 - **GIVEN** question has variable `x=5`
@@ -231,7 +231,7 @@ Variable substitution must work correctly with the existing multilingual text sy
 
 ### Requirement: Form UI for Variable Definition
 
-Question creation/edit form must provide an intuitive UI for defining variables with type-specific fields.
+Question creation/edit form MUST provide an intuitive UI for defining variables with type-specific fields.
 
 #### Scenario: Add new variable to question
 - **GIVEN** a teacher is editing a question
@@ -271,7 +271,7 @@ Question creation/edit form must provide an intuitive UI for defining variables 
 
 ### Requirement: Variable Preview and Testing
 
-Teachers must be able to preview how questions render with different variable values.
+Teachers MUST be able to preview how questions render with different variable values.
 
 #### Scenario: Preview shows random instances
 - **GIVEN** a question with variables `a` and `b` (numeric, 1-10)
@@ -301,7 +301,7 @@ Teachers must be able to preview how questions render with different variable va
 
 ### Requirement: Error Handling and User Feedback
 
-The system must provide clear, actionable error messages for variable-related issues.
+The system MUST provide clear, actionable error messages for variable-related issues.
 
 #### Scenario: Display validation errors on save
 - **GIVEN** a question with undefined variable reference in text
@@ -328,7 +328,7 @@ The system must provide clear, actionable error messages for variable-related is
 
 ### Requirement: Database Schema Changes
 
-The Question model must be extended to store variable definitions efficiently.
+The Question model MUST be extended to store variable definitions efficiently.
 
 #### Scenario: Store variable definitions in JSONField
 - **GIVEN** a Question model instance
@@ -369,7 +369,7 @@ The Question model must be extended to store variable definitions efficiently.
 
 ### Requirement: Backward Compatibility
 
-Existing questions without variables must continue to work without modification.
+Existing questions without variables MUST continue to work without modification.
 
 #### Scenario: Existing question without variables field
 - **GIVEN** a question created before variable system was added

@@ -60,14 +60,14 @@
             <div class="card mb-4">
                 <div class="card-body">
                     {% if preview_instance.error %}
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger alert-permanent">
                             <i class="fa-solid fa-exclamation-triangle"></i>
                             <strong>Error:</strong> {{ preview_instance.error }}
                         </div>
                     {% else %}
                         {# Show generated variables if any #}
                         {% if preview_instance.variables %}
-                            <div class="alert alert-light border">
+                            <div class="alert alert-light border alert-permanent">
                                 <h6 class="text-muted mb-2">
                                     <i class="fa-solid fa-dice"></i>
                                     Generated Variables (seed: {{ preview_instance.seed }}):
