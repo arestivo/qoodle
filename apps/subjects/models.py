@@ -96,3 +96,17 @@ class Subject(UUIDModel):
     def has_children(self) -> bool:
         """Check if this subject has any child subjects."""
         return self.children.exists()
+
+    def get_full_path(self, separator: str = " > ") -> str:
+        """
+        Return the full path from root to this subject.
+
+        Args:
+            separator: String to use between subject names (default: " > ")
+
+        Returns:
+            Full path string like "Math > Algebra > Equations"
+        """
+        ancestors = self.get_ancestors()
+        path_parts = [ancestor.name for ancestor in ancestors] + [self.name]
+        return separator.join(path_parts)

@@ -26,7 +26,7 @@
                             <option value="">-- All Subjects --</option>
                             {% for subject in subjects %}
                                 <option value="{{ subject.pk }}" {% if selected_subject.pk == subject.pk %}selected{% endif %}>
-                                    {{ subject.name }}
+                                    {{ subject.get_full_path }}
                                 </option>
                             {% endfor %}
                         </select>

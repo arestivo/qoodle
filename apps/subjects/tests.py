@@ -86,9 +86,9 @@ class SubjectModelTests(TestCase):
         self.assertFalse(child.has_children())
 
     def test_question_count_placeholder(self):
-        """Test that question_count returns 0 (placeholder)."""
+        """Test that get_question_count returns 0 (placeholder)."""
         subject = Subject.objects.create(name="Mathematics")
-        self.assertEqual(subject.question_count, 0)
+        self.assertEqual(subject.get_question_count(), 0)
 
     def test_unique_constraint_same_parent(self):
         """Test that subjects with same parent must have unique names."""
@@ -107,6 +107,24 @@ class SubjectModelTests(TestCase):
         child2 = Subject.objects.create(name="Statistics", parent=parent2)
 
         self.assertNotEqual(child1, child2)
+
+    def test_get_full_path(self):
+        """Test that get_full_path returns the correct hierarchical path."""
+        root = Subject.objects.create(name="Math")
+        algebra = Subject.objects.create(name="Algebra", parent=root)
+        equations = Subject.objects.create(name="Equations", parent=algebra)
+
+        self.assertEqual(root.get_full_path(), "Math")
+        self.assertEqual(algebra.get_full_path(), "Math > Algebra")
+        self.assertEqual(equations.get_full_path(), "Math > Algebra > Equations")
+
+    def test_get_full_path_custom_separator(self):
+        """Test that get_full_path works with custom separator."""
+        root = Subject.objects.create(name="Math")
+        algebra = Subject.objects.create(name="Algebra", parent=root)
+
+        self.assertEqual(algebra.get_full_path("/"), "Math/Algebra")
+        self.assertEqual(algebra.get_full_path(" :: "), "Math :: Algebra")
 
 
 class SubjectViewTests(TestCase):

@@ -25,7 +25,9 @@ class QuestionListView(ListView):
 
     def get_queryset(self) -> QuerySet[Question]:
         """Return questions, optionally filtered by subject."""
-        qs = Question.objects.select_related("subject").prefetch_related(Prefetch("choices", queryset=Choice.objects.order_by("order")))
+        qs = Question.objects.select_related("subject").prefetch_related(
+            Prefetch("choices", queryset=Choice.objects.order_by("order"))
+        )
 
         # Filter by subject if specified
         subject_id = self.request.GET.get("subject")
@@ -49,7 +51,13 @@ class QuestionListView(ListView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add subjects and filter info to context."""
         context = super().get_context_data(**kwargs)
-        context["subjects"] = Subject.objects.all().order_by("name")
+
+        # Get all subjects and sort by full path
+        all_subjects = Subject.objects.select_related("parent").all()
+        subjects_with_paths = [(subject, subject.get_full_path()) for subject in all_subjects]
+        # Sort alphabetically by full path
+        subjects_with_paths.sort(key=lambda x: x[1])
+        context["subjects"] = [subject for subject, _ in subjects_with_paths]
 
         # Add current filter values
         subject_id = self.request.GET.get("subject")
@@ -302,7 +310,9 @@ class QuestionPreviewView(DetailView):
 
     def get_queryset(self):
         """Optimize with select_related and prefetch_related."""
-        return Question.objects.select_related("subject").prefetch_related(Prefetch("choices", queryset=Choice.objects.order_by("order")))
+        return Question.objects.select_related("subject").prefetch_related(
+            Prefetch("choices", queryset=Choice.objects.order_by("order"))
+        )
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add all available languages to context."""
@@ -333,7 +343,9 @@ class QuestionPreviewView(DetailView):
             rendered_texts = {}
             for lang in context["languages"]:
                 try:
-                    rendered_texts[lang] = self.object.get_text(language_code=lang, variables=variables)
+                    rendered_texts[lang] = self.object.get_text(
+                        language_code=lang, variables=variables
+                    )
                 except (ValueError, KeyError):
                     rendered_texts[lang] = None
 
@@ -343,7 +355,9 @@ class QuestionPreviewView(DetailView):
                 choice_texts = {}
                 for lang in context["languages"]:
                     try:
-                        choice_texts[lang] = choice.get_text(language_code=lang, variables=variables)
+                        choice_texts[lang] = choice.get_text(
+                            language_code=lang, variables=variables
+                        )
                     except (ValueError, KeyError):
                         choice_texts[lang] = None
                 rendered_choices.append(
