@@ -112,7 +112,7 @@ class QuestionForm(forms.ModelForm):
         ),
         help_text="Enter text with language markers (e.g., ==en==, ==pt==) or plain text for language-independent content.",
     )
-    
+
     variables_json = forms.JSONField(
         required=False,
         widget=forms.HiddenInput(),
@@ -121,7 +121,7 @@ class QuestionForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ["title", "subject", "text"]
+        fields = ["title", "subject", "text", "variables_json"]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -136,6 +136,14 @@ class QuestionForm(forms.ModelForm):
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        """Initialize form and populate variables_json from instance."""
+        super().__init__(*args, **kwargs)
+
+        # Populate variables_json field from instance.variables for edit mode
+        if self.instance and self.instance.pk and self.instance.variables:
+            self.initial["variables_json"] = self.instance.variables
+
     def clean_variables_json(self):
         """
         Validate variables_json field.
@@ -147,13 +155,13 @@ class QuestionForm(forms.ModelForm):
             ValidationError: If malformed JSON
         """
         value = self.cleaned_data.get("variables_json")
-        
+
         if value is None or value == "":
             return {}
-        
+
         if isinstance(value, dict):
             return value
-        
+
         # If it's a string, try to parse it
         if isinstance(value, str):
             try:
@@ -163,7 +171,7 @@ class QuestionForm(forms.ModelForm):
                 return parsed
             except json.JSONDecodeError as e:
                 raise ValidationError(f"Invalid JSON: {e}")
-        
+
         raise ValidationError("Variables must be a JSON object")
 
     def save(self, commit=True):
@@ -174,16 +182,16 @@ class QuestionForm(forms.ModelForm):
         before calling model validation.
         """
         instance = super().save(commit=False)
-        
+
         # Assign variables from form field to model
         if "variables_json" in self.cleaned_data:
             variables = self.cleaned_data["variables_json"]
             instance.variables = variables if variables else None
-        
+
         if commit:
             instance.full_clean()  # This calls the model's clean() method
             instance.save()
-        
+
         return instance
 
 

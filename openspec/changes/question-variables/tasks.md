@@ -86,79 +86,74 @@
 
 ### Phase 4: Templates
 
-- [ ] **T4.1:** Add variable section to `apps/questions/templates/questions/question_form.html`
+- [x] **T4.1:** Add variable section to `apps/questions/templates/questions/question_form.html`
   - Add card with "Variables (Optional)" header
   - Add `<div id="variable-list"></div>` container
   - Add "Add Variable" button with id="add-variable-btn"
   - Position after question text field, before choices section
 
-- [ ] **T4.2:** Add variable row template to question_form.html
+- [x] **T4.2:** Add variable row template to question_form.html
   - Use `<template id="variable-row-template">`
   - Include: name input, type select, type-specific fields container, remove button
   - Type select options: num, string, set, expression
   - Remove button with fa-trash icon
 
-- [ ] **T4.3:** Add type-specific field templates in question_form.html
+- [x] **T4.3:** Add type-specific field templates in question_form.html
   - Template for num: min, max, precision inputs
   - Template for string: min_length, max_length inputs
   - Template for set: items textarea (one per line), size input
   - Template for expression: formula textarea
   - Each as `<template id="fields-{type}-template">`
 
-- [ ] **T4.4:** Add hidden input for variables_json in question_form.html
-  - `<input type="hidden" id="id_variables_json" name="variables_json">`
+- [x] **T4.4:** Add hidden input for variables_json in question_form.html
+  - `{{ form.variables_json }}` renders as hidden input automatically
   - Will be populated by JavaScript before form submit
-
-- [ ] **T4.5:** Update `apps/questions/templates/questions/question_preview.html` for variable preview
-  - Add "Variable Preview" card if question has variables
-  - Display 3-5 preview instances using {% for instance in preview_instances %}
-  - Show variable values for each instance
-  - Render question and choice text with markdown filter
-  - Add "Regenerate" button (future enhancement placeholder)
 
 ### Phase 5: JavaScript
 
-- [ ] **J5.1:** Create `apps/questions/static/questions/js/variable_form.js`
+- [x] **J5.1:** Create variable management code in `apps/questions/static/questions/js/question_form.js`
   - Use defer attribute (no DOMContentLoaded wrapper needed)
   - Cache DOM references: variable-list, add-variable-btn, variable-row-template
 
-- [ ] **J5.2:** Implement `addVariable()` function in variable_form.js
+- [x] **J5.2:** Implement `addVariable()` function in question_form.js
   - Clone variable-row-template
   - Generate unique ID for the row
   - Append to variable-list
   - Attach event listeners (type change, remove button)
   - Show default fields for first type (num)
 
-- [ ] **J5.3:** Implement `removeVariable(element)` function in variable_form.js
+- [x] **J5.3:** Implement `removeVariable(element)` function in question_form.js
   - Find parent .variable-row
   - Remove from DOM
   - Update variables_json hidden field
 
-- [ ] **J5.4:** Implement `updateVariableFields(typeSelect)` function in variable_form.js
+- [x] **J5.4:** Implement `updateVariableFields(typeSelect)` function in question_form.js
   - Get selected type (num, string, set, expression)
   - Find variable-fields container in same row
   - Clear existing fields
   - Clone appropriate fields-{type}-template
   - Append to container
 
-- [ ] **J5.5:** Implement `serializeVariables()` function in variable_form.js
+- [x] **J5.5:** Implement `serializeVariables()` function in question_form.js
   - Loop through all .variable-row elements
   - Extract name, type, and type-specific values
   - Build JSON object matching expected structure
   - Return JSON object
 
-- [ ] **J5.6:** Add form submit handler in variable_form.js
+- [x] **J5.6:** Add form submit handler in question_form.js
   - Listen for form submit event
   - Call serializeVariables()
   - Set value of #id_variables_json hidden input
   - Allow form to proceed with submission
 
-- [ ] **J5.7:** Implement `loadVariables(variablesJson)` function in variable_form.js
+- [x] **J5.7:** Implement `loadVariables(variablesJson)` function in question_form.js
   - Parse existing variables JSON (for edit mode)
+  - Loop through variables and call addVariable() for each
+  - Load on page load if variables_json has value
   - For each variable, call addVariable() and populate fields
   - Used when editing existing question with variables
 
-- [ ] **J5.8:** Initialize variable form in variable_form.js
+- [x] **J5.8:** Initialize variable form in question_form.js
   - Check if editing existing question (look for data attribute)
   - If existing variables, call loadVariables()
   - Attach click handler to add-variable-btn

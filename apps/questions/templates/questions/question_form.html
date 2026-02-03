@@ -71,6 +71,29 @@
                     <hr class="my-4">
 
                     <h5 class="mb-3">
+                        <i class="fa-solid fa-code"></i>
+                        Variables (Optional)
+                    </h5>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <p class="text-muted small mb-3">
+                                Define variables to create parametric questions. Use <code>{% templatetag openvariable %}variable{% templatetag closevariable %}</code> syntax in your question or choice text.
+                            </p>
+                            
+                            <div id="variable-list"></div>
+                            
+                            <button type="button" id="add-variable-btn" class="btn btn-outline-primary btn-sm">
+                                <i class="fa-solid fa-plus"></i> Add Variable
+                            </button>
+                        </div>
+                    </div>
+
+                    {{ form.variables_json }}
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-3">
                         <i class="fa-solid fa-list"></i>
                         Answer Choices
                         <small class="text-muted">(First choice is the correct answer)</small>
@@ -130,12 +153,6 @@
                         <i class="fa-solid fa-plus"></i> Add Choice
                     </button>
 
-                    <div class="alert alert-info">
-                        <i class="fa-solid fa-info-circle"></i>
-                        <strong>Reminder:</strong> The first choice is always the correct answer. 
-                        Use the move buttons to reorder choices.
-                    </div>
-
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'questions:list' %}" class="btn btn-secondary">
                             <i class="fa-solid fa-times"></i> Cancel
@@ -185,6 +202,84 @@
         </div>
     </div>
 </template>
+
+{# Template for variable row #}
+<template id="variable-row-template">
+    <div class="card mb-2 variable-row">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-start">
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Variable Name</label>
+                    <input type="text" class="form-control form-control-sm variable-name" placeholder="e.g., x">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Type</label>
+                    <select class="form-select form-select-sm variable-type">
+                        <option value="num">Number</option>
+                        <option value="string">String</option>
+                        <option value="set">Set</option>
+                        <option value="expression">Expression</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small mb-1">Parameters</label>
+                    <div class="variable-fields"></div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small mb-1 invisible">Remove</label>
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-variable">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+{# Template for num type fields #}
+<template id="fields-num-template">
+    <div class="row g-1">
+        <div class="col-4">
+            <input type="number" step="any" class="form-control form-control-sm var-min" placeholder="Min" required>
+        </div>
+        <div class="col-4">
+            <input type="number" step="any" class="form-control form-control-sm var-max" placeholder="Max" required>
+        </div>
+        <div class="col-4">
+            <input type="number" step="any" class="form-control form-control-sm var-precision" placeholder="Step" value="1">
+        </div>
+    </div>
+</template>
+
+{# Template for string type fields #}
+<template id="fields-string-template">
+    <div class="row g-1">
+        <div class="col-6">
+            <input type="number" class="form-control form-control-sm var-min-length" placeholder="Min Length" min="0" required>
+        </div>
+        <div class="col-6">
+            <input type="number" class="form-control form-control-sm var-max-length" placeholder="Max Length" min="0" required>
+        </div>
+    </div>
+</template>
+
+{# Template for set type fields #}
+<template id="fields-set-template">
+    <div class="row g-1">
+        <div class="col-8">
+            <input type="text" class="form-control form-control-sm var-items" placeholder="Items (comma-separated)" required>
+        </div>
+        <div class="col-4">
+            <input type="number" class="form-control form-control-sm var-size" placeholder="Size" min="1" required>
+        </div>
+    </div>
+</template>
+
+{# Template for expression type fields #}
+<template id="fields-expression-template">
+    <input type="text" class="form-control form-control-sm var-formula" placeholder="e.g., x + y * 2" required>
+</template>
+
 {% endblock %}
 
 {% block extra_js %}
