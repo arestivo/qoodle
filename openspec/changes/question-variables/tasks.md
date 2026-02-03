@@ -160,21 +160,21 @@
 
 ### Phase 6: Views
 
-- [ ] **V6.1:** Update QuestionCreateView in `apps/questions/views.py`
+- [x] **V6.1:** Update QuestionCreateView in `apps/questions/views.py`
   - Override `form_valid()` method
   - Extract variables from request.POST if present
   - Validation handled by form's clean() method
   - No changes needed (form handles it)
 
-- [ ] **V6.2:** Update QuestionUpdateView in `apps/questions/views.py`
+- [x] **V6.2:** Update QuestionUpdateView in `apps/questions/views.py`
   - Override `get_context_data()` to pass existing variables to template
   - Pass `variables_json` for JavaScript to load
-  - Form handles saving via same flow as create
+  - Form handles saving via same flow as create (already implemented via form __init__)
 
-- [ ] **V6.3:** Update QuestionPreviewView in `apps/questions/views.py`
+- [x] **V6.3:** Update QuestionPreviewView in `apps/questions/views.py`
   - Override `get_context_data()`
   - If `question.variables` exists, generate preview_instances
-  - For each instance (3-5): generate variables with different seeds
+  - For each instance (5): generate variables with different seeds
   - Build dict with variables, rendered text, rendered choices
   - Pass preview_instances to template context
 

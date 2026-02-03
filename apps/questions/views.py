@@ -294,6 +294,62 @@ class QuestionPreviewView(DetailView):
             languages.discard("none")
 
         context["languages"] = sorted(languages)
+        
+        # Generate preview instances with variables (if question has variables)
+        if self.object.variables:
+            preview_instances = []
+            num_instances = 5  # Generate 5 preview instances
+            
+            for seed in range(num_instances):
+                try:
+                    # Generate variables for this instance
+                    variables = self.object.generate_variables(seed=seed)
+                    
+                    # Get rendered question text for each language
+                    rendered_texts = {}
+                    for lang in context["languages"]:
+                        try:
+                            rendered_texts[lang] = self.object.get_text(
+                                language_code=lang, variables=variables
+                            )
+                        except (ValueError, KeyError):
+                            rendered_texts[lang] = None
+                    
+                    # Get rendered choice texts for each language
+                    rendered_choices = []
+                    for choice in self.object.choices.all():
+                        choice_texts = {}
+                        for lang in context["languages"]:
+                            try:
+                                choice_texts[lang] = choice.get_text(
+                                    language_code=lang, variables=variables
+                                )
+                            except (ValueError, KeyError):
+                                choice_texts[lang] = None
+                        rendered_choices.append({
+                            "id": choice.id,
+                            "is_correct": choice.is_correct,
+                            "texts": choice_texts,
+                        })
+                    
+                    preview_instances.append({
+                        "seed": seed,
+                        "variables": variables,
+                        "question_texts": rendered_texts,
+                        "choices": rendered_choices,
+                    })
+                except Exception as e:
+                    # If variable generation fails, include error
+                    preview_instances.append({
+                        "seed": seed,
+                        "error": str(e),
+                    })
+            
+            context["preview_instances"] = preview_instances
+            context["has_variables"] = True
+        else:
+            context["has_variables"] = False
+        
         return context
 
 
