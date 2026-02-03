@@ -7,7 +7,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
 
-from apps.questions.models import Choice, Question
+from apps.questions.models import Choice, QuestionTemplate
 
 
 class MultilingualTextField(forms.CharField):
@@ -99,10 +99,10 @@ class MultilingualTextField(forms.CharField):
 
 
 class QuestionForm(forms.ModelForm):
-    """Form for creating and editing questions."""
+    """Form for creating and editing question templates."""
 
     text = MultilingualTextField(
-        label="Question Text",
+        label="Question Template Text",
         widget=forms.Textarea(
             attrs={
                 "class": "form-control",
@@ -116,7 +116,7 @@ class QuestionForm(forms.ModelForm):
     variables_json = forms.JSONField(
         required=False,
         widget=forms.HiddenInput(),
-        help_text="Variable definitions for parametric questions (populated by JavaScript)",
+        help_text="Variable definitions for parametric question templates (populated by JavaScript)",
     )
 
     validation_rules_json = forms.JSONField(
@@ -126,7 +126,7 @@ class QuestionForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Question
+        model = QuestionTemplate
         fields = ["title", "subject", "text", "variables_json", "validation_rules_json"]
         widgets = {
             "title": forms.TextInput(
@@ -288,10 +288,10 @@ class ChoiceForm(forms.ModelForm):
         fields = ["text"]  # Removed order - will be set by position
 
 
-# Inline formset for editing choices within question form
+# Inline formset for editing choices within question template form
 # Note: We'll handle deletion and ordering manually via JavaScript
 ChoiceFormSet = inlineformset_factory(
-    Question,
+    QuestionTemplate,
     Choice,
     form=ChoiceForm,
     fields=["text"],  # Order removed - determined by position

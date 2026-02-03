@@ -55,8 +55,8 @@ class Subject(UUIDModel):
         return self.children.all()
 
     def get_question_count(self) -> int:
-        """Return count of questions directly assigned to this subject."""
-        return self.questions.count()
+        """Return count of question templates directly assigned to this subject."""
+        return self.question_templates.count()
 
     def get_ancestors(self):
         """

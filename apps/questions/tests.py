@@ -6,7 +6,7 @@ import uuid
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from apps.questions.models import Choice, Question, validate_multilingual_text
+from apps.questions.models import Choice, QuestionTemplate, validate_multilingual_text
 from apps.subjects.models import Subject
 
 
@@ -58,7 +58,7 @@ class QuestionModelTests(TestCase):
 
     def test_question_creation(self):
         """Test creating a basic question."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject, title="Addition Question", text={"none": "What is 4 + 5?"}
         )
         self.assertIsInstance(question.id, uuid.UUID)
@@ -69,14 +69,14 @@ class QuestionModelTests(TestCase):
 
     def test_question_str_representation(self):
         """Test string representation of question."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject, title="Test Question", text={"en": "What is the answer?"}
         )
         self.assertEqual(str(question), "Test Question")
 
     def test_get_text_specific_language(self):
         """Test retrieving text in specific language."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"en": "What is 4 + 5?", "pt": "Quanto é 4 + 5?"},
         )
@@ -85,7 +85,7 @@ class QuestionModelTests(TestCase):
 
     def test_get_text_fallback_to_none(self):
         """Test fallback to language-independent text."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "4 + 5 = ?", "en": "What is 4 + 5?"},
         )
@@ -94,7 +94,7 @@ class QuestionModelTests(TestCase):
 
     def test_get_text_fallback_to_any_language(self):
         """Test fallback to any available language."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject, text={"pt": "Quanto é 4 + 5?", "es": "¿Cuánto es 4 + 5?"}
         )
         # No "none" key, should fallback to first alphabetically
@@ -103,7 +103,7 @@ class QuestionModelTests(TestCase):
 
     def test_get_text_no_language_specified(self):
         """Test getting text with no language specified."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "4 + 5 = ?", "en": "What is 4 + 5?"},
         )
@@ -112,7 +112,7 @@ class QuestionModelTests(TestCase):
 
     def test_get_text_no_none_key(self):
         """Test getting text with no language specified and no none key."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject, text={"en": "What is 4 + 5?", "pt": "Quanto é 4 + 5?"}
         )
         # Should fallback to first alphabetically
@@ -120,7 +120,7 @@ class QuestionModelTests(TestCase):
 
     def test_available_languages(self):
         """Test retrieving available languages."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "Text", "en": "English", "pt": "Portuguese"},
         )
@@ -130,29 +130,29 @@ class QuestionModelTests(TestCase):
     def test_get_all_texts(self):
         """Test retrieving all text versions."""
         text_dict = {"none": "Text", "en": "English"}
-        question = Question.objects.create(subject=self.subject, text=text_dict)
+        question = QuestionTemplate.objects.create(subject=self.subject, text=text_dict)
         self.assertEqual(question.get_all_texts(), text_dict)
 
     def test_choice_count(self):
         """Test choice count property."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Question?"})
+        question = QuestionTemplate.objects.create(subject=self.subject, text={"none": "Question?"})
         self.assertEqual(question.choice_count, 0)
 
-        Choice.objects.create(question=question, text={"none": "Choice 1"}, order=0)
-        Choice.objects.create(question=question, text={"none": "Choice 2"}, order=1)
+        Choice.objects.create(template=question, text={"none": "Choice 1"}, order=0)
+        Choice.objects.create(template=question, text={"none": "Choice 2"}, order=1)
         self.assertEqual(question.choice_count, 2)
 
     def test_correct_choice_property(self):
         """Test correct_choice property returns first choice."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Question?"})
-        correct = Choice.objects.create(question=question, text={"none": "Correct"}, order=0)
-        Choice.objects.create(question=question, text={"none": "Wrong"}, order=1)
+        question = QuestionTemplate.objects.create(subject=self.subject, text={"none": "Question?"})
+        correct = Choice.objects.create(template=question, text={"none": "Correct"}, order=0)
+        Choice.objects.create(template=question, text={"none": "Wrong"}, order=1)
 
         self.assertEqual(question.correct_choice, correct)
 
     def test_question_subject_protect(self):
         """Test that deleting subject is protected if it has questions."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Question?"})
+        question = QuestionTemplate.objects.create(subject=self.subject, text={"none": "Question?"})
         # Attempting to delete subject should raise ProtectedError
         from django.db.models import ProtectedError
 
@@ -166,28 +166,28 @@ class ChoiceModelTests(TestCase):
     def setUp(self):
         """Set up test data."""
         self.subject = Subject.objects.create(name="Mathematics")
-        self.question = Question.objects.create(
+        self.template = QuestionTemplate.objects.create(
             subject=self.subject, text={"none": "What is 4 + 5?"}
         )
 
     def test_choice_creation(self):
         """Test creating a basic choice."""
-        choice = Choice.objects.create(question=self.question, text={"none": "9"}, order=0)
+        choice = Choice.objects.create(template=self.template, text={"none": "9"}, order=0)
         self.assertIsInstance(choice.id, uuid.UUID)
-        self.assertEqual(choice.question, self.question)
+        self.assertEqual(choice.template, self.template)
         self.assertEqual(choice.text, {"none": "9"})
         self.assertEqual(choice.order, 0)
 
     def test_choice_str_representation(self):
         """Test string representation of choice."""
-        choice = Choice.objects.create(question=self.question, text={"en": "Nine"}, order=0)
+        choice = Choice.objects.create(template=self.template, text={"en": "Nine"}, order=0)
         self.assertIn("Nine", str(choice))
         self.assertIn("✓", str(choice))  # Correct answer marker
 
     def test_get_text_specific_language(self):
         """Test retrieving choice text in specific language."""
         choice = Choice.objects.create(
-            question=self.question, text={"en": "Nine", "pt": "Nove"}, order=0
+            template=self.template, text={"en": "Nine", "pt": "Nove"}, order=0
         )
         self.assertEqual(choice.get_text("en"), "Nine")
         self.assertEqual(choice.get_text("pt"), "Nove")
@@ -195,38 +195,38 @@ class ChoiceModelTests(TestCase):
     def test_get_text_fallback(self):
         """Test choice text fallback logic."""
         choice = Choice.objects.create(
-            question=self.question, text={"none": "9", "en": "Nine"}, order=0
+            template=self.template, text={"none": "9", "en": "Nine"}, order=0
         )
         # Request non-existent language, should fallback to "none"
         self.assertEqual(choice.get_text("fr"), "9")
 
     def test_is_correct_property(self):
         """Test is_correct property."""
-        correct = Choice.objects.create(question=self.question, text={"none": "9"}, order=0)
-        wrong = Choice.objects.create(question=self.question, text={"none": "10"}, order=1)
+        correct = Choice.objects.create(template=self.template, text={"none": "9"}, order=0)
+        wrong = Choice.objects.create(template=self.template, text={"none": "10"}, order=1)
 
         self.assertTrue(correct.is_correct)
         self.assertFalse(wrong.is_correct)
 
     def test_choice_ordering(self):
         """Test that choices are ordered by order field."""
-        choice3 = Choice.objects.create(question=self.question, text={"none": "C"}, order=2)
-        choice1 = Choice.objects.create(question=self.question, text={"none": "A"}, order=0)
-        choice2 = Choice.objects.create(question=self.question, text={"none": "B"}, order=1)
+        choice3 = Choice.objects.create(template=self.template, text={"none": "C"}, order=2)
+        choice1 = Choice.objects.create(template=self.template, text={"none": "A"}, order=0)
+        choice2 = Choice.objects.create(template=self.template, text={"none": "B"}, order=1)
 
-        choices = list(self.question.choices.all())
+        choices = list(self.template.choices.all())
         self.assertEqual(choices, [choice1, choice2, choice3])
 
     def test_choice_cascade_delete(self):
         """Test that deleting question cascades to choices."""
-        choice = Choice.objects.create(question=self.question, text={"none": "9"}, order=0)
-        question_id = self.question.id
+        choice = Choice.objects.create(template=self.template, text={"none": "9"}, order=0)
+        question_id = self.template.id
         choice_id = choice.id
 
-        self.question.delete()
+        self.template.delete()
 
         # Question and choice should both be deleted
-        self.assertFalse(Question.objects.filter(id=question_id).exists())
+        self.assertFalse(QuestionTemplate.objects.filter(id=question_id).exists())
         self.assertFalse(Choice.objects.filter(id=choice_id).exists())
 
 
@@ -236,7 +236,7 @@ class QuestionChoiceIntegrationTests(TestCase):
     def test_complete_question_workflow(self):
         """Test creating a complete question with choices."""
         subject = Subject.objects.create(name="Mathematics")
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=subject,
             text={
                 "none": "4 + 5 = ?",
@@ -246,9 +246,9 @@ class QuestionChoiceIntegrationTests(TestCase):
         )
 
         # Add choices
-        correct = Choice.objects.create(question=question, text={"en": "9", "pt": "9"}, order=0)
-        wrong1 = Choice.objects.create(question=question, text={"en": "8", "pt": "8"}, order=1)
-        wrong2 = Choice.objects.create(question=question, text={"en": "10", "pt": "10"}, order=2)
+        correct = Choice.objects.create(template=question, text={"en": "9", "pt": "9"}, order=0)
+        wrong1 = Choice.objects.create(template=question, text={"en": "8", "pt": "8"}, order=1)
+        wrong2 = Choice.objects.create(template=question, text={"en": "10", "pt": "10"}, order=2)
 
         # Verify question
         self.assertEqual(question.choice_count, 3)
@@ -265,13 +265,13 @@ class QuestionChoiceIntegrationTests(TestCase):
     def test_multilingual_fallback_consistency(self):
         """Test that fallback logic is consistent across question and choices."""
         subject = Subject.objects.create(name="Science")
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=subject,
             text={"none": "H2O = ?", "en": "What is H2O?"},
         )
 
         choice = Choice.objects.create(
-            question=question, text={"none": "Water", "en": "Water"}, order=0
+            template=question, text={"none": "Water", "en": "Water"}, order=0
         )
 
         # Both should fallback to "none" for unsupported language
@@ -288,7 +288,7 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_num_variable_within_bounds(self):
         """Test numeric variable generation stays within min/max bounds."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "What is {{x}}?"},
             variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}},
@@ -303,7 +303,7 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_num_variable_respects_precision(self):
         """Test numeric variable respects precision parameter."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "Value: {{x}}"},
             variables={"x": {"type": "num", "min": 0, "max": 10, "precision": 0.5}},
@@ -318,7 +318,7 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_string_variable_length_constraints(self):
         """Test string variable respects min/max length constraints."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "Name: {{name}}"},
             variables={"name": {"type": "string", "min_length": 5, "max_length": 10}},
@@ -333,7 +333,7 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_set_variable_correct_size(self):
         """Test set variable returns correct number of items."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "Items: {{items}}"},
             variables={
@@ -355,7 +355,7 @@ class VariableGenerationTests(TestCase):
 
     def test_expression_variable_evaluation(self):
         """Test expression variables evaluate correctly."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "{{a}} + {{b}} = {{sum}}"},
             variables={
@@ -371,7 +371,7 @@ class VariableGenerationTests(TestCase):
 
     def test_variables_evaluated_in_order(self):
         """Test that variables are evaluated in definition order."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "Result: {{result}}"},
             variables={
@@ -398,7 +398,7 @@ class VariableSubstitutionTests(TestCase):
 
     def test_simple_variable_substitution(self):
         """Test simple variable substitution in text."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "What is {{x}}?"},
             variables={"x": {"type": "num", "min": 5, "max": 5, "precision": 1}},
@@ -410,7 +410,7 @@ class VariableSubstitutionTests(TestCase):
 
     def test_expression_evaluation_in_text(self):
         """Test that expressions in {{}} are evaluated."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "The values are {{items[0]}} and {{items[1]}}"},
             variables={"items": {"type": "set", "items": ["A", "B", "C"], "size": 2}},
@@ -422,7 +422,7 @@ class VariableSubstitutionTests(TestCase):
 
     def test_multiple_variables_in_text(self):
         """Test multiple variables in the same text."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "{{a}} + {{b}} = {{a + b}}"},
             variables={
@@ -437,7 +437,7 @@ class VariableSubstitutionTests(TestCase):
 
     def test_variable_substitution_preserves_markdown(self):
         """Test that markdown syntax is preserved during substitution."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "**Bold {{x}}** and *italic {{y}}*"},
             variables={
@@ -452,7 +452,7 @@ class VariableSubstitutionTests(TestCase):
 
     def test_substitution_in_choices(self):
         """Test variable substitution works in choice text."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "What is {{x}} + {{y}}?"},
             variables={
@@ -462,7 +462,7 @@ class VariableSubstitutionTests(TestCase):
             },
         )
 
-        choice = Choice.objects.create(question=question, text={"none": "{{sum}}"}, order=0)
+        choice = Choice.objects.create(template=question, text={"none": "{{sum}}"}, order=0)
 
         variables = {"x": 3, "y": 5, "sum": 8}
         result = choice.get_text(language_code="none", variables=variables)
@@ -478,7 +478,7 @@ class VariableValidationTests(TestCase):
 
     def test_circular_dependency_detected(self):
         """Test that circular dependencies are detected."""
-        question = Question(
+        question = QuestionTemplate(
             subject=self.subject,
             text={"none": "Test {{x}}"},
             variables={
@@ -495,7 +495,7 @@ class VariableValidationTests(TestCase):
 
     def test_undefined_variable_reference_error(self):
         """Test that undefined variable references are caught."""
-        question = Question(
+        question = QuestionTemplate(
             subject=self.subject,
             text={"none": "Value is {{undefined_var}}"},
             variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}},
@@ -509,7 +509,7 @@ class VariableValidationTests(TestCase):
 
     def test_expression_with_undefined_reference(self):
         """Test that expression referencing undefined variable is caught."""
-        question = Question(
+        question = QuestionTemplate(
             subject=self.subject,
             text={"none": "Result: {{result}}"},
             variables={
@@ -527,7 +527,7 @@ class VariableValidationTests(TestCase):
 
     def test_invalid_variable_definition_structure(self):
         """Test that invalid variable definition structure is caught."""
-        question = Question(
+        question = QuestionTemplate(
             subject=self.subject,
             text={"none": "Value: {{x}}"},
             variables={"x": {"type": "num"}},  # Missing min/max
@@ -543,7 +543,7 @@ class VariableValidationTests(TestCase):
 
     def test_set_size_exceeds_items_error(self):
         """Test that requesting more items than available is caught."""
-        question = Question(
+        question = QuestionTemplate(
             subject=self.subject,
             text={"none": "Items: {{items}}"},
             variables={
@@ -565,7 +565,7 @@ class VariableValidationTests(TestCase):
 
     def test_min_greater_than_max_error(self):
         """Test that min > max is caught."""
-        question = Question(
+        question = QuestionTemplate(
             subject=self.subject,
             text={"none": "Value: {{x}}"},
             variables={"x": {"type": "num", "min": 10, "max": 5, "precision": 1}},
@@ -581,7 +581,7 @@ class VariableValidationTests(TestCase):
 
     def test_undefined_variable_in_choice_text(self):
         """Test that undefined variables in choice text are caught."""
-        question = Question(
+        question = QuestionTemplate(
             subject=self.subject,
             text={"none": "Question with {{x}}"},
             variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}},
@@ -589,7 +589,7 @@ class VariableValidationTests(TestCase):
         question.save()
 
         # Add choice with undefined variable
-        Choice.objects.create(question=question, text={"none": "Answer: {{undefined}}"}, order=0)
+        Choice.objects.create(template=question, text={"none": "Answer: {{undefined}}"}, order=0)
 
         with self.assertRaises(ValidationError) as cm:
             question.full_clean()
@@ -607,7 +607,7 @@ class ValidationRulesTests(TestCase):
 
     def test_validate_rules_all_pass(self):
         """Test that validation passes when all rules return True."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Test",
             text={"none": "Test"},
             subject=self.subject,
@@ -625,7 +625,7 @@ class ValidationRulesTests(TestCase):
 
     def test_validate_rules_one_fails(self):
         """Test that validation fails when one rule returns False."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Test",
             text={"none": "Test"},
             subject=self.subject,
@@ -646,7 +646,7 @@ class ValidationRulesTests(TestCase):
 
     def test_validate_rules_empty(self):
         """Test that validation passes when no rules are defined."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Test",
             text={"none": "Test"},
             subject=self.subject,
@@ -659,7 +659,7 @@ class ValidationRulesTests(TestCase):
 
     def test_validate_rules_syntax_error(self):
         """Test that invalid rule syntax is treated as validation failure."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Test",
             text={"none": "Test"},
             subject=self.subject,
@@ -674,7 +674,7 @@ class ValidationRulesTests(TestCase):
 
     def test_generate_variables_with_validation(self):
         """Test successful variable generation with validation rules."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Test",
             text={"none": "Test"},
             subject=self.subject,
@@ -691,7 +691,7 @@ class ValidationRulesTests(TestCase):
 
     def test_generate_variables_max_retries(self):
         """Test that ValidationError is raised after max attempts."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Test",
             text={"none": "Test"},
             subject=self.subject,
@@ -710,7 +710,7 @@ class ValidationRulesTests(TestCase):
 
     def test_validation_rule_undefined_variable(self):
         """Test that rule referencing undefined variable fails validation."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Test",
             text={"none": "Test"},
             subject=self.subject,
@@ -724,7 +724,7 @@ class ValidationRulesTests(TestCase):
     def test_complex_validation_rules(self):
         """Test complex validation rules like triangle inequality and integer results."""
         # Triangle inequality
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             title="Triangle",
             text={"none": "Test"},
             subject=self.subject,
@@ -747,7 +747,7 @@ class ValidationRulesTests(TestCase):
         self.assertGreater(variables["c"] + variables["a"], variables["b"])
 
         # Integer result validation
-        question2 = Question.objects.create(
+        question2 = QuestionTemplate.objects.create(
             title="Integer Result",
             text={"none": "Test"},
             subject=self.subject,
@@ -772,7 +772,7 @@ class VariableIntegrationTests(TestCase):
 
     def test_create_question_with_variables(self):
         """Test creating a question with variables."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Variable Question",
             text={"none": "What is {{x}} + {{y}}?"},
@@ -794,7 +794,7 @@ class VariableIntegrationTests(TestCase):
     def test_edit_question_add_variables(self):
         """Test adding variables to existing question."""
         # Create question without variables
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject, title="Simple Question", text={"none": "What is 2 + 2?"}
         )
 
@@ -814,7 +814,7 @@ class VariableIntegrationTests(TestCase):
 
     def test_question_without_variables_still_works(self):
         """Test backward compatibility - questions without variables."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject, title="Static Question", text={"none": "What is 2 + 2?"}
         )
 
@@ -829,7 +829,7 @@ class VariableIntegrationTests(TestCase):
 
     def test_preview_generates_different_instances(self):
         """Test that different seeds generate different variable values."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"none": "Value: {{x}}"},
             variables={"x": {"type": "num", "min": 1, "max": 100, "precision": 1}},
@@ -846,7 +846,7 @@ class VariableIntegrationTests(TestCase):
 
     def test_multilingual_with_variables(self):
         """Test that variables work with multilingual text."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             text={"en": "What is {{x}} + {{y}}?", "pt": "Quanto é {{x}} + {{y}}?"},
             variables={
@@ -941,7 +941,7 @@ class VariableFormTests(TestCase):
 
     def test_question_form_edit_mode_loads_variables(self):
         """Test that form loads existing variables in edit mode."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Existing Question",
             text={"none": "What is {{x}}?"},
@@ -1039,7 +1039,7 @@ class ValidationRulesFormTests(TestCase):
 
     def test_validation_rules_edit_mode_loads(self):
         """Test that form loads existing validation rules in edit mode."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Existing Question",
             text={"none": "Test"},
@@ -1064,7 +1064,7 @@ class ValidationRulesPreviewTests(TestCase):
 
     def test_preview_with_valid_rules(self):
         """Test that preview works when validation rules can be satisfied."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Valid Rules Question",
             text={"none": "What is {{a}} + {{b}}?"},
@@ -1093,7 +1093,7 @@ class ValidationRulesPreviewTests(TestCase):
 
     def test_preview_with_impossible_rules(self):
         """Test that preview shows helpful error when rules can't be satisfied."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Impossible Rules Question",
             text={"none": "Test"},
@@ -1119,7 +1119,7 @@ class ValidationRulesPreviewTests(TestCase):
 
     def test_preview_without_validation_rules(self):
         """Test that preview works normally when no validation rules are set."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="No Rules Question",
             text={"none": "What is {{a}}?"},
@@ -1144,7 +1144,7 @@ class ValidationRulesPreviewTests(TestCase):
 
     def test_preview_with_conflicting_rules(self):
         """Test preview with rules that conflict with variable ranges."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Conflicting Rules",
             text={"none": "{{a}}, {{b}}, {{c}}"},
@@ -1215,7 +1215,7 @@ class ValidationRulesIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
         # Verify question created with validation rules
-        question = Question.objects.get(title="Triangle Inequality Question")
+        question = QuestionTemplate.objects.get(title="Triangle Inequality Question")
         self.assertEqual(len(question.validation_rules), 3)
         self.assertIn("a + b > c", question.validation_rules)
 
@@ -1234,7 +1234,7 @@ class ValidationRulesIntegrationTests(TestCase):
     def test_question_update_with_validation_rules(self):
         """Test updating an existing question to add validation rules."""
         # Create question without validation rules
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Simple Question",
             text={"none": "What is {{a}} + {{b}}?"},
@@ -1245,8 +1245,8 @@ class ValidationRulesIntegrationTests(TestCase):
         )
 
         # Add choices to the question
-        Choice.objects.create(question=question, text={"none": "Correct"}, order=0)
-        Choice.objects.create(question=question, text={"none": "Incorrect"}, order=1)
+        Choice.objects.create(template=question, text={"none": "Correct"}, order=0)
+        Choice.objects.create(template=question, text={"none": "Incorrect"}, order=1)
 
         from django.urls import reverse
 
@@ -1281,7 +1281,7 @@ class ValidationRulesIntegrationTests(TestCase):
 
     def test_question_preview_with_validation_rules(self):
         """Test that preview respects validation rules."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Ordered Numbers",
             text={"none": "Numbers: {{x}}, {{y}}, {{z}}"},
@@ -1314,7 +1314,7 @@ class ValidationRulesIntegrationTests(TestCase):
 
     def test_question_preview_validation_error(self):
         """Test that preview shows error when validation rules fail."""
-        question = Question.objects.create(
+        question = QuestionTemplate.objects.create(
             subject=self.subject,
             title="Impossible Question",
             text={"none": "Value: {{n}}"},

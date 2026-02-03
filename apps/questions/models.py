@@ -170,11 +170,11 @@ class VariableGenerator:
             raise ValidationError(f"Expression evaluation failed: {e}")
 
 
-class Question(UUIDModel):
+class QuestionTemplate(UUIDModel):
     """
-    Quiz question with multilingual and parametric variable support.
+    Question template with multilingual and parametric variable support.
 
-    Questions belong to a subject and contain text that can be provided
+    Question templates belong to a subject and contain text that can be provided
     in multiple languages. The first choice (order=0) is always the correct answer.
 
     ## Variable System
@@ -277,13 +277,13 @@ class Question(UUIDModel):
     subject = models.ForeignKey(
         Subject,
         on_delete=models.PROTECT,
-        related_name="questions",
-        help_text="Subject this question belongs to",
+        related_name="question_templates",
+        help_text="Subject this question template belongs to",
     )
     title = models.CharField(
         max_length=200,
         default="no title",
-        help_text="Short title to identify this question",
+        help_text="Short title to identify this question template",
     )
     text = models.JSONField(
         help_text="Question text in multiple languages (JSON)",
@@ -768,11 +768,11 @@ class Choice(UUIDModel):
     When displaying questions to students, choices should be randomized.
     """
 
-    question = models.ForeignKey(
-        Question,
+    template = models.ForeignKey(
+        QuestionTemplate,
         on_delete=models.CASCADE,
         related_name="choices",
-        help_text="Question this choice belongs to",
+        help_text="Question template this choice belongs to",
     )
     text = models.JSONField(
         help_text="Choice text in multiple languages (JSON)",
@@ -832,9 +832,9 @@ class Choice(UUIDModel):
             else:
                 raise ValueError("No text available in any language")
 
-        # Substitute variables if provided (reuse Question's method)
-        if variables and self.question:
-            text = self.question._substitute_variables(text, variables)
+        # Substitute variables if provided (reuse QuestionTemplate's method)
+        if variables and self.template:
+            text = self.template._substitute_variables(text, variables)
 
         return text
 

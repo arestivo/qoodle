@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from apps.questions.models import Choice, Question
+from apps.questions.models import Choice, QuestionTemplate
 
 
 class ChoiceInline(admin.TabularInline):
@@ -13,9 +13,9 @@ class ChoiceInline(admin.TabularInline):
     fields = ["text", "order"]
 
 
-@admin.register(Question)
-class QuestionAdmin(admin.ModelAdmin):
-    """Admin interface for Question model."""
+@admin.register(QuestionTemplate)
+class QuestionTemplateAdmin(admin.ModelAdmin):
+    """Admin interface for QuestionTemplate model."""
 
     list_display = ["title", "subject", "choice_count", "created_at"]
     list_filter = ["subject", "created_at"]
@@ -25,7 +25,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
     fieldsets = [
         (
-            "Question Information",
+            "Question Template Information",
             {
                 "fields": ["title", "subject", "text"],
             },
@@ -35,7 +35,7 @@ class QuestionAdmin(admin.ModelAdmin):
             {
                 "fields": ["variables", "validation_rules"],
                 "classes": ["collapse"],
-                "description": "Define variables for parametric questions. Use {{variable}} syntax in text. Add validation rules to ensure generated values are valid.",
+                "description": "Define variables for parametric question templates. Use {{variable}} syntax in text. Add validation rules to ensure generated values are valid.",
             },
         ),
         (
@@ -57,16 +57,16 @@ class QuestionAdmin(admin.ModelAdmin):
 class ChoiceAdmin(admin.ModelAdmin):
     """Admin interface for Choice model."""
 
-    list_display = ["get_text_preview", "question_preview", "order", "is_correct"]
-    list_filter = ["question__subject", "order"]
-    search_fields = ["text", "question__text"]
+    list_display = ["get_text_preview", "template_preview", "order", "is_correct"]
+    list_filter = ["template__subject", "order"]
+    search_fields = ["text", "template__text"]
     readonly_fields = ["id", "created_at", "updated_at"]
 
     fieldsets = [
         (
             "Choice Information",
             {
-                "fields": ["question", "text", "order"],
+                "fields": ["template", "text", "order"],
             },
         ),
         (
@@ -87,16 +87,16 @@ class ChoiceAdmin(admin.ModelAdmin):
 
     get_text_preview.short_description = "Choice"
 
-    def question_preview(self, obj):
-        """Return truncated question text."""
+    def template_preview(self, obj):
+        """Return truncated question template text."""
         try:
-            return obj.question.get_text()[:50]
+            return obj.template.get_text()[:50]
         except (ValueError, KeyError):
-            return "(No question)"
+            return "(No template)"
 
-    question_preview.short_description = "Question"
+    template_preview.short_description = "Question Template"
 
     def get_queryset(self, request):
         """Optimize queryset with select_related."""
         qs = super().get_queryset(request)
-        return qs.select_related("question", "question__subject")
+        return qs.select_related("template", "template__subject")

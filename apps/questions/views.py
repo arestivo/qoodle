@@ -11,23 +11,21 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from apps.questions.forms import ChoiceFormSet, QuestionForm
-from apps.questions.models import Choice, Question
+from apps.questions.models import Choice, QuestionTemplate
 from apps.subjects.models import Subject
 
 
 class QuestionListView(ListView):
-    """Display list of questions with optional subject filter."""
+    """Display list of question templates with optional subject filter."""
 
-    model = Question
+    model = QuestionTemplate
     template_name = "questions/question_list.html"
     context_object_name = "questions"
     paginate_by = 20
 
-    def get_queryset(self) -> QuerySet[Question]:
-        """Return questions, optionally filtered by subject."""
-        qs = Question.objects.select_related("subject").prefetch_related(
-            Prefetch("choices", queryset=Choice.objects.order_by("order"))
-        )
+    def get_queryset(self) -> QuerySet[QuestionTemplate]:
+        """Return question templates, optionally filtered by subject."""
+        qs = QuestionTemplate.objects.select_related("subject").prefetch_related(Prefetch("choices", queryset=Choice.objects.order_by("order")))
 
         # Filter by subject if specified
         subject_id = self.request.GET.get("subject")
@@ -37,7 +35,7 @@ class QuestionListView(ListView):
             try:
                 subject = Subject.objects.get(pk=subject_id)
                 if include_sub:
-                    # Include questions from subject and all descendants
+                    # Include question templates from subject and all descendants
                     descendants = subject.get_descendants()
                     subject_ids = [subject.id] + [d.id for d in descendants]
                     qs = qs.filter(subject_id__in=subject_ids)
@@ -72,9 +70,9 @@ class QuestionListView(ListView):
 
 
 class QuestionCreateView(CreateView):
-    """Create a new question with choices."""
+    """Create a new question template with choices."""
 
-    model = Question
+    model = QuestionTemplate
     form_class = QuestionForm
     template_name = "questions/question_form.html"
     success_url = reverse_lazy("questions:list")
@@ -94,8 +92,8 @@ class QuestionCreateView(CreateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add formset to context."""
         context = super().get_context_data(**kwargs)
-        context["title"] = "Create Question"
-        context["button_text"] = "Create Question"
+        context["title"] = "Create Template"
+        context["button_text"] = "Create Template"
 
         if self.request.POST:
             context["choice_formset"] = ChoiceFormSet(self.request.POST, instance=self.object)
@@ -125,7 +123,7 @@ class QuestionCreateView(CreateView):
 
         messages.success(
             self.request,
-            f"Question created successfully with {len(choices_data)} choices!",
+            f"Question template created successfully with {len(choices_data)} choices!",
         )
         return HttpResponse(status=302, headers={"Location": str(self.success_url)})
 
@@ -165,21 +163,21 @@ class QuestionCreateView(CreateView):
             if choice_data["id"]:
                 # Update existing - fetch instance and update
                 try:
-                    choice = Choice.objects.get(id=choice_data["id"], question=self.object)
+                    choice = Choice.objects.get(id=choice_data["id"], template=self.object)
                     choice.text = self._parse_multilingual_text(choice_data["text"])
                     choice.order = i
                     choice.save()
                 except Choice.DoesNotExist:
                     # If choice doesn't exist, create it
                     Choice.objects.create(
-                        question=self.object,
+                        template=self.object,
                         text=self._parse_multilingual_text(choice_data["text"]),
                         order=i,
                     )
             else:
                 # Create new
                 Choice.objects.create(
-                    question=self.object,
+                    template=self.object,
                     text=self._parse_multilingual_text(choice_data["text"]),
                     order=i,
                 )
@@ -193,9 +191,9 @@ class QuestionCreateView(CreateView):
 
 
 class QuestionUpdateView(UpdateView):
-    """Update an existing question and its choices."""
+    """Update an existing question template and its choices."""
 
-    model = Question
+    model = QuestionTemplate
     form_class = QuestionForm
     template_name = "questions/question_form.html"
 
@@ -206,8 +204,8 @@ class QuestionUpdateView(UpdateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add formset to context."""
         context = super().get_context_data(**kwargs)
-        context["title"] = "Edit Question"
-        context["button_text"] = "Update Question"
+        context["title"] = "Edit Template"
+        context["button_text"] = "Update Template"
 
         if self.request.POST:
             context["choice_formset"] = ChoiceFormSet(self.request.POST, instance=self.object)
@@ -235,7 +233,7 @@ class QuestionUpdateView(UpdateView):
         # Save choices in order
         self._save_choices(choices_data)
 
-        messages.success(self.request, "Question updated successfully!")
+        messages.success(self.request, "Question template updated successfully!")
         return HttpResponse(status=302, headers={"Location": str(self.get_success_url())})
 
     def _extract_choices_from_post(self):
@@ -274,21 +272,21 @@ class QuestionUpdateView(UpdateView):
             if choice_data["id"]:
                 # Update existing - fetch instance and update
                 try:
-                    choice = Choice.objects.get(id=choice_data["id"], question=self.object)
+                    choice = Choice.objects.get(id=choice_data["id"], template=self.object)
                     choice.text = self._parse_multilingual_text(choice_data["text"])
                     choice.order = i
                     choice.save()
                 except Choice.DoesNotExist:
                     # If choice doesn't exist, create it
                     Choice.objects.create(
-                        question=self.object,
+                        template=self.object,
                         text=self._parse_multilingual_text(choice_data["text"]),
                         order=i,
                     )
             else:
                 # Create new
                 Choice.objects.create(
-                    question=self.object,
+                    template=self.object,
                     text=self._parse_multilingual_text(choice_data["text"]),
                     order=i,
                 )
@@ -302,17 +300,15 @@ class QuestionUpdateView(UpdateView):
 
 
 class QuestionPreviewView(DetailView):
-    """Preview question showing all language versions."""
+    """Preview question template showing all language versions."""
 
-    model = Question
+    model = QuestionTemplate
     template_name = "questions/question_preview.html"
     context_object_name = "question"
 
     def get_queryset(self):
         """Optimize with select_related and prefetch_related."""
-        return Question.objects.select_related("subject").prefetch_related(
-            Prefetch("choices", queryset=Choice.objects.order_by("order"))
-        )
+        return QuestionTemplate.objects.select_related("subject").prefetch_related(Prefetch("choices", queryset=Choice.objects.order_by("order")))
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add all available languages to context."""
@@ -343,9 +339,7 @@ class QuestionPreviewView(DetailView):
             rendered_texts = {}
             for lang in context["languages"]:
                 try:
-                    rendered_texts[lang] = self.object.get_text(
-                        language_code=lang, variables=variables
-                    )
+                    rendered_texts[lang] = self.object.get_text(language_code=lang, variables=variables)
                 except (ValueError, KeyError):
                     rendered_texts[lang] = None
 
@@ -355,9 +349,7 @@ class QuestionPreviewView(DetailView):
                 choice_texts = {}
                 for lang in context["languages"]:
                     try:
-                        choice_texts[lang] = choice.get_text(
-                            language_code=lang, variables=variables
-                        )
+                        choice_texts[lang] = choice.get_text(language_code=lang, variables=variables)
                     except (ValueError, KeyError):
                         choice_texts[lang] = None
                 rendered_choices.append(
@@ -396,9 +388,9 @@ class QuestionPreviewView(DetailView):
 
 
 class QuestionDeleteView(DeleteView):
-    """Delete a question and its choices."""
+    """Delete a question template and its choices."""
 
-    model = Question
+    model = QuestionTemplate
     template_name = "questions/question_confirm_delete.html"
     success_url = reverse_lazy("questions:list")
 
@@ -409,12 +401,12 @@ class QuestionDeleteView(DeleteView):
             response = super().form_valid(form)
             messages.success(
                 self.request,
-                f"Question '{question_text}...' and its choices deleted successfully!",
+                f"Question template '{question_text}...' and its choices deleted successfully!",
             )
             return response
         except models.ProtectedError:
             messages.error(
                 self.request,
-                f"Cannot delete question '{question_text}...' due to protected relationships.",
+                f"Cannot delete question template '{question_text}...' due to protected relationships.",
             )
             return self.render_to_response(self.get_context_data())
