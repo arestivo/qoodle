@@ -1,6 +1,10 @@
 {% extends "common/base.html" %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'subjects/css/subjects.css' %}">
+{% endblock %}
+
 {% block title %}Subjects - Qoodle{% endblock %}
 
 {% block content %}
@@ -24,8 +28,8 @@
                             <thead>
                                 <tr>
                                     <th>Subject</th>
-                                    <th class="text-center">Questions</th>
-                                    <th class="text-end">Actions</th>
+                                    <th class="text-center" style="width: 1px; white-space: nowrap;">Templates</th>
+                                    <th class="text-end" style="width: 1px; white-space: nowrap;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>

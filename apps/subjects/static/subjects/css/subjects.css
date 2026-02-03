@@ -1,0 +1,59 @@
+/* Subject List Styling */
+
+.subject-row {
+    cursor: pointer;
+}
+
+.subject-row td {
+    vertical-align: middle;
+}
+
+.subject-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.subject-name-link {
+    color: inherit;
+    text-decoration: none;
+    display: block;
+    padding: 0;
+}
+
+.subject-name-link:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Indentation for hierarchical subjects */
+.subject-indent-0 { 
+    display: inline-block;
+    padding-left: 0; 
+}
+.subject-indent-1 { 
+    display: inline-block;
+    padding-left: 1rem; 
+}
+.subject-indent-2 { 
+    display: inline-block;
+    padding-left: 2rem; 
+}
+.subject-indent-3 { 
+    display: inline-block;
+    padding-left: 3rem; 
+}
+.subject-indent-4 { 
+    display: inline-block;
+    padding-left: 4rem; 
+}
+.subject-indent-5 { 
+    display: inline-block;
+    padding-left: 5rem; 
+}
+
+.subject-description {
+    padding-left: 1.5rem;
+}
+
+.subject-child-icon {
+    font-size: 0.85rem;
+}

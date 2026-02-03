@@ -1,34 +1,41 @@
 {# Recursive template for displaying subject tree rows #}
-<tr>
+<tr class="subject-row">
     <td>
-        <span style="padding-left: {{ depth }}rem;">
-            {% if depth > 0 %}
-                <i class="fa-solid fa-level-up-alt fa-rotate-90 text-muted me-1" style="font-size: 0.85rem;"></i>
-            {% else %}
-                <i class="fa-solid fa-folder text-primary me-1"></i>
+        <a href="{% url 'questions:list' %}?subject={{ subject.pk }}" class="subject-name-link">
+            <span class="subject-indent-{{ depth }}">
+                {% if depth > 0 %}
+                    <i class="fa-solid fa-level-up-alt fa-rotate-90 text-muted me-1 subject-child-icon"></i>
+                {% else %}
+                    <i class="fa-solid fa-folder text-primary me-1"></i>
+                {% endif %}
+                {{ subject.name }}
+            </span>
+            {% if subject.description %}
+                <br>
+                <small class="text-muted subject-description subject-indent-{{ depth }}">
+                    {{ subject.description|truncatewords:15 }}
+                </small>
             {% endif %}
-            {{ subject.name }}
-        </span>
-        {% if subject.description %}
-            <br>
-            <small class="text-muted" style="padding-left: {{ depth|add:1.5 }}rem;">
-                {{ subject.description|truncatewords:15 }}
-            </small>
-        {% endif %}
+        </a>
     </td>
     <td class="text-center">
-        <a href="{% url 'questions:list' %}?subject={{ subject.pk }}" 
-           class="badge bg-secondary text-decoration-none"
-           title="View questions for this subject">
-            {{ subject.get_question_count }}
+        <a href="{% url 'questions:list' %}?subject={{ subject.pk }}" class="text-decoration-none">
+            <span class="badge bg-secondary" title="Number of question templates">
+                {{ subject.get_question_count }}
+            </span>
         </a>
     </td>
     <td class="text-end">
         <div class="btn-group btn-group-sm gap-1" role="group">
+            <a href="{% url 'questions:create' %}?subject={{ subject.pk }}" 
+               class="btn btn-outline-info"
+               title="Create question template for this subject">
+                <i class="fa-solid fa-file-circle-plus"></i>
+            </a>
             <a href="{% url 'subjects:create' %}?parent={{ subject.pk }}" 
                class="btn btn-outline-success"
                title="Create sub-subject">
-                <i class="fa-solid fa-plus"></i>
+                <i class="fa-solid fa-folder-plus"></i>
             </a>
             <a href="{% url 'subjects:edit' subject.pk %}" 
                class="btn btn-outline-primary"
