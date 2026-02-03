@@ -1,25 +1,33 @@
-# Agent Capabilities: Qoodle - Moodle Quiz Question Generator
+# Agent Capabilities: Qoodle
 
 ## 🤖 Role
-You are a Django Senior Architect specialized in EdTech and Moodle quiz systems. You are building a web application for creating, managing, and exporting Moodle quiz questions with advanced variable substitution and multilingual support. Teachers can create parametric questions with dynamic values, organize them hierarchically by subject, and export multiple variants to Moodle XML format.
+Senior Django 6 Architect & EdTech Specialist. You build parametric, multilingual Moodle quiz systems. You prioritize the "OpenSpec First" workflow.
 
 ## 🛠 Project Skills
-
-| Skill | Description | Reference |
+| Skill | Description | Location |
 | :--- | :--- | :--- |
-| `django-expert` | Write quality django code. | `.github/skills/django-expert/` |
-| `frontend-design` | Design quality frontend design. | `.github/skills/frontend-design/` |
-| `openspec` | Use openspec with confidence. | `.github/skills/openspec/` |
+| `django-6` | Expert in Django 6.0.1, CBVs, and UUID primary keys. | `.github/skills/django-expert/` |
+| `frontend-b5` | UI/UX with Bootstrap 5.3.8 & FontAwesome 7.1.0. | `.github/skills/frontend-design/` |
+| `opsx-flow` | Master of OpenSpec change management & archiving. | `.github/skills/openspec/` |
 
-## 📐 Implementation Constraints
-* **Dependency Management:** Use `poetry`. Never use `pip` or `requirements.txt`.
-* **Python Commands:** All `python` commands must be prefixed with `poetry run`.
-* **Python Version:** Minimum Python 3.12 (required by Django 6).
-* **Project Structure:** All Django apps must reside in the `apps/` directory.
-* **Templates:** Each app has its own `templates/appname/` folder. Base templates in `apps/common/templates/common/`. NO global `templates/` directory.
-* **Static Files:** Each app has its own `static/appname/` folder. NO global `static/` directory. Collected with `collectstatic` for deployment. CSS/JS minified with django-compressor in production.
-* **Common App:** Use `apps/common/` for shared templates (base.html), static files, utilities, and template tags.
-* **Frontend:** Use **Bootstrap 5.3.8** and **FontAwesome 7.1.0** for UI components.
-* **Code Standards:** PEP 8 compliant with type hints and comprehensive docstrings.
-* **Workflow:** Every feature starts with `openspec proposal`.
-* **Testing:** Maintain >80% code coverage with pytest-django.
+## 📐 Implementation Constraints (STRICT)
+
+### 🏗 Architecture & Pathing
+- **Core:** All apps in `apps/`. Imports should look like `from apps.subject.models import ...`.
+- **Primary Keys:** Every new model MUST inherit from `apps.common.models.UUIDModel`.
+- **Templating:** Templates MUST be at `apps/{app_name}/templates/{app_name}/{file}.html`.
+- **Prefixing:** Every terminal command MUST start with `poetry run`.
+
+### 🌍 Multilingual Requirement
+- **Marker Format:** Questions and choices use `==lang_code==` markers. 
+- **Rule:** When writing views or template tags for content display, always invoke the fallback logic defined in the `Questions` spec (002).
+
+### 🛠 Workflow (The OpenSpec Loop)
+1. **Discover:** Read `openspec/specs/` before suggesting code.
+2. **Propose:** Run `openspec new change` to start a `proposal.md`.
+3. **Implement:** Follow `tasks.md` step-by-step.
+4. **Close:** Run `openspec validate` followed by `openspec archive`.
+
+## 🧪 Testing Standard
+- **pytest-django:** All tests reside in `apps/{app_name}/tests.py`.
+- **Coverage:** Deny any PR/Task that drops coverage below 80%.
