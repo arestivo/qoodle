@@ -170,10 +170,106 @@ class VariableGenerator:
 
 class Question(UUIDModel):
     """
-    Quiz question with multilingual support.
+    Quiz question with multilingual and parametric variable support.
 
     Questions belong to a subject and contain text that can be provided
     in multiple languages. The first choice (order=0) is always the correct answer.
+
+    ## Variable System
+
+    Questions support parametric variables for generating randomized content.
+    Variables are defined in the `variables` JSONField and referenced using
+    {{variable}} syntax in question and choice text.
+
+    ### Variable Types
+
+    1. **Numeric (num)**: Random number within range
+       ```python
+       {
+           "x": {
+               "type": "num",
+               "min": 1,
+               "max": 10,
+               "precision": 0.5  # Steps: 1.0, 1.5, 2.0, ...
+           }
+       }
+       ```
+
+    2. **String (string)**: Random string with length constraints
+       ```python
+       {
+           "name": {
+               "type": "string",
+               "min_length": 5,
+               "max_length": 10
+           }
+       }
+       ```
+
+    3. **Set (set)**: Random subset from predefined items
+       ```python
+       {
+           "wrong": {
+               "type": "set",
+               "items": ["A", "B", "C", "D", "E"],
+               "size": 3  # Select 3 items
+           }
+       }
+       ```
+
+    4. **Expression (expression)**: Computed from other variables
+       ```python
+       {
+           "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+           "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+           "sum": {
+               "type": "expression",
+               "formula": "a + b"  # Python expression
+           }
+       }
+       ```
+
+    ### Variable Usage
+
+    Use {{variable}} syntax to reference variables in text:
+    ```python
+    text = {"en": "What is {{a}} + {{b}}?"}
+    choices = [
+        {"en": "{{sum}}"},  # Correct answer
+        {"en": "{{wrong[0]}}"},  # From set variable
+        {"en": "{{wrong[1]}}"},
+        {"en": "{{wrong[2]}}"}
+    ]
+    ```
+
+    ### Rendering Pipeline
+
+    1. **Generate**: `question.generate_variables(seed=42)` creates variable values
+    2. **Substitute**: `question.get_text(lang, variables)` replaces {{...}} markers
+    3. **Render**: `question.render_text(lang, seed)` applies markdown formatting
+
+    ### Example: Math Problem
+
+    ```python
+    question = Question.objects.create(
+        subject=math_subject,
+        title="Addition Problem",
+        text={"en": "Calculate {{x}} + {{y}}"},
+        variables={
+            "x": {"type": "num", "min": 1, "max": 20, "precision": 1},
+            "y": {"type": "num", "min": 1, "max": 20, "precision": 1},
+            "answer": {"type": "expression", "formula": "x + y"},
+            "wrong": {"type": "set", "items": [str(i) for i in range(50)], "size": 3}
+        }
+    )
+    ```
+
+    ### Validation
+
+    - Variables are evaluated in definition order (expressions can reference earlier variables)
+    - Circular dependencies are detected during validation
+    - Undefined variable references in text raise ValidationError
+    - Invalid variable definitions (missing fields, invalid ranges) are caught
     """
 
     subject = models.ForeignKey(

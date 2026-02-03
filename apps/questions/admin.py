@@ -31,6 +31,14 @@ class QuestionAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Variables (Optional)",
+            {
+                "fields": ["variables"],
+                "classes": ["collapse"],
+                "description": "Define variables for parametric questions. Use {{variable}} syntax in text.",
+            },
+        ),
+        (
             "Metadata",
             {
                 "fields": ["id", "created_at", "updated_at"],

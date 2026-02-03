@@ -77,13 +77,23 @@
 
                     <div class="card mb-3">
                         <div class="card-body">
-                            <p class="text-muted small mb-3">
-                                Define variables to create parametric questions. Use <code>{% templatetag openvariable %}variable{% templatetag closevariable %}</code> syntax in your question or choice text.
+                            <p class="text-muted small mb-2">
+                                Define variables to create parametric questions with randomized values. Use <code>{% templatetag openvariable %}variable{% templatetag closevariable %}</code> syntax in your question or choice text.
                             </p>
+                            
+                            <div class="alert alert-info py-2 small mb-3">
+                                <strong><i class="fa-solid fa-lightbulb"></i> Quick Guide:</strong>
+                                <ul class="mb-0 mt-1">
+                                    <li><strong>Numeric:</strong> Random numbers (e.g., <code>x</code> from 1-10)</li>
+                                    <li><strong>String:</strong> Random text (e.g., variable-length names)</li>
+                                    <li><strong>Set:</strong> Random selection from list (e.g., 3 wrong answers from a pool)</li>
+                                    <li><strong>Expression:</strong> Computed values (e.g., <code>sum = x + y</code>)</li>
+                                </ul>
+                            </div>
                             
                             <div id="variable-list"></div>
                             
-                            <button type="button" id="add-variable-btn" class="btn btn-outline-primary btn-sm">
+                            <button type="button" id="add-variable-btn" class="btn btn-outline-primary btn-sm mt-2">
                                 <i class="fa-solid fa-plus"></i> Add Variable
                             </button>
                         </div>
@@ -240,44 +250,56 @@
 <template id="fields-num-template">
     <div class="row g-1">
         <div class="col-4">
-            <input type="number" step="any" class="form-control form-control-sm var-min" placeholder="Min" required>
+            <input type="number" step="any" class="form-control form-control-sm var-min" placeholder="Min" required 
+                   title="Minimum value (inclusive)">
         </div>
         <div class="col-4">
-            <input type="number" step="any" class="form-control form-control-sm var-max" placeholder="Max" required>
+            <input type="number" step="any" class="form-control form-control-sm var-max" placeholder="Max" required
+                   title="Maximum value (inclusive)">
         </div>
         <div class="col-4">
-            <input type="number" step="any" class="form-control form-control-sm var-precision" placeholder="Step" value="1">
+            <input type="number" step="any" class="form-control form-control-sm var-precision" placeholder="Step" value="1"
+                   title="Precision/step size (e.g., 0.5 for 1.0, 1.5, 2.0, ...)">
         </div>
     </div>
+    <small class="text-muted">Precision: 1 for integers, 0.1 for one decimal, 0.5 for half steps</small>
 </template>
 
 {# Template for string type fields #}
 <template id="fields-string-template">
     <div class="row g-1">
         <div class="col-6">
-            <input type="number" class="form-control form-control-sm var-min-length" placeholder="Min Length" min="0" required>
+            <input type="number" class="form-control form-control-sm var-min-length" placeholder="Min Length" min="0" required
+                   title="Minimum string length">
         </div>
         <div class="col-6">
-            <input type="number" class="form-control form-control-sm var-max-length" placeholder="Max Length" min="0" required>
+            <input type="number" class="form-control form-control-sm var-max-length" placeholder="Max Length" min="0" required
+                   title="Maximum string length">
         </div>
     </div>
+    <small class="text-muted">Generates random lowercase letters</small>
 </template>
 
 {# Template for set type fields #}
 <template id="fields-set-template">
     <div class="row g-1">
         <div class="col-8">
-            <input type="text" class="form-control form-control-sm var-items" placeholder="Items (comma-separated)" required>
+            <input type="text" class="form-control form-control-sm var-items" placeholder="Items (comma-separated)" required
+                   title="Comma-separated list of items to choose from">
         </div>
         <div class="col-4">
-            <input type="number" class="form-control form-control-sm var-size" placeholder="Size" min="1" required>
+            <input type="number" class="form-control form-control-sm var-size" placeholder="Size" min="1" required
+                   title="Number of items to select">
         </div>
     </div>
+    <small class="text-muted">Items: apple, banana, cherry (comma-separated). Access with {{var[0]}}, {{var[1]}}, etc.</small>
 </template>
 
 {# Template for expression type fields #}
 <template id="fields-expression-template">
-    <input type="text" class="form-control form-control-sm var-formula" placeholder="e.g., x + y * 2" required>
+    <input type="text" class="form-control form-control-sm var-formula" placeholder="e.g., x + y * 2" required
+           title="Python expression referencing other variables">
+    <small class="text-muted">Python expression (e.g., a + b, x * 2, round(y / 3, 1)). Can reference earlier variables.</small>
 </template>
 
 {% endblock %}
