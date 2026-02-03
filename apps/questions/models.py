@@ -94,7 +94,9 @@ class VariableGenerator:
             generate_string(3, 5) -> "abc", "wxyz", "hello"
         """
         if min_length > max_length:
-            raise ValueError(f"min_length ({min_length}) cannot be greater than max_length ({max_length})")
+            raise ValueError(
+                f"min_length ({min_length}) cannot be greater than max_length ({max_length})"
+            )
 
         if min_length < 0:
             raise ValueError("min_length cannot be negative")
@@ -470,7 +472,9 @@ class Question(UUIDModel):
 
         return text
 
-    def render_text(self, language_code: str = None, seed: int = None, markdown: bool = True) -> str:
+    def render_text(
+        self, language_code: str = None, seed: int = None, markdown: bool = True
+    ) -> str:
         """
         Convenience method: generate variables and render text with markdown.
 
@@ -510,7 +514,9 @@ class Question(UUIDModel):
         for var_name, var_def in self.variables.items():
             # Check var_name is valid Python identifier
             if not var_name.isidentifier():
-                raise ValidationError(f"Variable name '{var_name}' is not a valid Python identifier")
+                raise ValidationError(
+                    f"Variable name '{var_name}' is not a valid Python identifier"
+                )
 
             # Check type exists
             if "type" not in var_def:
@@ -529,7 +535,9 @@ class Question(UUIDModel):
                 if not isinstance(var_def["max"], (int, float)):
                     raise ValidationError(f"Variable '{var_name}': 'max' must be a number")
                 if var_def["min"] > var_def["max"]:
-                    raise ValidationError(f"Variable '{var_name}': 'min' cannot be greater than 'max'")
+                    raise ValidationError(
+                        f"Variable '{var_name}': 'min' cannot be greater than 'max'"
+                    )
                 if "precision" in var_def and not isinstance(var_def["precision"], (int, float)):
                     raise ValidationError(f"Variable '{var_name}': 'precision' must be a number")
 
@@ -545,7 +553,9 @@ class Question(UUIDModel):
                 if var_def["min_length"] < 0:
                     raise ValidationError(f"Variable '{var_name}': 'min_length' cannot be negative")
                 if var_def["min_length"] > var_def["max_length"]:
-                    raise ValidationError(f"Variable '{var_name}': 'min_length' cannot be greater than 'max_length'")
+                    raise ValidationError(
+                        f"Variable '{var_name}': 'min_length' cannot be greater than 'max_length'"
+                    )
 
             elif var_type == "set":
                 if "items" not in var_def:
@@ -559,7 +569,9 @@ class Question(UUIDModel):
                 if var_def["size"] < 0:
                     raise ValidationError(f"Variable '{var_name}': 'size' cannot be negative")
                 if var_def["size"] > len(var_def["items"]):
-                    raise ValidationError(f"Variable '{var_name}': 'size' ({var_def['size']}) cannot exceed items count ({len(var_def['items'])})")
+                    raise ValidationError(
+                        f"Variable '{var_name}': 'size' ({var_def['size']}) cannot exceed items count ({len(var_def['items'])})"
+                    )
 
             elif var_type == "expression":
                 if "formula" not in var_def:
@@ -625,7 +637,9 @@ class Question(UUIDModel):
             undefined = all_references - defined_vars
 
             if undefined:
-                raise ValidationError(f"Undefined variables referenced in text: {sorted(undefined)}")
+                raise ValidationError(
+                    f"Undefined variables referenced in text: {sorted(undefined)}"
+                )
 
     def clean(self) -> None:
         """
@@ -750,7 +764,9 @@ class Choice(UUIDModel):
 
         return text
 
-    def render_text(self, language_code: str = None, variables: dict[str, Any] = None, markdown: bool = True) -> str:
+    def render_text(
+        self, language_code: str = None, variables: dict[str, Any] = None, markdown: bool = True
+    ) -> str:
         """
         Convenience method: render text with variables and markdown.
 

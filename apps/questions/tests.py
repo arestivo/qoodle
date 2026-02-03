@@ -57,7 +57,9 @@ class QuestionModelTests(TestCase):
 
     def test_question_creation(self):
         """Test creating a basic question."""
-        question = Question.objects.create(subject=self.subject, title="Addition Question", text={"none": "What is 4 + 5?"})
+        question = Question.objects.create(
+            subject=self.subject, title="Addition Question", text={"none": "What is 4 + 5?"}
+        )
         self.assertIsInstance(question.id, uuid.UUID)
         self.assertEqual(question.subject, self.subject)
         self.assertEqual(question.title, "Addition Question")
@@ -66,7 +68,9 @@ class QuestionModelTests(TestCase):
 
     def test_question_str_representation(self):
         """Test string representation of question."""
-        question = Question.objects.create(subject=self.subject, title="Test Question", text={"en": "What is the answer?"})
+        question = Question.objects.create(
+            subject=self.subject, title="Test Question", text={"en": "What is the answer?"}
+        )
         self.assertEqual(str(question), "Test Question")
 
     def test_get_text_specific_language(self):
@@ -89,7 +93,9 @@ class QuestionModelTests(TestCase):
 
     def test_get_text_fallback_to_any_language(self):
         """Test fallback to any available language."""
-        question = Question.objects.create(subject=self.subject, text={"pt": "Quanto é 4 + 5?", "es": "¿Cuánto es 4 + 5?"})
+        question = Question.objects.create(
+            subject=self.subject, text={"pt": "Quanto é 4 + 5?", "es": "¿Cuánto es 4 + 5?"}
+        )
         # No "none" key, should fallback to first alphabetically
         result = question.get_text("fr")
         self.assertIn(result, ["Quanto é 4 + 5?", "¿Cuánto es 4 + 5?"])
@@ -105,7 +111,9 @@ class QuestionModelTests(TestCase):
 
     def test_get_text_no_none_key(self):
         """Test getting text with no language specified and no none key."""
-        question = Question.objects.create(subject=self.subject, text={"en": "What is 4 + 5?", "pt": "Quanto é 4 + 5?"})
+        question = Question.objects.create(
+            subject=self.subject, text={"en": "What is 4 + 5?", "pt": "Quanto é 4 + 5?"}
+        )
         # Should fallback to first alphabetically
         self.assertEqual(question.get_text(), "What is 4 + 5?")
 
@@ -157,7 +165,9 @@ class ChoiceModelTests(TestCase):
     def setUp(self):
         """Set up test data."""
         self.subject = Subject.objects.create(name="Mathematics")
-        self.question = Question.objects.create(subject=self.subject, text={"none": "What is 4 + 5?"})
+        self.question = Question.objects.create(
+            subject=self.subject, text={"none": "What is 4 + 5?"}
+        )
 
     def test_choice_creation(self):
         """Test creating a basic choice."""
@@ -175,13 +185,17 @@ class ChoiceModelTests(TestCase):
 
     def test_get_text_specific_language(self):
         """Test retrieving choice text in specific language."""
-        choice = Choice.objects.create(question=self.question, text={"en": "Nine", "pt": "Nove"}, order=0)
+        choice = Choice.objects.create(
+            question=self.question, text={"en": "Nine", "pt": "Nove"}, order=0
+        )
         self.assertEqual(choice.get_text("en"), "Nine")
         self.assertEqual(choice.get_text("pt"), "Nove")
 
     def test_get_text_fallback(self):
         """Test choice text fallback logic."""
-        choice = Choice.objects.create(question=self.question, text={"none": "9", "en": "Nine"}, order=0)
+        choice = Choice.objects.create(
+            question=self.question, text={"none": "9", "en": "Nine"}, order=0
+        )
         # Request non-existent language, should fallback to "none"
         self.assertEqual(choice.get_text("fr"), "9")
 
@@ -255,7 +269,9 @@ class QuestionChoiceIntegrationTests(TestCase):
             text={"none": "H2O = ?", "en": "What is H2O?"},
         )
 
-        choice = Choice.objects.create(question=question, text={"none": "Water", "en": "Water"}, order=0)
+        choice = Choice.objects.create(
+            question=question, text={"none": "Water", "en": "Water"}, order=0
+        )
 
         # Both should fallback to "none" for unsupported language
         self.assertEqual(question.get_text("fr"), "H2O = ?")
@@ -271,7 +287,11 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_num_variable_within_bounds(self):
         """Test numeric variable generation stays within min/max bounds."""
-        question = Question.objects.create(subject=self.subject, text={"none": "What is {{x}}?"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "What is {{x}}?"},
+            variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+        )
 
         # Generate multiple times with different seeds
         for seed in range(20):
@@ -282,7 +302,11 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_num_variable_respects_precision(self):
         """Test numeric variable respects precision parameter."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Value: {{x}}"}, variables={"x": {"type": "num", "min": 0, "max": 10, "precision": 0.5}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "Value: {{x}}"},
+            variables={"x": {"type": "num", "min": 0, "max": 10, "precision": 0.5}},
+        )
 
         variables = question.generate_variables(seed=42)
         x_value = variables["x"]
@@ -293,7 +317,11 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_string_variable_length_constraints(self):
         """Test string variable respects min/max length constraints."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Name: {{name}}"}, variables={"name": {"type": "string", "min_length": 5, "max_length": 10}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "Name: {{name}}"},
+            variables={"name": {"type": "string", "min_length": 5, "max_length": 10}},
+        )
 
         for seed in range(10):
             variables = question.generate_variables(seed=seed)
@@ -304,7 +332,17 @@ class VariableGenerationTests(TestCase):
 
     def test_generate_set_variable_correct_size(self):
         """Test set variable returns correct number of items."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Items: {{items}}"}, variables={"items": {"type": "set", "items": ["apple", "banana", "cherry", "date", "elderberry"], "size": 3}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "Items: {{items}}"},
+            variables={
+                "items": {
+                    "type": "set",
+                    "items": ["apple", "banana", "cherry", "date", "elderberry"],
+                    "size": 3,
+                }
+            },
+        )
 
         variables = question.generate_variables(seed=42)
         self.assertIn("items", variables)
@@ -316,7 +354,15 @@ class VariableGenerationTests(TestCase):
 
     def test_expression_variable_evaluation(self):
         """Test expression variables evaluate correctly."""
-        question = Question.objects.create(subject=self.subject, text={"none": "{{a}} + {{b}} = {{sum}}"}, variables={"a": {"type": "num", "min": 1, "max": 10, "precision": 1}, "b": {"type": "num", "min": 1, "max": 10, "precision": 1}, "sum": {"type": "expression", "formula": "a + b"}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "{{a}} + {{b}} = {{sum}}"},
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "sum": {"type": "expression", "formula": "a + b"},
+            },
+        )
 
         variables = question.generate_variables(seed=42)
         self.assertIn("sum", variables)
@@ -324,7 +370,15 @@ class VariableGenerationTests(TestCase):
 
     def test_variables_evaluated_in_order(self):
         """Test that variables are evaluated in definition order."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Result: {{result}}"}, variables={"x": {"type": "num", "min": 1, "max": 5, "precision": 1}, "y": {"type": "expression", "formula": "x * 2"}, "result": {"type": "expression", "formula": "y + 10"}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "Result: {{result}}"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 5, "precision": 1},
+                "y": {"type": "expression", "formula": "x * 2"},
+                "result": {"type": "expression", "formula": "y + 10"},
+            },
+        )
 
         variables = question.generate_variables(seed=42)
         expected_y = variables["x"] * 2
@@ -343,7 +397,11 @@ class VariableSubstitutionTests(TestCase):
 
     def test_simple_variable_substitution(self):
         """Test simple variable substitution in text."""
-        question = Question.objects.create(subject=self.subject, text={"none": "What is {{x}}?"}, variables={"x": {"type": "num", "min": 5, "max": 5, "precision": 1}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "What is {{x}}?"},
+            variables={"x": {"type": "num", "min": 5, "max": 5, "precision": 1}},
+        )
 
         variables = {"x": 5}
         result = question.get_text(language_code="none", variables=variables)
@@ -351,7 +409,11 @@ class VariableSubstitutionTests(TestCase):
 
     def test_expression_evaluation_in_text(self):
         """Test that expressions in {{}} are evaluated."""
-        question = Question.objects.create(subject=self.subject, text={"none": "The values are {{items[0]}} and {{items[1]}}"}, variables={"items": {"type": "set", "items": ["A", "B", "C"], "size": 2}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "The values are {{items[0]}} and {{items[1]}}"},
+            variables={"items": {"type": "set", "items": ["A", "B", "C"], "size": 2}},
+        )
 
         variables = {"items": ["X", "Y"]}
         result = question.get_text(language_code="none", variables=variables)
@@ -359,7 +421,14 @@ class VariableSubstitutionTests(TestCase):
 
     def test_multiple_variables_in_text(self):
         """Test multiple variables in the same text."""
-        question = Question.objects.create(subject=self.subject, text={"none": "{{a}} + {{b}} = {{a + b}}"}, variables={"a": {"type": "num", "min": 1, "max": 10, "precision": 1}, "b": {"type": "num", "min": 1, "max": 10, "precision": 1}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "{{a}} + {{b}} = {{a + b}}"},
+            variables={
+                "a": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "b": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+        )
 
         variables = {"a": 3, "b": 7}
         result = question.get_text(language_code="none", variables=variables)
@@ -367,7 +436,14 @@ class VariableSubstitutionTests(TestCase):
 
     def test_variable_substitution_preserves_markdown(self):
         """Test that markdown syntax is preserved during substitution."""
-        question = Question.objects.create(subject=self.subject, text={"none": "**Bold {{x}}** and *italic {{y}}*"}, variables={"x": {"type": "string", "min_length": 4, "max_length": 4}, "y": {"type": "string", "min_length": 4, "max_length": 4}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "**Bold {{x}}** and *italic {{y}}*"},
+            variables={
+                "x": {"type": "string", "min_length": 4, "max_length": 4},
+                "y": {"type": "string", "min_length": 4, "max_length": 4},
+            },
+        )
 
         variables = {"x": "text", "y": "word"}
         result = question.get_text(language_code="none", variables=variables)
@@ -375,7 +451,15 @@ class VariableSubstitutionTests(TestCase):
 
     def test_substitution_in_choices(self):
         """Test variable substitution works in choice text."""
-        question = Question.objects.create(subject=self.subject, text={"none": "What is {{x}} + {{y}}?"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}, "y": {"type": "num", "min": 1, "max": 10, "precision": 1}, "sum": {"type": "expression", "formula": "x + y"}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "What is {{x}} + {{y}}?"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "y": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "sum": {"type": "expression", "formula": "x + y"},
+            },
+        )
 
         choice = Choice.objects.create(question=question, text={"none": "{{sum}}"}, order=0)
 
@@ -393,7 +477,14 @@ class VariableValidationTests(TestCase):
 
     def test_circular_dependency_detected(self):
         """Test that circular dependencies are detected."""
-        question = Question(subject=self.subject, text={"none": "Test {{x}}"}, variables={"x": {"type": "expression", "formula": "y + 1"}, "y": {"type": "expression", "formula": "x + 1"}})
+        question = Question(
+            subject=self.subject,
+            text={"none": "Test {{x}}"},
+            variables={
+                "x": {"type": "expression", "formula": "y + 1"},
+                "y": {"type": "expression", "formula": "x + 1"},
+            },
+        )
 
         with self.assertRaises(ValidationError) as cm:
             question.full_clean()
@@ -403,7 +494,11 @@ class VariableValidationTests(TestCase):
 
     def test_undefined_variable_reference_error(self):
         """Test that undefined variable references are caught."""
-        question = Question(subject=self.subject, text={"none": "Value is {{undefined_var}}"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}})
+        question = Question(
+            subject=self.subject,
+            text={"none": "Value is {{undefined_var}}"},
+            variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+        )
 
         with self.assertRaises(ValidationError) as cm:
             question.full_clean()
@@ -413,7 +508,14 @@ class VariableValidationTests(TestCase):
 
     def test_expression_with_undefined_reference(self):
         """Test that expression referencing undefined variable is caught."""
-        question = Question(subject=self.subject, text={"none": "Result: {{result}}"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}, "result": {"type": "expression", "formula": "undefined_var + 1"}})
+        question = Question(
+            subject=self.subject,
+            text={"none": "Result: {{result}}"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "result": {"type": "expression", "formula": "undefined_var + 1"},
+            },
+        )
 
         with self.assertRaises(ValidationError) as cm:
             question.full_clean()
@@ -427,16 +529,16 @@ class VariableValidationTests(TestCase):
         question = Question(
             subject=self.subject,
             text={"none": "Value: {{x}}"},
-            variables={
-                "x": {"type": "num"}  # Missing min/max
-            },
+            variables={"x": {"type": "num"}},  # Missing min/max
         )
 
         with self.assertRaises(ValidationError) as cm:
             question.full_clean()
 
         error_message = str(cm.exception).lower()
-        self.assertTrue("min" in error_message or "max" in error_message or "required" in error_message)
+        self.assertTrue(
+            "min" in error_message or "max" in error_message or "required" in error_message
+        )
 
     def test_set_size_exceeds_items_error(self):
         """Test that requesting more items than available is caught."""
@@ -456,21 +558,33 @@ class VariableValidationTests(TestCase):
             question.full_clean()
 
         error_message = str(cm.exception).lower()
-        self.assertTrue("size" in error_message or "items" in error_message or "exceed" in error_message)
+        self.assertTrue(
+            "size" in error_message or "items" in error_message or "exceed" in error_message
+        )
 
     def test_min_greater_than_max_error(self):
         """Test that min > max is caught."""
-        question = Question(subject=self.subject, text={"none": "Value: {{x}}"}, variables={"x": {"type": "num", "min": 10, "max": 5, "precision": 1}})
+        question = Question(
+            subject=self.subject,
+            text={"none": "Value: {{x}}"},
+            variables={"x": {"type": "num", "min": 10, "max": 5, "precision": 1}},
+        )
 
         with self.assertRaises(ValidationError) as cm:
             question.full_clean()
 
         error_message = str(cm.exception).lower()
-        self.assertTrue("min" in error_message or "max" in error_message or "greater" in error_message)
+        self.assertTrue(
+            "min" in error_message or "max" in error_message or "greater" in error_message
+        )
 
     def test_undefined_variable_in_choice_text(self):
         """Test that undefined variables in choice text are caught."""
-        question = Question(subject=self.subject, text={"none": "Question with {{x}}"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}})
+        question = Question(
+            subject=self.subject,
+            text={"none": "Question with {{x}}"},
+            variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+        )
         question.save()
 
         # Add choice with undefined variable
@@ -492,7 +606,15 @@ class VariableIntegrationTests(TestCase):
 
     def test_create_question_with_variables(self):
         """Test creating a question with variables."""
-        question = Question.objects.create(subject=self.subject, title="Variable Question", text={"none": "What is {{x}} + {{y}}?"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}, "y": {"type": "num", "min": 1, "max": 10, "precision": 1}})
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Variable Question",
+            text={"none": "What is {{x}} + {{y}}?"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "y": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+        )
 
         question.full_clean()  # Should not raise
 
@@ -506,11 +628,16 @@ class VariableIntegrationTests(TestCase):
     def test_edit_question_add_variables(self):
         """Test adding variables to existing question."""
         # Create question without variables
-        question = Question.objects.create(subject=self.subject, title="Simple Question", text={"none": "What is 2 + 2?"})
+        question = Question.objects.create(
+            subject=self.subject, title="Simple Question", text={"none": "What is 2 + 2?"}
+        )
 
         # Update to add variables
         question.text = {"none": "What is {{a}} + {{b}}?"}
-        question.variables = {"a": {"type": "num", "min": 1, "max": 5, "precision": 1}, "b": {"type": "num", "min": 1, "max": 5, "precision": 1}}
+        question.variables = {
+            "a": {"type": "num", "min": 1, "max": 5, "precision": 1},
+            "b": {"type": "num", "min": 1, "max": 5, "precision": 1},
+        }
         question.save()
         question.full_clean()  # Should not raise
 
@@ -521,7 +648,9 @@ class VariableIntegrationTests(TestCase):
 
     def test_question_without_variables_still_works(self):
         """Test backward compatibility - questions without variables."""
-        question = Question.objects.create(subject=self.subject, title="Static Question", text={"none": "What is 2 + 2?"})
+        question = Question.objects.create(
+            subject=self.subject, title="Static Question", text={"none": "What is 2 + 2?"}
+        )
 
         # Should work without variables
         question.full_clean()
@@ -534,7 +663,11 @@ class VariableIntegrationTests(TestCase):
 
     def test_preview_generates_different_instances(self):
         """Test that different seeds generate different variable values."""
-        question = Question.objects.create(subject=self.subject, text={"none": "Value: {{x}}"}, variables={"x": {"type": "num", "min": 1, "max": 100, "precision": 1}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"none": "Value: {{x}}"},
+            variables={"x": {"type": "num", "min": 1, "max": 100, "precision": 1}},
+        )
 
         # Generate with different seeds
         vars1 = question.generate_variables(seed=0)
@@ -547,7 +680,14 @@ class VariableIntegrationTests(TestCase):
 
     def test_multilingual_with_variables(self):
         """Test that variables work with multilingual text."""
-        question = Question.objects.create(subject=self.subject, text={"en": "What is {{x}} + {{y}}?", "pt": "Quanto é {{x}} + {{y}}?"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}, "y": {"type": "num", "min": 1, "max": 10, "precision": 1}})
+        question = Question.objects.create(
+            subject=self.subject,
+            text={"en": "What is {{x}} + {{y}}?", "pt": "Quanto é {{x}} + {{y}}?"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 10, "precision": 1},
+                "y": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+        )
 
         variables = question.generate_variables(seed=42)
 
@@ -573,7 +713,12 @@ class VariableFormTests(TestCase):
 
     def test_question_form_accepts_variables_json(self):
         """Test that QuestionForm accepts and processes variables_json."""
-        form_data = {"subject": self.subject.id, "title": "Test Question", "text": '{"none": "What is {{x}}?"}', "variables_json": '{"x": {"type": "num", "min": 1, "max": 10, "precision": 1}}'}
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Test Question",
+            "text": '{"none": "What is {{x}}?"}',
+            "variables_json": '{"x": {"type": "num", "min": 1, "max": 10, "precision": 1}}',
+        }
 
         form = self.form_class(data=form_data)
         self.assertTrue(form.is_valid(), form.errors)
@@ -597,7 +742,12 @@ class VariableFormTests(TestCase):
 
     def test_question_form_saves_variables_to_model(self):
         """Test that QuestionForm saves variables to model."""
-        form_data = {"subject": self.subject.id, "title": "Test Question", "text": '{"none": "What is {{x}}?"}', "variables_json": '{"x": {"type": "num", "min": 1, "max": 10, "precision": 1}}'}
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Test Question",
+            "text": '{"none": "What is {{x}}?"}',
+            "variables_json": '{"x": {"type": "num", "min": 1, "max": 10, "precision": 1}}',
+        }
 
         form = self.form_class(data=form_data)
         self.assertTrue(form.is_valid(), form.errors)
@@ -609,7 +759,12 @@ class VariableFormTests(TestCase):
 
     def test_question_form_empty_variables_json(self):
         """Test that form handles empty/missing variables_json."""
-        form_data = {"subject": self.subject.id, "title": "Test Question", "text": '{"none": "Simple question"}', "variables_json": ""}
+        form_data = {
+            "subject": self.subject.id,
+            "title": "Test Question",
+            "text": '{"none": "Simple question"}',
+            "variables_json": "",
+        }
 
         form = self.form_class(data=form_data)
         self.assertTrue(form.is_valid(), form.errors)
@@ -620,7 +775,12 @@ class VariableFormTests(TestCase):
 
     def test_question_form_edit_mode_loads_variables(self):
         """Test that form loads existing variables in edit mode."""
-        question = Question.objects.create(subject=self.subject, title="Existing Question", text={"none": "What is {{x}}?"}, variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}})
+        question = Question.objects.create(
+            subject=self.subject,
+            title="Existing Question",
+            text={"none": "What is {{x}}?"},
+            variables={"x": {"type": "num", "min": 1, "max": 10, "precision": 1}},
+        )
 
         form = self.form_class(instance=question)
 

@@ -24,7 +24,9 @@ class QuestionListView(ListView):
 
     def get_queryset(self) -> QuerySet[Question]:
         """Return questions, optionally filtered by subject."""
-        qs = Question.objects.select_related("subject").prefetch_related(Prefetch("choices", queryset=Choice.objects.order_by("order")))
+        qs = Question.objects.select_related("subject").prefetch_related(
+            Prefetch("choices", queryset=Choice.objects.order_by("order"))
+        )
 
         # Filter by subject if specified
         subject_id = self.request.GET.get("subject")
@@ -158,10 +160,18 @@ class QuestionCreateView(CreateView):
                     choice.save()
                 except Choice.DoesNotExist:
                     # If choice doesn't exist, create it
-                    Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+                    Choice.objects.create(
+                        question=self.object,
+                        text=self._parse_multilingual_text(choice_data["text"]),
+                        order=i,
+                    )
             else:
                 # Create new
-                Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+                Choice.objects.create(
+                    question=self.object,
+                    text=self._parse_multilingual_text(choice_data["text"]),
+                    order=i,
+                )
 
     def _parse_multilingual_text(self, text):
         """Parse text using MultilingualTextField logic."""
@@ -255,10 +265,18 @@ class QuestionUpdateView(UpdateView):
                     choice.save()
                 except Choice.DoesNotExist:
                     # If choice doesn't exist, create it
-                    Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+                    Choice.objects.create(
+                        question=self.object,
+                        text=self._parse_multilingual_text(choice_data["text"]),
+                        order=i,
+                    )
             else:
                 # Create new
-                Choice.objects.create(question=self.object, text=self._parse_multilingual_text(choice_data["text"]), order=i)
+                Choice.objects.create(
+                    question=self.object,
+                    text=self._parse_multilingual_text(choice_data["text"]),
+                    order=i,
+                )
 
     def _parse_multilingual_text(self, text):
         """Parse text using MultilingualTextField logic."""
@@ -277,7 +295,9 @@ class QuestionPreviewView(DetailView):
 
     def get_queryset(self):
         """Optimize with select_related and prefetch_related."""
-        return Question.objects.select_related("subject").prefetch_related(Prefetch("choices", queryset=Choice.objects.order_by("order")))
+        return Question.objects.select_related("subject").prefetch_related(
+            Prefetch("choices", queryset=Choice.objects.order_by("order"))
+        )
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add all available languages to context."""
@@ -308,7 +328,9 @@ class QuestionPreviewView(DetailView):
             rendered_texts = {}
             for lang in context["languages"]:
                 try:
-                    rendered_texts[lang] = self.object.get_text(language_code=lang, variables=variables)
+                    rendered_texts[lang] = self.object.get_text(
+                        language_code=lang, variables=variables
+                    )
                 except (ValueError, KeyError):
                     rendered_texts[lang] = None
 
@@ -318,7 +340,9 @@ class QuestionPreviewView(DetailView):
                 choice_texts = {}
                 for lang in context["languages"]:
                     try:
-                        choice_texts[lang] = choice.get_text(language_code=lang, variables=variables)
+                        choice_texts[lang] = choice.get_text(
+                            language_code=lang, variables=variables
+                        )
                     except (ValueError, KeyError):
                         choice_texts[lang] = None
                 rendered_choices.append(
