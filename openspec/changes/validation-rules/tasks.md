@@ -43,69 +43,69 @@
 - [x] Test `test_validation_rule_undefined_variable` - rule references undefined variable
 - [x] Test `test_complex_validation_rules` - triangle inequality, integer results
 
-## Phase 2: Form & Validation
+## Phase 2: Form & Validation ✅
 
-### P2.1: Add validation_rules to QuestionForm
-- [ ] Add `validation_rules` field to QuestionForm in `apps/questions/forms.py`
-- [ ] Use JSONField or CharField with JSON handling
-- [ ] Add widget configuration for textarea display
-- [ ] Add help_text with examples
+### P2.1: Add validation_rules to QuestionForm ✅
+- [x] Add `validation_rules` field to QuestionForm in `apps/questions/forms.py`
+- [x] Use JSONField or CharField with JSON handling
+- [x] Add widget configuration for textarea display
+- [x] Add help_text with examples
 
-### P2.2: Implement form validation for rules
-- [ ] Add `clean_validation_rules()` method to QuestionForm
-- [ ] Parse rules as JSON list if string input
-- [ ] Validate each rule is a string
-- [ ] Test syntax by attempting compile() on each rule
-- [ ] Return cleaned list of rules
+### P2.2: Implement form validation for rules ✅
+- [x] Add `clean_validation_rules()` method to QuestionForm
+- [x] Parse rules as JSON list if string input
+- [x] Validate each rule is a string
+- [x] Test syntax by attempting compile() on each rule
+- [x] Return cleaned list of rules
 
-### P2.3: Handle JSON serialization in form save
-- [ ] Ensure validation_rules saves as list to JSONField
-- [ ] Handle both string and list input formats
-- [ ] Test round-trip: save and reload
+### P2.3: Handle JSON serialization in form save ✅
+- [x] Ensure validation_rules saves as list to JSONField
+- [x] Handle both string and list input formats
+- [x] Test round-trip: save and reload
 
-### P2.4: Update admin interface
-- [ ] Add `validation_rules` to QuestionAdmin fieldsets
-- [ ] Place in appropriate section (e.g., "Variables and Validation")
-- [ ] Test admin UI display and editing
+### P2.4: Update admin interface ✅
+- [x] Add `validation_rules` to QuestionAdmin fieldsets
+- [x] Place in appropriate section (e.g., "Variables and Validation")
+- [x] Test admin UI display and editing
 
-### P2.5: Write form tests
-- [ ] Test `test_validation_rules_field_valid_input` - valid rules accepted
-- [ ] Test `test_validation_rules_field_invalid_syntax` - invalid syntax rejected
-- [ ] Test `test_validation_rules_serialization` - JSON encoding/decoding works
-- [ ] Test `test_validation_rules_empty` - empty list handled correctly
+### P2.5: Write form tests ✅
+- [x] Test `test_validation_rules_field_valid_input` - valid rules accepted
+- [x] Test `test_validation_rules_field_invalid_syntax` - invalid syntax rejected
+- [x] Test `test_validation_rules_serialization` - JSON encoding/decoding works
+- [x] Test `test_validation_rules_empty` - empty list handled correctly
 
-## Phase 3: UI & JavaScript
+## Phase 3: UI & JavaScript ✅
 
-### P3.1: Create validation rules section in question_form.html
-- [ ] Add validation rules section after variables section
-- [ ] Include label "Validation Rules (Optional)"
-- [ ] Add container div for dynamic rules
-- [ ] Add "Add Rule" button
-- [ ] Add help text with examples
+### P3.1: Create validation rules section in question_form.html ✅
+- [x] Add validation rules section after variables section
+- [x] Include label "Validation Rules (Optional)"
+- [x] Add container div for dynamic rules
+- [x] Add "Add Rule" button
+- [x] Add help text with examples
 
-### P3.2: Create HTML template for rule inputs
-- [ ] Create `<template>` element for rule input row
-- [ ] Include text input for rule expression
-- [ ] Include delete button for each rule
-- [ ] Add appropriate styling classes
+### P3.2: Create HTML template for rule inputs ✅
+- [x] Create `<template>` element for rule input row
+- [x] Include text input for rule expression
+- [x] Include delete button for each rule
+- [x] Add appropriate styling classes
 
-### P3.3: Implement JavaScript for rule management
-- [ ] Add `addValidationRule()` function in `question_form.js`
-- [ ] Add `removeValidationRule(index)` function
-- [ ] Add event listener for "Add Rule" button
-- [ ] Add event listeners for delete buttons
-- [ ] Implement rule numbering/indexing
+### P3.3: Implement JavaScript for rule management ✅
+- [x] Add `addValidationRule()` function in `question_form.js`
+- [x] Add `removeValidationRule(index)` function
+- [x] Add event listener for "Add Rule" button
+- [x] Add event listeners for delete buttons
+- [x] Implement rule numbering/indexing
 
-### P3.4: Implement form serialization
-- [ ] Collect all rule inputs on form submit
-- [ ] Serialize to JSON array
-- [ ] Store in hidden field or textarea for form submission
-- [ ] Handle empty rules list
+### P3.4: Implement form serialization ✅
+- [x] Collect all rule inputs on form submit
+- [x] Serialize to JSON array
+- [x] Store in hidden field or textarea for form submission
+- [x] Handle empty rules list
 
-### P3.5: Add client-side validation hints
-- [ ] Add basic syntax checking on blur/change
-- [ ] Show visual feedback for common errors
-- [ ] Keep validation non-blocking (server validates authoritatively)
+### P3.5: Add client-side validation hints ✅
+- [x] Add basic syntax checking on blur/change
+- [x] Show visual feedback for common errors
+- [x] Keep validation non-blocking (server validates authoritatively)
 
 ## Phase 4: Preview & Error Handling ✅
 
