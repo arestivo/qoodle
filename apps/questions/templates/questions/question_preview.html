@@ -2,6 +2,10 @@
 {% load static %}
 {% load question_tags %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'questions/css/question_preview.css' %}">
+{% endblock %}
+
 {% block title %}Preview Question - Qoodle{% endblock %}
 
 {% block content %}
@@ -38,7 +42,6 @@
                     </a>
                 </p>
                 <p class="mb-1"><strong>Updated:</strong> {{ question.updated_at|date:"Y-m-d H:i" }}</p>
-                <p class="mb-0"><strong>Number of Choices:</strong> {{ question.choice_count }}</p>
             </div>
         </div>
 
@@ -161,17 +164,20 @@
                                             </div>
                                             <div>
                                                 <strong>Choices:</strong>
-                                                <div class="list-group">
-                                                    {% for choice in preview_instance.choices %}
-                                                        <div class="list-group-item {% if choice.is_correct %}list-group-item-success{% endif %}">
-                                                            <span class="badge bg-secondary me-2">{{ choice.order }}</span>
-                                                            {% if choice.is_correct %}
-                                                                <i class="fa-solid fa-check-circle text-success"></i>
-                                                            {% endif %}
-                                                            {{ choice.texts|get_item:lang|markdown }}
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
+                                                <table class="table table-sm mb-0 mt-2 choices-table">
+                                                    <tbody>
+                                                        {% for choice in preview_instance.choices %}
+                                                            <tr class="{% if choice.is_correct %}table-success{% endif %}">
+                                                                <td style="width: 0px;" class="text-center align-middle p-2">
+                                                                    <strong>{{ choice.order }}</strong>
+                                                                </td>
+                                                                <td class="align-middle p-2">
+                                                                    {{ choice.texts|get_item:lang|markdown }}
+                                                                </td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
                                                 </div>
                                             </div>
                                         </div>
