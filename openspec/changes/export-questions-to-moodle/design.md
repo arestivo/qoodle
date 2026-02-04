@@ -40,12 +40,13 @@ The export process transforms these abstract specifications into concrete Moodle
 
 ### 1. Hardcoded Fraction Schemes (2-6 Choices)
 
-**Decision:** Implement 5 hardcoded fraction schemes as Python dict literals rather than database/config storage.
+**Decision:** Calculate single-choice fractions dynamically using formula `-100/(n-1)`, implement multi-choice as 5 hardcoded schemes.
 
 **Rationale:**
-- Only 5 valid schemes needed (2/3/4/5/6 choices)
-- Schemes are mathematically derived (ensure unique score combinations)
-- No user customization required
+- Single-choice penalty is formulaic: wrong_fraction = -100 / (num_choices - 1)
+- Multi-choice schemes are not formulaic (6-choice uses 75/5, not 50/10)
+- Single-choice supports any number of choices ≥2
+- Multi-choice limited to 2-6 choices for pattern tracking
 - Simpler to test and maintain than dynamic configuration
 
 **Implementation:**
@@ -53,9 +54,17 @@ The export process transforms these abstract specifications into concrete Moodle
 def calculate_fractions(num_choices: int, grading_mode: str) -> dict[str, Decimal]:
     """Calculate answer fractions for Moodle XML export."""
     if grading_mode == 'single':
-        return {'correct': Decimal('100.0'), 'wrong': Decimal('-33.33')}
+        # Formula: wrong penalty = -100 / (num_choices - 1)
+        # Examples: 2 choices=-100%, 3=-50%, 4=-33.33%, 5=-25%, 6=-20%
+        if num_choices < 2:
+            raise ValueError(f"Questions must have at least 2 choices, got {num_choices}")
+        wrong_fraction = -100.0 / (num_choices - 1)
+        return {
+            'correct': Decimal('100.0'),
+            'wrong': Decimal(str(round(wrong_fraction, 5)))
+        }
     
-    # Multi-choice schemes (hardcoded)
+    # Multi-choice schemes (hardcoded for pattern tracking)
     schemes = {
         2: {'correct': Decimal('90.0'), 'wrong': Decimal('10.0')},
         3: {'correct': Decimal('80.0'), 'wrong': Decimal('10.0')},
@@ -225,8 +234,10 @@ def generate_moodle_xml(exam: Exam, language: str) -> str:
                     html_choice = format_html_for_moodle(choice['text'])
                     text_elem = ET.SubElement(answer, 'text')
                     text_elem.text = f"<![CDATA[{html_choice}]]>"
-                
-                # Default grade
+                                # Single attribute (true for single-choice, false for multi-choice)
+                single_value = 'true' if exam.grading_mode == 'single' else 'false'
+                ET.SubElement(question, 'single').text = single_value
+                                # Default grade
                 ET.SubElement(question, 'defaultgrade').text = str(pool.default_grade)
                 
                 question_number += 1

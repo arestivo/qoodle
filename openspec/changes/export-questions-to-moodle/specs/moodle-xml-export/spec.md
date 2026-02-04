@@ -148,12 +148,24 @@ Returns dictionary with:
 - `'wrong'`: Fraction for wrong answers
 
 #### Single Choice Mode Logic
+
+Formula: `wrong_fraction = -100 / (num_choices - 1)`
+
 ```python
-return {
-    'correct': 100,
-    'wrong': -33.33333
-}
+if grading_mode == 'single':
+    wrong_fraction = -100.0 / (num_choices - 1)
+    return {
+        'correct': Decimal('100.0'),
+        'wrong': Decimal(str(wrong_fraction))
+    }
 ```
+
+Examples:
+- 2 choices: correct=100%, wrong=-100%
+- 3 choices: correct=100%, wrong=-50%
+- 4 choices: correct=100%, wrong=-33.33%
+- 5 choices: correct=100%, wrong=-25%
+- 6 choices: correct=100%, wrong=-20%
 
 #### Multi Choice Mode Logic (2-6 choices)
 | Choices | Correct | Wrong | Rationale |

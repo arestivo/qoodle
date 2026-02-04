@@ -49,8 +49,60 @@ class Exam(UUIDModel):
     def get_grading_mode_display_verbose(self) -> str:
         """Get detailed grading mode description."""
         if self.grading_mode == 'single':
-            return "Single Choice (100% / -33% fractions)"
-        return "Multiple Choice (70/10 to 75/5 fractions)"
+            return "Single Choice (One correct answer, negative fractions)"
+        return "Multiple Choice (Pattern tracking, positive fractions)"
+
+## Grading Mode Differences
+
+### Single Choice Mode
+
+Traditional single-answer questions where only one choice should be selected.
+
+**Moodle XML Attributes:**
+- `<single>true</single>` - Indicates radio button selection in Moodle
+- Negative fractions for wrong answers
+
+**Fraction Calculation:**
+Correct answer always gets 100%, wrong answers get negative fractions based on count:
+
+| Total Choices | Correct Fraction | Wrong Fraction | Formula |
+|---------------|------------------|----------------|----------|
+| 2 | 100% | -100% | -100/(n-1) |
+| 3 | 100% | -50% | -100/(n-1) |
+| 4 | 100% | -33.33% | -100/(n-1) |
+| 5 | 100% | -25% | -100/(n-1) |
+| 6 | 100% | -20% | -100/(n-1) |
+
+**Rationale:** Negative fractions penalize students for selecting wrong answers. The penalty is proportional to the number of wrong choices available.
+
+### Multiple Choice Mode
+
+Allows multiple answer selection with custom positive fractions for Excel-based answer pattern analysis.
+
+**Moodle XML Attributes:**
+- `<single>false</single>` - Indicates checkbox selection in Moodle
+- Positive fractions for both correct and wrong answers
+
+**Fraction Schemes (2-6 choices):**
+
+| Total Choices | Correct Fraction | Wrong Fraction | Score Interpretation |
+|---------------|------------------|----------------|---------------------|
+| 2 | 90% | 10% | 100% = all selected |
+| 3 | 80% | 10% | 100% = all selected |
+| 4 | 70% | 10% | 100% = all selected |
+| 5 | 60% | 10% | 100% = all selected |
+| 6 | 75% | 5% | 100% = all selected |
+
+**Rationale:** Positive fractions allow teachers to export Moodle results to Excel and calculate unique scores based on answer patterns. For example, with 4 choices (70/10 scheme):
+- Score 100% = correct + 3 wrong (student selected all)
+- Score 90% = correct + 2 wrong
+- Score 80% = correct + 1 wrong
+- Score 70% = correct only (ideal answer)
+- Score 30% = 3 wrong only
+- Score 20% = 2 wrong only
+- Score 10% = 1 wrong only
+
+This enables sophisticated analysis of student confidence and guessing patterns.
 ```
 
 ## ADDED Requirements

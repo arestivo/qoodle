@@ -57,8 +57,9 @@
   def calculate_fractions(num_choices: int, grading_mode: str) -> dict[str, Decimal]:
       """Calculate answer fractions for Moodle export."""
   ```
-  - Single mode returns: `{'correct': Decimal('100.0'), 'wrong': Decimal('-33.33')}`
-  - Multi mode returns hardcoded schemes for 2-6 choices
+  - Single mode calculates: `wrong = -100 / (num_choices - 1)`, returns `{'correct': Decimal('100.0'), 'wrong': Decimal(str(wrong))}`
+  - Multi mode returns hardcoded schemes for 2-6 choices (90/10, 80/10, 70/10, 60/10, 75/5)
+  - Raises `ValueError` for <2 choices (any mode)
   - Raises `ValueError` for >6 choices in multi mode
 
 - [ ] Implement `format_html_for_moodle()` function in `apps/exams/moodle_export.py`
@@ -156,6 +157,7 @@
   - Add sequential tags: q1, q2, q3...
   - Wrap question text in `<![CDATA[...]]>`
   - Add answers with fractions from `calculate_fractions()`
+  - Add `<single>true</single>` for single-choice mode, `<single>false</single>` for multi-choice
   - Add `<defaultgrade>` from `pool.default_grade`
   - Pretty-print with `minidom.toprettyxml(indent="  ")`
 
@@ -296,10 +298,14 @@
 ### Unit Tests for Export Logic
 
 - [ ] Create test class `CalculateFractionsTests` in `apps/exams/tests.py`
-  - Test single mode returns 100/-33.33
-  - Test multi mode schemes for 2, 3, 4, 5, 6 choices
+  - Test single mode with 2 choices returns 100/-100
+  - Test single mode with 3 choices returns 100/-50
+  - Test single mode with 4 choices returns 100/-33.33
+  - Test single mode with 5 choices returns 100/-25
+  - Test single mode with 6 choices returns 100/-20
+  - Test multi mode schemes for 2, 3, 4, 5, 6 choices (90/10, 80/10, 70/10, 60/10, 75/5)
+  - Test ValueError raised for <2 choices (any mode)
   - Test ValueError raised for 7+ choices in multi mode
-  - Test ValueError raised for 1 choice in multi mode
 
 - [ ] Create test class `VariantGenerationTests` in `apps/exams/tests.py`
   - Test deterministic generation (same seed = same output)
@@ -322,6 +328,8 @@
   - Test sequential tagging (q1, q2, q3...)
   - Test CDATA wrapping for question text
   - Test fraction attributes on answer elements
+  - Test `<single>true</single>` for single-choice exams
+  - Test `<single>false</single>` for multi-choice exams
   - Test defaultgrade element matches pool.default_grade
 
 - [ ] Create test class `LanguageExtractionTests` in `apps/exams/tests.py`
@@ -461,10 +469,12 @@
   - `poetry run mypy apps/exams/` (type check)
 
 - [ ] Manual testing checklist:
-  - [ ] Create exam with single-choice mode
-  - [ ] Export and verify fractions are 100/-33.33
+  - [ ] Create exam with single-choice mode (4 choices)
+  - [ ] Export and verify fractions are 100/-33.33 and `<single>true</single>`
+  - [ ] Create exam with single-choice mode (2 choices)
+  - [ ] Export and verify fractions are 100/-100
   - [ ] Create exam with multi-choice mode (4 choices)
-  - [ ] Export and verify fractions are 70/10
+  - [ ] Export and verify fractions are 70/10 and `<single>false</single>`
   - [ ] Create template with variables
   - [ ] Export and verify variants are unique and deterministic
   - [ ] Test language selection (English and Português)
