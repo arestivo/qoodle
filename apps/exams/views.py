@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -104,23 +104,26 @@ class PoolReorderView(View):
         direction = request.POST.get("direction")
 
         if direction == "up":
-            # Find the pool with order = pool.order - 1
-            other_pool = (
-                exam.pools.filter(order__lt=pool.order).order_by("-order").first()
-            )
-            if other_pool:
-                # Swap orders
-                pool.order, other_pool.order = other_pool.order, pool.order
-                pool.save()
-                other_pool.save()
+            other_pool = exam.pools.filter(order__lt=pool.order).order_by("-order").first()
         elif direction == "down":
-            # Find the pool with order = pool.order + 1
             other_pool = exam.pools.filter(order__gt=pool.order).order_by("order").first()
-            if other_pool:
-                # Swap orders
-                pool.order, other_pool.order = other_pool.order, pool.order
+        else:
+            other_pool = None
+
+        if other_pool:
+            # Use a temporary negative value to avoid constraint violation
+            pool_order = pool.order
+            other_order = other_pool.order
+
+            print(f"Swapping pool {pool.pk} (order {pool_order}) with pool {other_pool.pk} (order {other_order})")
+
+            with transaction.atomic():
+                pool.order = 0
                 pool.save()
+                other_pool.order = pool_order
                 other_pool.save()
+                pool.order = other_order
+                pool.save()
 
         return redirect("exams:detail", pk=exam_pk)
 

@@ -50,7 +50,7 @@
                             <h6 class="mb-0">
                                 Question {{ pool.order }}
                             </h6>
-                            <div class="btn-group btn-group-sm">
+                            <div class="btn-group btn-group-sm gap-1">
                                 <form method="post" action="{% url 'exams:pool_reorder' exam.pk pool.pk %}" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="direction" value="up">
@@ -61,7 +61,7 @@
                                         <i class="fa-solid fa-arrow-up"></i>
                                     </button>
                                 </form>
-                                <form method="post" action="{% url 'exams:pool_reorder' exam.pk pool.pk %}" class="d-inline">
+                                <form method="post" action="{% url 'exams:pool_reorder' exam.pk pool.pk %}" class="d-inline me-2">
                                     {% csrf_token %}
                                     <input type="hidden" name="direction" value="down">
                                     <button type="submit" 
