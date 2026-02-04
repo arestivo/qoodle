@@ -51,6 +51,26 @@
                                 Question {{ pool.order }}
                             </h6>
                             <div class="btn-group btn-group-sm">
+                                <form method="post" action="{% url 'exams:pool_reorder' exam.pk pool.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="direction" value="up">
+                                    <button type="submit" 
+                                            class="btn btn-outline-secondary"
+                                            title="Move Up"
+                                            {% if forloop.first %}disabled{% endif %}>
+                                        <i class="fa-solid fa-arrow-up"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'exams:pool_reorder' exam.pk pool.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="direction" value="down">
+                                    <button type="submit" 
+                                            class="btn btn-outline-secondary"
+                                            title="Move Down"
+                                            {% if forloop.last %}disabled{% endif %}>
+                                        <i class="fa-solid fa-arrow-down"></i>
+                                    </button>
+                                </form>
                                 <a href="{% url 'exams:pool_template_add' exam.pk pool.pk %}" 
                                    class="btn btn-outline-primary"
                                    title="Add Template Versions">

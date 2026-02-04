@@ -95,13 +95,34 @@ class PoolDeleteView(DeleteView):
         return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
 
 
-class PoolReorderView(UpdateView):
-    """Placeholder for pool reordering - can be implemented later."""
+class PoolReorderView(View):
+    """Reorder a pool up or down within an exam."""
 
-    model = QuestionPool
+    def post(self, request, exam_pk, pk):
+        pool = get_object_or_404(QuestionPool, pk=pk, exam_id=exam_pk)
+        exam = pool.exam
+        direction = request.POST.get("direction")
 
-    def get_success_url(self):
-        return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
+        if direction == "up":
+            # Find the pool with order = pool.order - 1
+            other_pool = (
+                exam.pools.filter(order__lt=pool.order).order_by("-order").first()
+            )
+            if other_pool:
+                # Swap orders
+                pool.order, other_pool.order = other_pool.order, pool.order
+                pool.save()
+                other_pool.save()
+        elif direction == "down":
+            # Find the pool with order = pool.order + 1
+            other_pool = exam.pools.filter(order__gt=pool.order).order_by("order").first()
+            if other_pool:
+                # Swap orders
+                pool.order, other_pool.order = other_pool.order, pool.order
+                pool.save()
+                other_pool.save()
+
+        return redirect("exams:detail", pk=exam_pk)
 
 
 class PoolTemplateAddView(TemplateView):
