@@ -103,7 +103,7 @@
                     </div>
                 </form>
             {% else %}
-                <div class="alert alert-info">
+                <div class="alert alert-warning alert-permanent">
                     <i class="fa-solid fa-info-circle"></i>
                     All available templates have already been added to this question.
                     {% if selected_subject %}
@@ -111,7 +111,7 @@
                     {% endif %}
                 </div>
                 <a href="{% url 'exams:detail' exam.pk %}" class="btn btn-secondary">
-                    Back to Exam
+                    <i class="fa-solid fa-arrow-left"></i> Back to Exam
                 </a>
             {% endif %}
         </div>

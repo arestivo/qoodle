@@ -154,24 +154,34 @@ class QuestionPoolTemplateModelTests(TestCase):
 
     def test_create_pool_template_link_with_version_count(self):
         """Test creating a pool-template link with version count."""
-        pt = QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=5)
+        pt = QuestionPoolTemplate.objects.create(
+            pool=self.pool, template=self.template1, number_of_versions=5
+        )
         self.assertEqual(pt.pool, self.pool)
         self.assertEqual(pt.template, self.template1)
         self.assertEqual(pt.number_of_versions, 5)
 
     def test_unique_constraint_on_pool_template_prevents_duplicates(self):
         """Test that (pool, template) unique constraint prevents duplicates."""
-        QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
+        QuestionPoolTemplate.objects.create(
+            pool=self.pool, template=self.template1, number_of_versions=1
+        )
 
         with self.assertRaises(IntegrityError):
-            QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
+            QuestionPoolTemplate.objects.create(
+                pool=self.pool, template=self.template1, number_of_versions=1
+            )
 
     def test_same_template_can_be_in_different_pools(self):
         """Test that same template can be in different pools."""
         pool2 = QuestionPool.objects.create(exam=self.exam, order=2)
 
-        pt1 = QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
-        pt2 = QuestionPoolTemplate.objects.create(pool=pool2, template=self.template1, number_of_versions=3)
+        pt1 = QuestionPoolTemplate.objects.create(
+            pool=self.pool, template=self.template1, number_of_versions=1
+        )
+        pt2 = QuestionPoolTemplate.objects.create(
+            pool=pool2, template=self.template1, number_of_versions=3
+        )
 
         self.assertEqual(pt1.template, pt2.template)
         self.assertNotEqual(pt1.pool, pt2.pool)
@@ -322,7 +332,9 @@ class PoolViewTests(TestCase):
         pool = QuestionPool.objects.create(exam=self.exam, order=1)
         pool_id = pool.id
 
-        self.client.post(reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk}))
+        self.client.post(
+            reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk})
+        )
 
         self.assertFalse(QuestionPool.objects.filter(id=pool_id).exists())
 
@@ -339,7 +351,9 @@ class PoolViewTests(TestCase):
         QuestionPoolTemplate.objects.create(pool=pool, template=template, number_of_versions=1)
 
         template_id = template.id
-        self.client.post(reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk}))
+        self.client.post(
+            reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk})
+        )
 
         self.assertTrue(QuestionTemplate.objects.filter(id=template_id).exists())
 
@@ -366,7 +380,9 @@ class PoolTemplateViewTests(TestCase):
     def test_pool_template_add_view_excludes_existing_templates(self):
         """Test that pool template add view excludes already-used templates."""
         # Add template1 to pool
-        QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
+        QuestionPoolTemplate.objects.create(
+            pool=self.pool, template=self.template1, number_of_versions=1
+        )
 
         response = self.client.get(
             reverse(
@@ -396,12 +412,18 @@ class PoolTemplateViewTests(TestCase):
             data,
         )
 
-        self.assertTrue(QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template1).exists())
-        self.assertTrue(QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template2).exists())
+        self.assertTrue(
+            QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template1).exists()
+        )
+        self.assertTrue(
+            QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template2).exists()
+        )
 
     def test_pool_template_delete_removes_link(self):
         """Test that pool template delete removes the link."""
-        pt = QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
+        pt = QuestionPoolTemplate.objects.create(
+            pool=self.pool, template=self.template1, number_of_versions=1
+        )
         pt_id = pt.id
 
         self.client.post(
@@ -550,8 +572,12 @@ class ExamWorkflowIntegrationTests(TestCase):
 
         for i in range(1, 4):
             pool = QuestionPool.objects.create(exam=exam, order=i)
-            QuestionPoolTemplate.objects.create(pool=pool, template=self.templates[(i - 1) * 2], number_of_versions=3)
-            QuestionPoolTemplate.objects.create(pool=pool, template=self.templates[(i - 1) * 2 + 1], number_of_versions=3)
+            QuestionPoolTemplate.objects.create(
+                pool=pool, template=self.templates[(i - 1) * 2], number_of_versions=3
+            )
+            QuestionPoolTemplate.objects.create(
+                pool=pool, template=self.templates[(i - 1) * 2 + 1], number_of_versions=3
+            )
 
         self.assertEqual(exam.pools.count(), 3)
         for pool in exam.pools.all():
@@ -565,8 +591,12 @@ class ExamWorkflowIntegrationTests(TestCase):
 
         template = self.templates[0]
 
-        pt1 = QuestionPoolTemplate.objects.create(pool=pool1, template=template, number_of_versions=1)
-        pt2 = QuestionPoolTemplate.objects.create(pool=pool2, template=template, number_of_versions=1)
+        pt1 = QuestionPoolTemplate.objects.create(
+            pool=pool1, template=template, number_of_versions=1
+        )
+        pt2 = QuestionPoolTemplate.objects.create(
+            pool=pool2, template=template, number_of_versions=1
+        )
 
         self.assertEqual(pt1.template, pt2.template)
         self.assertNotEqual(pt1.pool, pt2.pool)

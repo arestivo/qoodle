@@ -144,9 +144,15 @@ class PoolTemplateAddView(TemplateView):
         from apps.subjects.models import Subject
 
         # Get all template IDs already used in any pool in this exam
-        existing_template_ids = QuestionPoolTemplate.objects.filter(pool__exam=exam).values_list("template_id", flat=True)
+        existing_template_ids = QuestionPoolTemplate.objects.filter(pool__exam=exam).values_list(
+            "template_id", flat=True
+        )
 
-        available_templates = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject").order_by("title")
+        available_templates = (
+            QuestionTemplate.objects.exclude(id__in=existing_template_ids)
+            .select_related("subject")
+            .order_by("title")
+        )
 
         # Filter by subject if provided
         subject_id = self.request.GET.get("subject")
@@ -172,7 +178,12 @@ class PoolTemplateAddView(TemplateView):
 
         if not template_ids:
             # No templates selected, redirect back with error message
-            return redirect(reverse("exams:pool_template_add", kwargs={"exam_pk": self.kwargs["exam_pk"], "pool_pk": self.kwargs["pool_pk"]}))
+            return redirect(
+                reverse(
+                    "exams:pool_template_add",
+                    kwargs={"exam_pk": self.kwargs["exam_pk"], "pool_pk": self.kwargs["pool_pk"]},
+                )
+            )
 
         # Get default number of versions
         default_versions = int(request.POST.get("default_versions", 5))
@@ -186,7 +197,9 @@ class PoolTemplateAddView(TemplateView):
             # If template has no variables, use 1 version, otherwise use default
             num_versions = 1 if not template.variables else default_versions
 
-            QuestionPoolTemplate.objects.create(pool=pool, template=template, number_of_versions=num_versions)
+            QuestionPoolTemplate.objects.create(
+                pool=pool, template=template, number_of_versions=num_versions
+            )
 
         return redirect("exams:detail", pk=self.kwargs["exam_pk"])
 
