@@ -372,12 +372,12 @@ ALLOWED_HOSTS=domain.com,www.domain.com
 
 ### Implemented ✅
 
-**Hierarchical Subject Management** (001-hierarchical-subjects)
+**Hierarchical Subject Management** (hierarchical-subjects)
 - Tree-based subject organization
 - Parent-child relationships with PROTECT constraint
 - Question count display on subjects
 
-**Multilingual Questions** (002-multilingual-questions)
+**Multilingual Questions** (multilingual-questions)
 - Question and Choice models with JSONField multilingual support
 - Marker format input (==en==, ==pt==) converted to JSON automatically
 - Intelligent language fallback (requested → none → first available)

@@ -1,6 +1,6 @@
 # Specification: UUID Model System
 
-**ID:** 001-uuid-model-system  
+**ID:** uuid-model-system  
 **Status:** Implemented  
 **Version:** 1.0  
 **Last Updated:** 2026-02-03
@@ -151,8 +151,8 @@ If migrating from integer IDs, requires data migration:
 
 ## Related Specifications
 
-- [002-subject-hierarchy](../002-subject-hierarchy/spec.md) - Uses UUIDModel
-- [003-multilingual-questions](../003-multilingual-questions/spec.md) - Uses UUIDModel
+- [subject-hierarchy](../subject-hierarchy/spec.md) - Uses UUIDModel
+- [multilingual-questions](../multilingual-questions/spec.md) - Uses UUIDModel
 
 ## References
 

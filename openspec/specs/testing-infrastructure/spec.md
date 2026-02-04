@@ -1,6 +1,6 @@
 # Specification: Testing Infrastructure
 
-**ID:** 005-testing-infrastructure  
+**ID:** testing-infrastructure  
 **Status:** Implemented  
 **Version:** 1.0  
 **Last Updated:** 2026-02-03  
@@ -687,9 +687,9 @@ poetry run pytest --durations=10  # Show 10 slowest tests
 
 ## Related Specifications
 
-- [001-uuid-model-system](../001-uuid-model-system/spec.md) - Model testing patterns
-- [002-subject-hierarchy](../002-subject-hierarchy/spec.md) - 99% coverage example
-- [003-multilingual-questions](../003-multilingual-questions/spec.md) - 91% coverage example
+- [uuid-model-system](../uuid-model-system/spec.md) - Model testing patterns
+- [subject-hierarchy](../subject-hierarchy/spec.md) - 99% coverage example
+- [multilingual-questions](../multilingual-questions/spec.md) - 91% coverage example
 
 ## Future Enhancements
 

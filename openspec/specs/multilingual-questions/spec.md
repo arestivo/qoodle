@@ -1,10 +1,10 @@
 # Specification: Multilingual Question System
 
-**ID:** 003-multilingual-questions  
+**ID:** multilingual-questions  
 **Status:** Implemented  
 **Version:** 1.0  
 **Last Updated:** 2026-02-03  
-**Change:** 002-multilingual-questions (archived)
+**Change:** multilingual-questions (archived)
 
 ## Overview
 
@@ -449,13 +449,13 @@ def test_choice_cascade_delete()  # Deleted with question
 
 ## Related Specifications
 
-- [001-uuid-model-system](../001-uuid-model-system/spec.md) - Base model
-- [002-subject-hierarchy](../002-subject-hierarchy/spec.md) - Subject organization
-- [004-static-asset-management](../004-static-asset-management/spec.md) - Compressor setup
+- [uuid-model-system](../uuid-model-system/spec.md) - Base model
+- [subject-hierarchy](../subject-hierarchy/spec.md) - Subject organization
+- [static-asset-management](../static-asset-management/spec.md) - Compressor setup
 
 ## Future Enhancements
 
-- Variable substitution in question/choice text (003-question-variables)
+- Variable substitution in question/choice text (question-variables)
 - Moodle XML export functionality
 - Choice randomization for quiz display
 - Rich text editor alternative to markdown

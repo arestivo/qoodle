@@ -1,10 +1,10 @@
 # Specification: Subject Hierarchy System
 
-**ID:** 002-subject-hierarchy  
+**ID:** subject-hierarchy  
 **Status:** Implemented  
 **Version:** 1.0  
 **Last Updated:** 2026-02-03  
-**Change:** 001-hierarchical-subjects (archived)
+**Change:** hierarchical-subjects (archived)
 
 ## Overview
 
@@ -256,8 +256,8 @@ class SubjectAdmin(admin.ModelAdmin):
 
 ## Related Specifications
 
-- [001-uuid-model-system](../001-uuid-model-system/spec.md) - Base model
-- [003-multilingual-questions](../003-multilingual-questions/spec.md) - Uses subjects for organization
+- [uuid-model-system](../uuid-model-system/spec.md) - Base model
+- [multilingual-questions](../multilingual-questions/spec.md) - Uses subjects for organization
 
 ## Future Enhancements
 

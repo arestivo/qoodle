@@ -1,6 +1,6 @@
 # Specification: Static Asset Management
 
-**ID:** 004-static-asset-management  
+**ID:** static-asset-management  
 **Status:** Implemented  
 **Version:** 1.0  
 **Last Updated:** 2026-02-03  
@@ -472,9 +472,9 @@ Files must be in `static/appname/` subdirectory:
 
 ## Related Specifications
 
-- [001-uuid-model-system](../001-uuid-model-system/spec.md) - Admin interface styling
-- [002-subject-hierarchy](../002-subject-hierarchy/spec.md) - Tree UI JavaScript
-- [003-multilingual-questions](../003-multilingual-questions/spec.md) - Question form scripts
+- [uuid-model-system](../uuid-model-system/spec.md) - Admin interface styling
+- [subject-hierarchy](../subject-hierarchy/spec.md) - Tree UI JavaScript
+- [multilingual-questions](../multilingual-questions/spec.md) - Question form scripts
 
 ## Future Enhancements
 
