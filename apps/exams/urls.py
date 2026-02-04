@@ -18,11 +18,6 @@ urlpatterns = [
         name="pool_create",
     ),
     path(
-        "<uuid:exam_pk>/pools/<uuid:pk>/edit/",
-        views.PoolUpdateView.as_view(),
-        name="pool_edit",
-    ),
-    path(
         "<uuid:exam_pk>/pools/<uuid:pk>/delete/",
         views.PoolDeleteView.as_view(),
         name="pool_delete",

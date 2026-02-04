@@ -1,10 +1,11 @@
 from django.db import models
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django.views.generic.base import TemplateView
 
-from .forms import ExamForm, QuestionPoolForm
+from .forms import ExamForm
 from .models import Exam, QuestionPool, QuestionPoolTemplate
 
 
@@ -51,40 +52,20 @@ class ExamDeleteView(DeleteView):
     success_url = reverse_lazy("exams:list")
 
 
-class PoolCreateView(CreateView):
-    model = QuestionPool
-    form_class = QuestionPoolForm
-    template_name = "exams/pool_form.html"
+class PoolCreateView(View):
+    """Create a new question pool without a form - just creates it directly."""
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["exam"] = get_object_or_404(Exam, pk=self.kwargs["exam_pk"])
-        return context
-
-    def form_valid(self, form):
+    def get(self, request, *args, **kwargs):
+        """Create a new pool and redirect to exam detail."""
         exam = get_object_or_404(Exam, pk=self.kwargs["exam_pk"])
-        form.instance.exam = exam
+
         # Set order to max+1
         max_order = exam.pools.aggregate(models.Max("order"))["order__max"] or 0
-        form.instance.order = max_order + 1
-        return super().form_valid(form)
 
-    def get_success_url(self):
-        return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
+        # Create the pool
+        QuestionPool.objects.create(exam=exam, order=max_order + 1)
 
-
-class PoolUpdateView(UpdateView):
-    model = QuestionPool
-    form_class = QuestionPoolForm
-    template_name = "exams/pool_form.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["exam"] = get_object_or_404(Exam, pk=self.kwargs["exam_pk"])
-        return context
-
-    def get_success_url(self):
-        return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
+        return redirect("exams:detail", pk=exam.pk)
 
 
 class PoolDeleteView(DeleteView):
@@ -95,6 +76,20 @@ class PoolDeleteView(DeleteView):
         context = super().get_context_data(**kwargs)
         context["exam"] = get_object_or_404(Exam, pk=self.kwargs["exam_pk"])
         return context
+
+    def form_valid(self, form):
+        """Delete the pool and renumber remaining pools sequentially."""
+        exam = get_object_or_404(Exam, pk=self.kwargs["exam_pk"])
+
+        # Delete the pool
+        response = super().form_valid(form)
+
+        # Renumber all remaining pools sequentially (1, 2, 3, ...)
+        for index, pool in enumerate(exam.pools.order_by("order"), start=1):
+            pool.order = index
+            pool.save()
+
+        return response
 
     def get_success_url(self):
         return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
