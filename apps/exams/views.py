@@ -1,3 +1,10 @@
+"""Views for exam management.
+
+This module provides CBVs for CRUD operations on exams and question pools:
+- Exam CRUD: List, Create, Detail, Update, Delete
+- Pool management: Create, Delete, Reorder
+- Pool template management: Add templates via formset, Delete templates
+"""
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy

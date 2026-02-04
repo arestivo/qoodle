@@ -1,3 +1,10 @@
+"""Models for exam management.
+
+This module defines the core models for creating and managing exams:
+- Exam: The top-level container for an exam
+- QuestionPool: An ordered pool of questions within an exam
+- QuestionPoolTemplate: Links question templates to pools with version counts
+"""
 from django.core.validators import MinValueValidator
 from django.db import models
 

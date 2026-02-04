@@ -1,3 +1,8 @@
+"""Admin configuration for exam management.
+
+This module registers Exam and QuestionPool models in the Django admin interface
+with inline editing for pools and pool templates.
+"""
 from django.contrib import admin
 
 from .models import Exam, QuestionPool, QuestionPoolTemplate

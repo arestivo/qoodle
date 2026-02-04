@@ -1,3 +1,9 @@
+"""Forms for exam management.
+
+This module defines forms for creating and editing exams and question pool templates:
+- ExamForm: Form for exam creation and editing
+- QuestionPoolTemplateFormSet: Formset for bulk adding templates to pools
+"""
 from django import forms
 from django.forms import modelformset_factory
 
