@@ -1,0 +1,44 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block title %}Delete Exam{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1>Delete Exam</h1>
+
+            <div class="alert alert-warning mt-4">
+                <h4 class="alert-heading">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Are you sure?
+                </h4>
+                <p>Are you sure you want to delete <strong>{{ object.title }}</strong>?</p>
+                
+                {% with pool_count=object.pools.count %}
+                    {% if pool_count > 0 %}
+                        <p>This will also delete <strong>{{ pool_count }} question pool{{ pool_count|pluralize }}</strong>.</p>
+                    {% endif %}
+                {% endwith %}
+                
+                <p class="mb-0">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <em>Note: Question templates will NOT be deleted.</em>
+                </p>
+            </div>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                    <a href="{% url 'exams:detail' object.pk %}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

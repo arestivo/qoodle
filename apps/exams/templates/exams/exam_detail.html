@@ -1,0 +1,119 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block title %}{{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1>{{ exam.title }}</h1>
+            <p class="text-muted mb-0">
+                {% if exam.date %}
+                    <i class="fa-solid fa-calendar"></i> {{ exam.date|date:"F j, Y" }}
+                {% else %}
+                    <i class="fa-solid fa-calendar"></i> <em>No date set</em>
+                {% endif %}
+            </p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'exams:edit' exam.pk %}" class="btn btn-outline-primary">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+            </a>
+            <a href="{% url 'exams:delete' exam.pk %}" class="btn btn-outline-danger">
+                <i class="fa-solid fa-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+
+    {% if exam.description %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Description</h5>
+                <p class="card-text">{{ exam.description|linebreaks }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Question Pools</h5>
+            <a href="{% url 'exams:pool_create' exam.pk %}" class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-plus"></i> Add Pool
+            </a>
+        </div>
+        <div class="card-body">
+            {% if pools %}
+                {% for pool in pools %}
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                Pool {{ pool.order }}
+                                <span class="badge bg-secondary ms-2">
+                                    {{ pool.pool_templates.count }} template{{ pool.pool_templates.count|pluralize }}
+                                </span>
+                            </h6>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'exams:pool_template_add' exam.pk pool.pk %}" 
+                                   class="btn btn-outline-primary"
+                                   title="Add Templates">
+                                    <i class="fa-solid fa-plus"></i> Templates
+                                </a>
+                                <a href="{% url 'exams:pool_edit' exam.pk pool.pk %}" 
+                                   class="btn btn-outline-secondary"
+                                   title="Edit Pool">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <a href="{% url 'exams:pool_delete' exam.pk pool.pk %}" 
+                                   class="btn btn-outline-danger"
+                                   title="Delete Pool">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% if pool.pool_templates.all %}
+                            <ul class="list-group list-group-flush">
+                                {% for pt in pool.pool_templates.all %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ pt.template.title }}</strong>
+                                            {% if pt.number_of_versions > 1 %}
+                                                <span class="badge bg-info text-dark ms-2">
+                                                    {{ pt.number_of_versions }} version{{ pt.number_of_versions|pluralize }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <a href="{% url 'exams:pool_template_delete' exam.pk pool.pk pt.pk %}" 
+                                           class="btn btn-sm btn-outline-danger"
+                                           title="Remove from pool">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="card-body">
+                                <p class="text-muted mb-0">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    No templates in this pool yet.
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">
+                    <i class="fa-solid fa-info-circle"></i>
+                    No question pools yet. Add your first pool to get started.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{% url 'exams:list' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Exams
+        </a>
+    </div>
+</div>
+{% endblock %}

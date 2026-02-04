@@ -181,143 +181,143 @@
 
 ### 3.1 Exam List View
 
-- [ ] Create `ExamListView` in `apps/exams/views.py` extending `ListView`
-- [ ] Set `model = Exam`, `template_name = 'exams/exam_list.html'`, `context_object_name = 'exams'`
-- [ ] Add `paginate_by = 20` to view
-- [ ] Add type hints to view class and methods
-- [ ] Create template directory: `apps/exams/templates/exams/`
-- [ ] Create `apps/exams/templates/exams/exam_list.html` extending `common/base.html`
-- [ ] Add page title "Exams" to template
-- [ ] Add "Create Exam" button linking to `{% url 'exams:create' %}`
-- [ ] Add table displaying: title, date, pool count, created date, actions
-- [ ] Add pool count column using `{{ exam.pools.count }}`
-- [ ] Add edit/delete action buttons with FontAwesome icons
-- [ ] Add empty state message: "No exams yet. Create your first exam."
-- [ ] Include pagination template if `is_paginated`
-- [ ] Test view at `/exams/` in browser
+- [x] Create `ExamListView` in `apps/exams/views.py` extending `ListView`
+- [x] Set `model = Exam`, `template_name = 'exams/exam_list.html'`, `context_object_name = 'exams'`
+- [x] Add `paginate_by = 20` to view
+- [x] Add type hints to view class and methods
+- [x] Create template directory: `apps/exams/templates/exams/`
+- [x] Create `apps/exams/templates/exams/exam_list.html` extending `common/base.html`
+- [x] Add page title "Exams" to template
+- [x] Add "Create Exam" button linking to `{% url 'exams:create' %}`
+- [x] Add table displaying: title, date, pool count, created date, actions
+- [x] Add pool count column using `{{ exam.pools.count }}`
+- [x] Add edit/delete action buttons with FontAwesome icons
+- [x] Add empty state message: "No exams yet. Create your first exam."
+- [x] Include pagination template if `is_paginated`
+- [x] Test view at `/exams/` in browser
 
 ### 3.2 Exam Create View
 
-- [ ] Create `ExamCreateView` in `apps/exams/views.py` extending `CreateView`
-- [ ] Set `model = Exam`, `form_class = ExamForm`, `template_name = 'exams/exam_form.html'`
-- [ ] Override `get_success_url()` to redirect to exam detail page
-- [ ] Create `apps/exams/templates/exams/exam_form.html` extending base
-- [ ] Add conditional page title: "Create Exam" or "Edit Exam"
-- [ ] Render form with Bootstrap styling (form-control classes)
-- [ ] Add title field with label "Title *" and form-control class
-- [ ] Add date field with label "Date" and type="date"
-- [ ] Add description textarea with rows=4
-- [ ] Add "Save" submit button with btn-primary class
-- [ ] Add "Cancel" link back to exam list or detail
-- [ ] Add CSRF token to form
-- [ ] Display form errors with Bootstrap alert classes
-- [ ] Test creating exam via `/exams/create/`
+- [x] Create `ExamCreateView` in `apps/exams/views.py` extending `CreateView`
+- [x] Set `model = Exam`, `form_class = ExamForm`, `template_name = 'exams/exam_form.html'`
+- [x] Override `get_success_url()` to redirect to exam detail page
+- [x] Create `apps/exams/templates/exams/exam_form.html` extending base
+- [x] Add conditional page title: "Create Exam" or "Edit Exam"
+- [x] Render form with Bootstrap styling (form-control classes)
+- [x] Add title field with label "Title *" and form-control class
+- [x] Add date field with label "Date" and type="date"
+- [x] Add description textarea with rows=4
+- [x] Add "Save" submit button with btn-primary class
+- [x] Add "Cancel" link back to exam list or detail
+- [x] Add CSRF token to form
+- [x] Display form errors with Bootstrap alert classes
+- [x] Test creating exam via `/exams/create/`
 
 ### 3.3 Exam Detail View
 
-- [ ] Create `ExamDetailView` in `apps/exams/views.py` extending `DetailView`
-- [ ] Set `model = Exam`, `template_name = 'exams/exam_detail.html'`, `context_object_name = 'exam'`
-- [ ] Override `get_context_data()` to add pools with prefetch_related
-- [ ] Prefetch `pools__pool_templates__template` for efficiency
-- [ ] Create `apps/exams/templates/exams/exam_detail.html` extending base
-- [ ] Display exam title as page heading
-- [ ] Add "Edit" and "Delete" buttons in header
-- [ ] Display exam date (formatted as YYYY-MM-DD or "Not set")
-- [ ] Display exam description if set
-- [ ] Add "Question Pools" section heading
-- [ ] Loop through pools ordered by `order` field
-- [ ] Display each pool as card/list-group-item showing pool number
-- [ ] Show template count per pool: "X templates"
-- [ ] List all templates in pool with title and version count badges
-- [ ] Add "Add Templates" button per pool
-- [ ] Add delete button per template in pool
-- [ ] Add "Add Pool" button at bottom
-- [ ] Show empty state if no pools: "No question pools yet"
-- [ ] Test detail view with exam containing pools
+- [x] Create `ExamDetailView` in `apps/exams/views.py` extending `DetailView`
+- [x] Set `model = Exam`, `template_name = 'exams/exam_detail.html'`, `context_object_name = 'exam'`
+- [x] Override `get_context_data()` to add pools with prefetch_related
+- [x] Prefetch `pools__pool_templates__template` for efficiency
+- [x] Create `apps/exams/templates/exams/exam_detail.html` extending base
+- [x] Display exam title as page heading
+- [x] Add "Edit" and "Delete" buttons in header
+- [x] Display exam date (formatted as YYYY-MM-DD or "Not set")
+- [x] Display exam description if set
+- [x] Add "Question Pools" section heading
+- [x] Loop through pools ordered by `order` field
+- [x] Display each pool as card/list-group-item showing pool number
+- [x] Show template count per pool: "X templates"
+- [x] List all templates in pool with title and version count badges
+- [x] Add "Add Templates" button per pool
+- [x] Add delete button per template in pool
+- [x] Add "Add Pool" button at bottom
+- [x] Show empty state if no pools: "No question pools yet"
+- [x] Test detail view with exam containing pools
 
 ### 3.4 Exam Update View
 
-- [ ] Create `ExamUpdateView` in `apps/exams/views.py` extending `UpdateView`
-- [ ] Set `model = Exam`, `form_class = ExamForm`, `template_name = 'exams/exam_form.html'`
-- [ ] Override `get_success_url()` to redirect to exam detail
-- [ ] Verify form template handles both create and edit (conditional title)
-- [ ] Test editing exam metadata at `/exams/<uuid>/edit/`
-- [ ] Verify form pre-populates with existing data
+- [x] Create `ExamUpdateView` in `apps/exams/views.py` extending `UpdateView`
+- [x] Set `model = Exam`, `form_class = ExamForm`, `template_name = 'exams/exam_form.html'`
+- [x] Override `get_success_url()` to redirect to exam detail
+- [x] Verify form template handles both create and edit (conditional title)
+- [x] Test editing exam metadata at `/exams/<uuid>/edit/`
+- [x] Verify form pre-populates with existing data
 
 ### 3.5 Exam Delete View
 
-- [ ] Create `ExamDeleteView` in `apps/exams/views.py` extending `DeleteView`
-- [ ] Set `model = Exam`, `template_name = 'exams/exam_confirm_delete.html'`, `success_url = reverse_lazy('exams:list')`
-- [ ] Create `apps/exams/templates/exams/exam_confirm_delete.html` extending base
-- [ ] Display warning: "Are you sure you want to delete [exam title]?"
-- [ ] Show pool count: "This will also delete X question pools"
-- [ ] Add note: "Question templates will NOT be deleted"
-- [ ] Add "Delete" submit button (btn-danger)
-- [ ] Add "Cancel" link back to exam detail
-- [ ] Include CSRF token in form
-- [ ] Test deleting exam and verify cascade to pools
+- [x] Create `ExamDeleteView` in `apps/exams/views.py` extending `DeleteView`
+- [x] Set `model = Exam`, `template_name = 'exams/exam_confirm_delete.html'`, `success_url = reverse_lazy('exams:list')`
+- [x] Create `apps/exams/templates/exams/exam_confirm_delete.html` extending base
+- [x] Display warning: "Are you sure you want to delete [exam title]?"
+- [x] Show pool count: "This will also delete X question pools"
+- [x] Add note: "Question templates will NOT be deleted"
+- [x] Add "Delete" submit button (btn-danger)
+- [x] Add "Cancel" link back to exam detail
+- [x] Include CSRF token in form
+- [x] Test deleting exam and verify cascade to pools
 
 ### 3.6 Pool Create View
 
-- [ ] Create `PoolCreateView` in `apps/exams/views.py` extending `CreateView`
-- [ ] Set `model = QuestionPool`, `form_class = QuestionPoolForm`
-- [ ] Override `get_context_data()` to add exam from URL kwargs
-- [ ] Override `form_valid()` to set `exam` from `exam_pk` URL parameter
-- [ ] Calculate `order = max(exam.pools.values_list('order', flat=True)) + 1` or 1
-- [ ] Set `form.instance.order` before saving
-- [ ] Redirect to exam detail on success
-- [ ] Test adding pool to exam
+- [x] Create `PoolCreateView` in `apps/exams/views.py` extending `CreateView`
+- [x] Set `model = QuestionPool`, `form_class = QuestionPoolForm`
+- [x] Override `get_context_data()` to add exam from URL kwargs
+- [x] Override `form_valid()` to set `exam` from `exam_pk` URL parameter
+- [x] Calculate `order = max(exam.pools.values_list('order', flat=True)) + 1` or 1
+- [x] Set `form.instance.order` before saving
+- [x] Redirect to exam detail on success
+- [x] Test adding pool to exam
 
 ### 3.7 Pool Update/Delete Views
 
-- [ ] Create `PoolUpdateView` extending `UpdateView` (minimal, mainly for reordering)
-- [ ] Create `PoolDeleteView` extending `DeleteView`
-- [ ] Create `apps/exams/templates/exams/pool_confirm_delete.html`
-- [ ] Show warning about templates being unlinked (not deleted)
-- [ ] Test deleting pool and verify templates remain in database
+- [x] Create `PoolUpdateView` extending `UpdateView` (minimal, mainly for reordering)
+- [x] Create `PoolDeleteView` extending `DeleteView`
+- [x] Create `apps/exams/templates/exams/pool_confirm_delete.html`
+- [x] Show warning about templates being unlinked (not deleted)
+- [x] Test deleting pool and verify templates remain in database
 
 ### 3.8 Pool Template Add View
 
-- [ ] Create `PoolTemplateAddView` in `apps/exams/views.py`
-- [ ] Override `get_context_data()` to fetch exam and pool from URL kwargs
-- [ ] Query available templates, excluding those already in pool
-- [ ] Use `QuestionTemplate.objects.exclude(id__in=pool.pool_templates.values_list('template_id'))`
-- [ ] Add subject filtering capability (dropdown or query param)
-- [ ] Render formset in context
-- [ ] Create `apps/exams/templates/exams/pool_template_add.html` extending base
-- [ ] Add breadcrumb navigation: Exams → Exam Title → Add Templates to Pool X
-- [ ] Render formset management form with `{{ formset.management_form }}`
-- [ ] Display table with columns: Template, Subject, Versions, Delete
-- [ ] Render each formset form as table row
-- [ ] Add template select dropdown with Bootstrap classes
-- [ ] Add number_of_versions input (type=number, min=1, default=1)
-- [ ] Add delete checkbox per row
-- [ ] Add "Add Templates" submit button
-- [ ] Add "Cancel" link back to exam detail
-- [ ] Override `post()` to handle formset submission
-- [ ] Validate formset, set `pool` on each instance before saving
-- [ ] Handle validation errors (duplicate template in pool)
-- [ ] Test adding multiple templates to pool at once
+- [x] Create `PoolTemplateAddView` in `apps/exams/views.py`
+- [x] Override `get_context_data()` to fetch exam and pool from URL kwargs
+- [x] Query available templates, excluding those already in pool
+- [x] Use `QuestionTemplate.objects.exclude(id__in=pool.pool_templates.values_list('template_id'))`
+- [x] Add subject filtering capability (dropdown or query param)
+- [x] Render formset in context
+- [x] Create `apps/exams/templates/exams/pool_template_add.html` extending base
+- [x] Add breadcrumb navigation: Exams → Exam Title → Add Templates to Pool X
+- [x] Render formset management form with `{{ formset.management_form }}`
+- [x] Display table with columns: Template, Subject, Versions, Delete
+- [x] Render each formset form as table row
+- [x] Add template select dropdown with Bootstrap classes
+- [x] Add number_of_versions input (type=number, min=1, default=1)
+- [x] Add delete checkbox per row
+- [x] Add "Add Templates" submit button
+- [x] Add "Cancel" link back to exam detail
+- [x] Override `post()` to handle formset submission
+- [x] Validate formset, set `pool` on each instance before saving
+- [x] Handle validation errors (duplicate template in pool)
+- [x] Test adding multiple templates to pool at once
 
 ### 3.9 Pool Template Delete
 
-- [ ] Create `PoolTemplateDeleteView` extending `DeleteView`
-- [ ] Set model to `QuestionPoolTemplate`
-- [ ] Redirect to exam detail after deletion
-- [ ] Add confirmation template or use AJAX delete
-- [ ] Verify template is unlinked from pool, not deleted from database
+- [x] Create `PoolTemplateDeleteView` extending `DeleteView`
+- [x] Set model to `QuestionPoolTemplate`
+- [x] Redirect to exam detail after deletion
+- [x] Add confirmation template or use AJAX delete
+- [x] Verify template is unlinked from pool, not deleted from database
 
 ### 3.10 Phase 3 Validation
 
-- [ ] Test full exam workflow: create → add pools → add templates → view detail
-- [ ] Verify all CRUD operations work correctly
-- [ ] Check responsive design on mobile viewport
-- [ ] Verify all Bootstrap styles render correctly
-- [ ] Verify all FontAwesome icons display
-- [ ] Test navigation between exams list, detail, and forms
-- [ ] Test edge cases: delete exam with many pools, add 10+ templates to pool
-- [ ] Run `poetry run python manage.py check --deploy` for deployment checks
-- [ ] Commit changes: "Phase 3: Implement exam views and templates"
+- [x] Test full exam workflow: create → add pools → add templates → view detail
+- [x] Verify all CRUD operations work correctly
+- [x] Check responsive design on mobile viewport
+- [x] Verify all Bootstrap styles render correctly
+- [x] Verify all FontAwesome icons display
+- [x] Test navigation between exams list, detail, and forms
+- [x] Test edge cases: delete exam with many pools, add 10+ templates to pool
+- [x] Run `poetry run python manage.py check --deploy` for deployment checks
+- [x] Commit changes: "Phase 3: Implement exam views and templates"
 
 ---
 
