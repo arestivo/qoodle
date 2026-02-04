@@ -5,6 +5,7 @@ This module defines the core models for creating and managing exams:
 - QuestionPool: An ordered pool of questions within an exam
 - QuestionPoolTemplate: Links question templates to pools with version counts
 """
+
 from django.core.validators import MinValueValidator
 from django.db import models
 

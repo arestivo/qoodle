@@ -5,6 +5,7 @@ This module provides CBVs for CRUD operations on exams and question pools:
 - Pool management: Create, Delete, Reorder
 - Pool template management: Add templates via formset, Delete templates
 """
+
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -151,15 +152,9 @@ class PoolTemplateAddView(TemplateView):
         from apps.subjects.models import Subject
 
         # Get all template IDs already used in any pool in this exam
-        existing_template_ids = QuestionPoolTemplate.objects.filter(pool__exam=exam).values_list(
-            "template_id", flat=True
-        )
+        existing_template_ids = QuestionPoolTemplate.objects.filter(pool__exam=exam).values_list("template_id", flat=True)
 
-        available_templates = (
-            QuestionTemplate.objects.exclude(id__in=existing_template_ids)
-            .select_related("subject")
-            .order_by("title")
-        )
+        available_templates = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject").order_by("title")
 
         # Filter by subject if provided
         subject_id = self.request.GET.get("subject")
@@ -204,9 +199,7 @@ class PoolTemplateAddView(TemplateView):
             # If template has no variables, use 1 version, otherwise use default
             num_versions = 1 if not template.variables else default_versions
 
-            QuestionPoolTemplate.objects.create(
-                pool=pool, template=template, number_of_versions=num_versions
-            )
+            QuestionPoolTemplate.objects.create(pool=pool, template=template, number_of_versions=num_versions)
 
         return redirect("exams:detail", pk=self.kwargs["exam_pk"])
 

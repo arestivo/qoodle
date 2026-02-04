@@ -4,6 +4,7 @@ This module defines forms for creating and editing exams and question pool templ
 - ExamForm: Form for exam creation and editing
 - QuestionPoolTemplateFormSet: Formset for bulk adding templates to pools
 """
+
 from django import forms
 from django.forms import modelformset_factory
 
@@ -15,9 +16,7 @@ class ExamForm(forms.ModelForm):
         model = Exam
         fields = ["title", "date", "description"]
         widgets = {
-            "title": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "e.g., Midterm Exam 2026"}
-            ),
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Midterm Exam 2026"}),
             "date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "description": forms.Textarea(
                 attrs={
@@ -42,8 +41,6 @@ QuestionPoolTemplateFormSet = modelformset_factory(
     can_delete=True,
     widgets={
         "template": forms.Select(attrs={"class": "form-select"}),
-        "number_of_versions": forms.NumberInput(
-            attrs={"class": "form-control", "min": 1, "value": 1}
-        ),
+        "number_of_versions": forms.NumberInput(attrs={"class": "form-control", "min": 1, "value": 1}),
     },
 )
