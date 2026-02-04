@@ -44,7 +44,7 @@ class QuestionListView(ListView):
             except Subject.DoesNotExist:
                 pass
 
-        return qs.order_by("-created_at")
+        return qs.order_by("title")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Add subjects and filter info to context."""

@@ -129,7 +129,7 @@ class PoolTemplateAddView(TemplateView):
         # Get all template IDs already used in any pool in this exam
         existing_template_ids = QuestionPoolTemplate.objects.filter(pool__exam=exam).values_list("template_id", flat=True)
 
-        available_templates = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject")
+        available_templates = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject").order_by("title")
 
         # Filter by subject if provided
         subject_id = self.request.GET.get("subject")
@@ -138,7 +138,12 @@ class PoolTemplateAddView(TemplateView):
             context["selected_subject"] = subject_id
 
         context["available_templates"] = available_templates
-        context["subjects"] = Subject.objects.all().order_by("name")
+
+        # Get all subjects and sort by full path (same as questions list)
+        all_subjects = Subject.objects.select_related("parent").all()
+        subjects_with_paths = [(subject, subject.get_full_path()) for subject in all_subjects]
+        subjects_with_paths.sort(key=lambda x: x[1])
+        context["subjects"] = [subject for subject, _ in subjects_with_paths]
 
         return context
 

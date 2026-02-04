@@ -13,47 +13,51 @@
     </div>
 
     {% if exams %}
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Date</th>
-                        <th style="width: 100px;">Questions</th>
-                        <th>Created</th>
-                        <th style="width: 120px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for exam in exams %}
-                    <tr style="cursor: pointer;" onclick="window.location='{% url 'exams:detail' exam.pk %}'">
-                        <td class="align-middle">
-                            <i class="fa-solid fa-file-lines text-primary me-1"></i>
-                            <strong>{{ exam.title }}</strong>
-                        </td>
-                        <td class="align-middle">
-                            {% if exam.date %}
-                                {{ exam.date|date:"Y-m-d" }}
-                            {% else %}
-                                <span class="text-muted">Not set</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center align-middle">
-                            <span class="badge bg-secondary">{{ exam.pools.count }}</span>
-                        </td>
-                        <td class="align-middle">{{ exam.created_at|date:"Y-m-d" }}</td>
-                        <td class="align-middle" onclick="event.stopPropagation();">
-                            <a href="{% url 'exams:edit' exam.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </a>
-                            <a href="{% url 'exams:delete' exam.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
-                                <i class="fa-solid fa-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th class="text-center">Questions</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in exams %}
+                            <tr style="cursor: pointer;" onclick="window.location='{% url 'exams:detail' exam.pk %}'">
+                                <td class="align-middle">
+                                    <i class="fa-solid fa-file-lines text-primary me-1"></i>
+                                    <strong>{{ exam.title }}</strong>
+                                </td>
+                                <td class="align-middle">
+                                    {% if exam.date %}
+                                        {{ exam.date|date:"Y-m-d" }}
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center align-middle">
+                                    <span class="badge bg-secondary">{{ exam.pools.count }}</span>
+                                </td>
+                                <td class="text-end align-middle" onclick="event.stopPropagation();">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'exams:edit' exam.pk %}" class="btn btn-outline-primary" title="Edit">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                        <a href="{% url 'exams:delete' exam.pk %}" class="btn btn-outline-danger" title="Delete">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         {% if is_paginated %}
