@@ -95,85 +95,85 @@
 
 ### 2.1 App Setup
 
-- [ ] Run `poetry run python manage.py startapp exams apps/exams` to create app
-- [ ] Add `'apps.exams'` to `INSTALLED_APPS` in `qoodle/settings.py`
-- [ ] Create `apps/exams/__init__.py` if not exists
-- [ ] Create `apps/exams/apps.py` with proper `AppConfig`
-- [ ] Verify app is recognized by Django: `poetry run python manage.py check`
+- [x] Run `poetry run python manage.py startapp exams apps/exams` to create app
+- [x] Add `'apps.exams'` to `INSTALLED_APPS` in `qoodle/settings.py`
+- [x] Create `apps/exams/__init__.py` if not exists
+- [x] Create `apps/exams/apps.py` with proper `AppConfig`
+- [x] Verify app is recognized by Django: `poetry run python manage.py check`
 
 ### 2.2 Model Implementation
 
-- [ ] Create `Exam` model in `apps/exams/models.py` with fields: title, date, description, created_at, updated_at
-- [ ] Ensure `Exam` extends `UUIDModel` from `apps.common.models`
-- [ ] Add `__str__` method returning `title` to `Exam` model
-- [ ] Add `Meta` class with `ordering = ['-created_at']` to `Exam` model
-- [ ] Create `QuestionPool` model in `apps/exams/models.py` with fields: exam (FK), order, question_templates (M2M)
-- [ ] Add `unique_together = [('exam', 'order')]` to `QuestionPool` Meta
-- [ ] Add `ordering = ['order']` to `QuestionPool` Meta
-- [ ] Create `QuestionPoolTemplate` through model with fields: pool (FK), template (FK to questions.QuestionTemplate), number_of_versions
-- [ ] Add `unique_together = [('pool', 'template')]` to `QuestionPoolTemplate` Meta
-- [ ] Add `MinValueValidator(1)` to `number_of_versions` field
-- [ ] Add docstrings to all models explaining their purpose
-- [ ] Add type hints to all model methods
+- [x] Create `Exam` model in `apps/exams/models.py` with fields: title, date, description, created_at, updated_at
+- [x] Ensure `Exam` extends `UUIDModel` from `apps.common.models`
+- [x] Add `__str__` method returning `title` to `Exam` model
+- [x] Add `Meta` class with `ordering = ['-created_at']` to `Exam` model
+- [x] Create `QuestionPool` model in `apps/exams/models.py` with fields: exam (FK), order, question_templates (M2M)
+- [x] Add `unique_together = [('exam', 'order')]` to `QuestionPool` Meta
+- [x] Add `ordering = ['order']` to `QuestionPool` Meta
+- [x] Create `QuestionPoolTemplate` through model with fields: pool (FK), template (FK to questions.QuestionTemplate), number_of_versions
+- [x] Add `unique_together = [('pool', 'template')]` to `QuestionPoolTemplate` Meta
+- [x] Add `MinValueValidator(1)` to `number_of_versions` field
+- [x] Add docstrings to all models explaining their purpose
+- [x] Add type hints to all model methods
 
 ### 2.3 Database Migrations
 
-- [ ] Run `poetry run python manage.py makemigrations exams` to create initial migration
-- [ ] Review migration file to ensure all fields and constraints are correct
-- [ ] Run `poetry run python manage.py migrate` to apply migration
-- [ ] Verify tables created: `exams_exam`, `exams_questionpool`, `exams_questionpooltemplate`
-- [ ] Verify foreign keys and unique constraints in database schema
+- [x] Run `poetry run python manage.py makemigrations exams` to create initial migration
+- [x] Review migration file to ensure all fields and constraints are correct
+- [x] Run `poetry run python manage.py migrate` to apply migration
+- [x] Verify tables created: `exams_exam`, `exams_questionpool`, `exams_questionpooltemplate`
+- [x] Verify foreign keys and unique constraints in database schema
 
 ### 2.4 Admin Registration
 
-- [ ] Create `apps/exams/admin.py` file
-- [ ] Create `ExamAdmin` class with `list_display = ['title', 'date', 'pool_count', 'created_at']`
-- [ ] Add `pool_count` method to `ExamAdmin` showing number of pools
-- [ ] Create `QuestionPoolInline` for editing pools within exam
-- [ ] Register `ExamAdmin` with `@admin.register(Exam)` decorator
-- [ ] Create `QuestionPoolAdmin` class with template count display
-- [ ] Create `QuestionPoolTemplateInline` for editing templates within pool
-- [ ] Register `QuestionPoolAdmin` with decorator
-- [ ] Create `QuestionPoolTemplateAdmin` with list display
-- [ ] Register `QuestionPoolTemplateAdmin` with decorator
-- [ ] Verify admin pages render correctly at `/admin/exams/`
+- [x] Create `apps/exams/admin.py` file
+- [x] Create `ExamAdmin` class with `list_display = ['title', 'date', 'pool_count', 'created_at']`
+- [x] Add `pool_count` method to `ExamAdmin` showing number of pools
+- [x] Create `QuestionPoolInline` for editing pools within exam
+- [x] Register `ExamAdmin` with `@admin.register(Exam)` decorator
+- [x] Create `QuestionPoolAdmin` class with template count display
+- [x] Create `QuestionPoolTemplateInline` for editing templates within pool
+- [x] Register `QuestionPoolAdmin` with decorator
+- [x] Create `QuestionPoolTemplateAdmin` with list display
+- [x] Register `QuestionPoolTemplateAdmin` with decorator
+- [x] Verify admin pages render correctly at `/admin/exams/`
 
 ### 2.5 URL Configuration
 
-- [ ] Create `apps/exams/urls.py` with `app_name = 'exams'`
-- [ ] Add exam list URL pattern: `path('', ExamListView.as_view(), name='list')`
-- [ ] Add exam create URL: `path('create/', ExamCreateView.as_view(), name='create')`
-- [ ] Add exam detail URL: `path('<uuid:pk>/', ExamDetailView.as_view(), name='detail')`
-- [ ] Add exam edit URL: `path('<uuid:pk>/edit/', ExamUpdateView.as_view(), name='edit')`
-- [ ] Add exam delete URL: `path('<uuid:pk>/delete/', ExamDeleteView.as_view(), name='delete')`
-- [ ] Add pool create URL: `path('<uuid:exam_pk>/pools/add/', PoolCreateView.as_view(), name='pool_create')`
-- [ ] Add pool edit URL: `path('<uuid:exam_pk>/pools/<uuid:pk>/edit/', PoolUpdateView.as_view(), name='pool_edit')`
-- [ ] Add pool delete URL: `path('<uuid:exam_pk>/pools/<uuid:pk>/delete/', PoolDeleteView.as_view(), name='pool_delete')`
-- [ ] Add pool template add URL: `path('<uuid:exam_pk>/pools/<uuid:pool_pk>/templates/add/', PoolTemplateAddView.as_view(), name='pool_template_add')`
-- [ ] Add pool template delete URL: `path('<uuid:exam_pk>/pools/<uuid:pool_pk>/templates/<uuid:pk>/delete/', PoolTemplateDeleteView.as_view(), name='pool_template_delete')`
-- [ ] Include exams URLs in project urls: `path('exams/', include('apps.exams.urls'))` in `qoodle/urls.py`
-- [ ] Verify URL routing works: `poetry run python manage.py show_urls` (if django-extensions installed)
+- [x] Create `apps/exams/urls.py` with `app_name = 'exams'`
+- [x] Add exam list URL pattern: `path('', ExamListView.as_view(), name='list')`
+- [x] Add exam create URL: `path('create/', ExamCreateView.as_view(), name='create')`
+- [x] Add exam detail URL: `path('<uuid:pk>/', ExamDetailView.as_view(), name='detail')`
+- [x] Add exam edit URL: `path('<uuid:pk>/edit/', ExamUpdateView.as_view(), name='edit')`
+- [x] Add exam delete URL: `path('<uuid:pk>/delete/', ExamDeleteView.as_view(), name='delete')`
+- [x] Add pool create URL: `path('<uuid:exam_pk>/pools/add/', PoolCreateView.as_view(), name='pool_create')`
+- [x] Add pool edit URL: `path('<uuid:exam_pk>/pools/<uuid:pk>/edit/', PoolUpdateView.as_view(), name='pool_edit')`
+- [x] Add pool delete URL: `path('<uuid:exam_pk>/pools/<uuid:pk>/delete/', PoolDeleteView.as_view(), name='pool_delete')`
+- [x] Add pool template add URL: `path('<uuid:exam_pk>/pools/<uuid:pool_pk>/templates/add/', PoolTemplateAddView.as_view(), name='pool_template_add')`
+- [x] Add pool template delete URL: `path('<uuid:exam_pk>/pools/<uuid:pool_pk>/templates/<uuid:pk>/delete/', PoolTemplateDeleteView.as_view(), name='pool_template_delete')`
+- [x] Include exams URLs in project urls: `path('exams/', include('apps.exams.urls'))` in `qoodle/urls.py`
+- [x] Verify URL routing works: `poetry run python manage.py show_urls` (if django-extensions installed)
 
 ### 2.6 Forms
 
-- [ ] Create `apps/exams/forms.py` file
-- [ ] Create `ExamForm` ModelForm with fields: title, date, description
-- [ ] Add Bootstrap widget classes to all `ExamForm` fields
-- [ ] Add placeholder text to `ExamForm` fields
-- [ ] Create `QuestionPoolForm` ModelForm (empty fields, order auto-assigned)
-- [ ] Create `QuestionPoolTemplateFormSet` using `modelformset_factory`
-- [ ] Configure formset with `extra=3`, `can_delete=True`
-- [ ] Add Bootstrap widget classes to formset fields
-- [ ] Add validation to prevent `number_of_versions < 1`
+- [x] Create `apps/exams/forms.py` file
+- [x] Create `ExamForm` ModelForm with fields: title, date, description
+- [x] Add Bootstrap widget classes to all `ExamForm` fields
+- [x] Add placeholder text to `ExamForm` fields
+- [x] Create `QuestionPoolForm` ModelForm (empty fields, order auto-assigned)
+- [x] Create `QuestionPoolTemplateFormSet` using `modelformset_factory`
+- [x] Configure formset with `extra=3`, `can_delete=True`
+- [x] Add Bootstrap widget classes to formset fields
+- [x] Add validation to prevent `number_of_versions < 1`
 
 ### 2.7 Phase 2 Validation
 
-- [ ] Run `poetry run python manage.py check` to verify configuration
-- [ ] Run `poetry run python manage.py migrate --check` to verify migrations
-- [ ] Access `/admin/exams/exam/` and verify admin works
-- [ ] Create test exam via admin and verify database record
-- [ ] Verify URL patterns resolve correctly
-- [ ] Commit changes: "Phase 2: Create exams app with models and admin"
+- [x] Run `poetry run python manage.py check` to verify configuration
+- [x] Run `poetry run python manage.py migrate --check` to verify migrations
+- [x] Access `/admin/exams/exam/` and verify admin works
+- [x] Create test exam via admin and verify database record
+- [x] Verify URL patterns resolve correctly
+- [x] Commit changes: "Phase 2: Create exams app with models and admin"
 
 ---
 

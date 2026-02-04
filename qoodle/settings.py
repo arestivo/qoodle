@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.subjects",
     "apps.questions",
+    "apps.exams",
 ]
 
 MIDDLEWARE = [

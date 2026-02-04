@@ -284,7 +284,7 @@ class QuestionTemplate(UUIDModel):
         help_text="Short title to identify this question template",
     )
     text = models.JSONField(
-        help_text="Question text in multiple languages (JSON)",
+        help_text="Template text in multiple languages (JSON)",
         validators=[validate_multilingual_text],
     )
     variables = models.JSONField(
@@ -301,22 +301,22 @@ class QuestionTemplate(UUIDModel):
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Question"
-        verbose_name_plural = "Questions"
+        verbose_name = "Template"
+        verbose_name_plural = "Templates"
         indexes = [
             models.Index(fields=["subject", "-created_at"]),
         ]
 
     def __str__(self) -> str:
-        """Return string representation of the question."""
+        """Return string representation of the template."""
         return self.title
 
     def get_absolute_url(self) -> str:
-        """Return the URL for this question."""
+        """Return the URL for this template."""
         return reverse("questions:preview", kwargs={"pk": self.pk})
 
     def available_languages(self) -> set[str]:
-        """Return set of all language codes used in this question."""
+        """Return set of all language codes used in this template."""
         return set(self.text.keys()) if self.text else set()
 
     def get_all_texts(self) -> dict[str, str]:
@@ -325,7 +325,7 @@ class QuestionTemplate(UUIDModel):
 
     def generate_variables(self, seed: int = None, max_validation_attempts: int = 100) -> dict[str, Any]:
         """
-        Generate values for all variables defined in this question.
+        Generate values for all variables defined in this template.
 
         Variables are evaluated in definition order. Expression variables
         can only reference variables defined earlier in the dict.
@@ -512,7 +512,7 @@ class QuestionTemplate(UUIDModel):
             variables: Optional dict of variable values for substitution
 
         Returns:
-            Question text in requested or fallback language with variables substituted
+            Template text in requested or fallback language with variables substituted
 
         Raises:
             ValueError: If no text available in any language
@@ -553,7 +553,7 @@ class QuestionTemplate(UUIDModel):
             Rendered text with variables substituted and markdown applied
 
         Example:
-            question.render_text(language_code="en", seed=42)
+            template.render_text(language_code="en", seed=42)
         """
         # Generate variable values
         variables = self.generate_variables(seed=seed)
@@ -646,7 +646,7 @@ class QuestionTemplate(UUIDModel):
         """
         Validate that all {{variable}} references in text exist in variables definition.
 
-        Checks both question text (all languages) and all choice texts.
+        Checks both template text (all languages) and all choice texts.
 
         Raises:
             ValidationError: If undefined variables are referenced
@@ -654,11 +654,11 @@ class QuestionTemplate(UUIDModel):
         if not self.text:
             return
 
-        # Collect all {{...}} references from question text
+        # Collect all {{...}} references from template text
         all_references = set()
         pattern = r"\{\{([^}]+)\}\}"
 
-        # Check question text in all languages
+        # Check template text in all languages
         for lang_text in self.text.values():
             matches = re.findall(pattern, lang_text)
             for match in matches:
@@ -666,7 +666,7 @@ class QuestionTemplate(UUIDModel):
                 var_names = re.findall(r"\b([a-zA-Z_]\w*)\b", match)
                 all_references.update(var_names)
 
-        # Check choice texts (if question has been saved and has choices)
+        # Check choice texts (if template has been saved and has choices)
         if self.pk:
             for choice in self.choices.all():
                 for lang_text in choice.text.values():
@@ -699,7 +699,7 @@ class QuestionTemplate(UUIDModel):
 
     def clean(self) -> None:
         """
-        Validate the question including variable definitions.
+        Validate the template including variable definitions.
 
         Called by Django's model validation before save.
 
@@ -733,7 +733,7 @@ class QuestionTemplate(UUIDModel):
 
     @property
     def choice_count(self) -> int:
-        """Return the number of choices for this question."""
+        """Return the number of choices for this template."""
         return self.choices.count()
 
     @property
@@ -747,7 +747,7 @@ class Choice(UUIDModel):
     Multiple choice option with multilingual support.
 
     Important: The first choice (order=0) is always the correct answer.
-    When displaying questions to students, choices should be randomized.
+    When displaying templates to students, choices should be randomized.
     """
 
     template = models.ForeignKey(
@@ -826,15 +826,15 @@ class Choice(UUIDModel):
 
         Args:
             language_code: Optional language code
-            variables: Optional dict of variable values (usually from question.generate_variables())
+            variables: Optional dict of variable values (usually from template.generate_variables())
             markdown: Whether to render as markdown (default: True)
 
         Returns:
             Rendered text with variables substituted and markdown applied
 
         Example:
-            # Generate variables from question
-            variables = choice.question.generate_variables(seed=42)
+            # Generate variables from template
+            variables = choice.template.generate_variables(seed=42)
             # Render choice with those variables
             choice.render_text(language_code="en", variables=variables)
         """
