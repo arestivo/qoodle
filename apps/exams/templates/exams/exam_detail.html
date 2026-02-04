@@ -49,9 +49,6 @@
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h6 class="mb-0">
                                 Question {{ pool.order }}
-                                <span class="badge bg-secondary ms-2">
-                                    {{ pool.pool_templates.count }} template{{ pool.pool_templates.count|pluralize }}
-                                </span>
                             </h6>
                             <div class="btn-group btn-group-sm">
                                 <a href="{% url 'exams:pool_template_add' exam.pk pool.pk %}" 
@@ -70,10 +67,13 @@
                             <ul class="list-group list-group-flush">
                                 {% for pt in pool.pool_templates.all %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <div>
+                                        <div class="d-flex align-items-center flex-grow-1 m-2">
                                             <strong>{{ pt.template.title }}</strong>
                                             {% if pt.template.subject %}
-                                                <span class="badge bg-secondary ms-2">{{ pt.template.subject.name }}</span>
+                                                <a href="{% url 'questions:list' %}?subject={{ pt.template.subject.pk }}" class="text-decoration-none ms-2">
+                                                  <i class="fa-solid fa-folder text-primary"></i>
+                                                  {{ pt.template.subject.name }}
+                                                </a>
                                             {% endif %}
                                             {% if pt.number_of_versions > 1 %}
                                                 <span class="badge bg-info text-dark ms-2">
