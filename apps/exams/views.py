@@ -1,7 +1,8 @@
 from django.db import models
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.views.generic.base import TemplateView
 
 from .forms import ExamForm, QuestionPoolForm
 from .models import Exam, QuestionPool, QuestionPoolTemplate
@@ -108,11 +109,9 @@ class PoolReorderView(UpdateView):
         return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
 
 
-class PoolTemplateAddView(CreateView):
-    """Add a question template to a pool."""
+class PoolTemplateAddView(TemplateView):
+    """Add question templates to a pool in bulk."""
 
-    model = QuestionPoolTemplate
-    fields = ["template", "number_of_versions"]
     template_name = "exams/pool_template_add.html"
 
     def get_context_data(self, **kwargs):
@@ -123,11 +122,13 @@ class PoolTemplateAddView(CreateView):
         context["exam"] = exam
         context["pool"] = pool
 
-        # Filter available templates - exclude those already in this pool
+        # Filter available templates - exclude those already used in ANY question in this exam
         from apps.questions.models import QuestionTemplate
         from apps.subjects.models import Subject
 
-        existing_template_ids = pool.pool_templates.values_list("template_id", flat=True)
+        # Get all template IDs already used in any pool in this exam
+        existing_template_ids = QuestionPoolTemplate.objects.filter(pool__exam=exam).values_list("template_id", flat=True)
+
         available_templates = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject")
 
         # Filter by subject if provided
@@ -141,41 +142,31 @@ class PoolTemplateAddView(CreateView):
 
         return context
 
-    def form_valid(self, form):
+    def post(self, request, *args, **kwargs):
         pool = get_object_or_404(QuestionPool, pk=self.kwargs["pool_pk"])
-        form.instance.pool = pool
 
-        # If template has no variables, set number_of_versions to 1
-        template = form.cleaned_data["template"]
-        if not template.variables:  # Empty string or None
-            form.instance.number_of_versions = 1
+        # Get selected template IDs from checkboxes
+        template_ids = request.POST.getlist("templates")
 
-        return super().form_valid(form)
+        if not template_ids:
+            # No templates selected, redirect back with error message
+            return redirect(reverse("exams:pool_template_add", kwargs={"exam_pk": self.kwargs["exam_pk"], "pool_pk": self.kwargs["pool_pk"]}))
 
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        # Add Bootstrap classes
-        form.fields["template"].widget.attrs.update({"class": "form-select"})
-        form.fields["number_of_versions"].widget.attrs.update({"class": "form-control", "min": 1, "value": 5})
+        # Get default number of versions
+        default_versions = int(request.POST.get("default_versions", 5))
 
-        # Filter templates - apply subject filter if provided
-        pool = get_object_or_404(QuestionPool, pk=self.kwargs["pool_pk"])
+        # Create pool template entries for each selected template
         from apps.questions.models import QuestionTemplate
 
-        existing_template_ids = pool.pool_templates.values_list("template_id", flat=True)
-        queryset = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject")
+        for template_id in template_ids:
+            template = QuestionTemplate.objects.get(pk=template_id)
 
-        # Apply subject filter from GET parameter
-        subject_id = self.request.GET.get("subject")
-        if subject_id:
-            queryset = queryset.filter(subject_id=subject_id)
+            # If template has no variables, use 1 version, otherwise use default
+            num_versions = 1 if not template.variables else default_versions
 
-        form.fields["template"].queryset = queryset
+            QuestionPoolTemplate.objects.create(pool=pool, template=template, number_of_versions=num_versions)
 
-        return form
-
-    def get_success_url(self):
-        return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
+        return redirect("exams:detail", pk=self.kwargs["exam_pk"])
 
 
 class PoolTemplateDeleteView(DeleteView):

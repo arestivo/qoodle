@@ -26,24 +26,23 @@
                 </thead>
                 <tbody>
                     {% for exam in exams %}
-                    <tr style="cursor: pointer; vertical-align: middle;" onclick="window.location='{% url 'exams:detail' exam.pk %}'">
-                        <td style="vertical-align: middle;">
-                            <a href="{% url 'exams:detail' exam.pk %}" class="text-decoration-none">
-                                {{ exam.title }}
-                            </a>
+                    <tr style="cursor: pointer;" onclick="window.location='{% url 'exams:detail' exam.pk %}'">
+                        <td class="align-middle">
+                            <i class="fa-solid fa-file-lines text-primary me-1"></i>
+                            <strong>{{ exam.title }}</strong>
                         </td>
-                        <td style="vertical-align: middle;">
+                        <td class="align-middle">
                             {% if exam.date %}
                                 {{ exam.date|date:"Y-m-d" }}
                             {% else %}
                                 <span class="text-muted">Not set</span>
                             {% endif %}
                         </td>
-                        <td class="text-center" style="vertical-align: middle;">
+                        <td class="text-center align-middle">
                             <span class="badge bg-secondary">{{ exam.pools.count }}</span>
                         </td>
-                        <td style="vertical-align: middle;">{{ exam.created_at|date:"Y-m-d" }}</td>
-                        <td style="vertical-align: middle;" onclick="event.stopPropagation();">
+                        <td class="align-middle">{{ exam.created_at|date:"Y-m-d" }}</td>
+                        <td class="align-middle" onclick="event.stopPropagation();">
                             <a href="{% url 'exams:edit' exam.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </a>

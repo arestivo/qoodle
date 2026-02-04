@@ -70,22 +70,21 @@
                             </thead>
                             <tbody>
                                 {% for question in questions %}
-                                <tr>
-                                    <td>
+                                <tr style="cursor: pointer;" onclick="window.location='{% url 'questions:preview' question.pk %}'">
+                                    <td class="align-middle">
+                                        <i class="fa-solid fa-file text-primary me-1"></i>
                                         <strong>{{ question.title }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ question.get_text|truncatewords:10 }}</small>
                                     </td>
-                                    <td>
+                                    <td class="align-middle">
                                         <a href="{% url 'questions:list' %}?subject={{ question.subject.pk }}" class="text-decoration-none">
                                             <i class="fa-solid fa-folder text-primary"></i>
                                             {{ question.subject.name }}
                                         </a>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="align-middle text-center">
                                         <span class="badge bg-secondary">{{ question.choice_count }}</span>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="align-middle text-center">
                                         <small class="text-muted">
                                             {{ question.available_languages|join:", " }}
                                         </small>

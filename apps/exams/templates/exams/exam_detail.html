@@ -77,17 +77,27 @@
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>
                                             <strong>{{ pt.template.title }}</strong>
+                                            {% if pt.template.subject %}
+                                                <span class="badge bg-secondary ms-2">{{ pt.template.subject.name }}</span>
+                                            {% endif %}
                                             {% if pt.number_of_versions > 1 %}
                                                 <span class="badge bg-info text-dark ms-2">
                                                     {{ pt.number_of_versions }} version{{ pt.number_of_versions|pluralize }}
                                                 </span>
                                             {% endif %}
                                         </div>
-                                        <a href="{% url 'exams:pool_template_delete' exam.pk pool.pk pt.pk %}" 
-                                           class="btn btn-sm btn-outline-danger"
-                                           title="Remove from question">
-                                            <i class="fa-solid fa-xmark"></i>
-                                        </a>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'questions:preview' pt.template.pk %}" 
+                                               class="btn btn-outline-info"
+                                               title="Preview template">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'exams:pool_template_delete' exam.pk pool.pk pt.pk %}" 
+                                               class="btn btn-outline-danger"
+                                               title="Remove from question">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </a>
+                                        </div>
                                     </li>
                                 {% endfor %}
                             </ul>
