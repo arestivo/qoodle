@@ -1,13 +1,13 @@
 {% extends 'common/base.html' %}
 {% load static %}
 
-{% block title %}Remove Template from Pool{% endblock %}
+{% block title %}Remove Template Version{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8 offset-md-2">
-            <h1>Remove Template from Pool</h1>
+            <h1>Remove Template Version</h1>
 
             <div class="alert alert-warning mt-4">
                 <h4 class="alert-heading">
@@ -15,7 +15,7 @@
                 </h4>
                 <p>
                     Are you sure you want to remove <strong>{{ object.template.title }}</strong> 
-                    from <strong>Pool {{ pool.order }}</strong> in <strong>{{ exam.title }}</strong>?
+                    from <strong>Question {{ pool.order }}</strong> in <strong>{{ exam.title }}</strong>?
                 </p>
                 
                 <p class="mb-0">
@@ -28,7 +28,7 @@
                 {% csrf_token %}
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-danger">
-                        <i class="fa-solid fa-xmark"></i> Remove from Pool
+                        <i class="fa-solid fa-xmark"></i> Remove from Question
                     </button>
                     <a href="{% url 'exams:detail' exam.pk %}" class="btn btn-secondary">
                         Cancel

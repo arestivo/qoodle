@@ -49,6 +49,11 @@
                             <i class="fa-solid fa-file"></i> Templates
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'exams:list' %}">
+                            <i class="fa-solid fa-file-lines"></i> Exams
+                        </a>
+                    </li>
                     {% block nav_items %}
                     {# Additional navigation items can be added here #}
                     {% endblock %}

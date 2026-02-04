@@ -37,9 +37,9 @@
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Question Pools</h5>
+            <h5 class="mb-0">Questions</h5>
             <a href="{% url 'exams:pool_create' exam.pk %}" class="btn btn-sm btn-primary">
-                <i class="fa-solid fa-plus"></i> Add Pool
+                <i class="fa-solid fa-plus"></i> Add Question
             </a>
         </div>
         <div class="card-body">
@@ -48,7 +48,7 @@
                     <div class="card mb-3">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h6 class="mb-0">
-                                Pool {{ pool.order }}
+                                Question {{ pool.order }}
                                 <span class="badge bg-secondary ms-2">
                                     {{ pool.pool_templates.count }} template{{ pool.pool_templates.count|pluralize }}
                                 </span>
@@ -56,17 +56,17 @@
                             <div class="btn-group btn-group-sm">
                                 <a href="{% url 'exams:pool_template_add' exam.pk pool.pk %}" 
                                    class="btn btn-outline-primary"
-                                   title="Add Templates">
+                                   title="Add Template Versions">
                                     <i class="fa-solid fa-plus"></i> Templates
                                 </a>
                                 <a href="{% url 'exams:pool_edit' exam.pk pool.pk %}" 
                                    class="btn btn-outline-secondary"
-                                   title="Edit Pool">
+                                   title="Edit Question">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
                                 <a href="{% url 'exams:pool_delete' exam.pk pool.pk %}" 
                                    class="btn btn-outline-danger"
-                                   title="Delete Pool">
+                                   title="Delete Question">
                                     <i class="fa-solid fa-trash"></i>
                                 </a>
                             </div>
@@ -85,7 +85,7 @@
                                         </div>
                                         <a href="{% url 'exams:pool_template_delete' exam.pk pool.pk pt.pk %}" 
                                            class="btn btn-sm btn-outline-danger"
-                                           title="Remove from pool">
+                                           title="Remove from question">
                                             <i class="fa-solid fa-xmark"></i>
                                         </a>
                                     </li>
@@ -95,7 +95,7 @@
                             <div class="card-body">
                                 <p class="text-muted mb-0">
                                     <i class="fa-solid fa-info-circle"></i>
-                                    No templates in this pool yet.
+                                    No templates for this question yet.
                                 </p>
                             </div>
                         {% endif %}
@@ -104,7 +104,7 @@
             {% else %}
                 <p class="text-muted mb-0">
                     <i class="fa-solid fa-info-circle"></i>
-                    No question pools yet. Add your first pool to get started.
+                    No questions yet. Add your first question to get started.
                 </p>
             {% endif %}
         </div>

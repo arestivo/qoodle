@@ -125,29 +125,56 @@ class PoolTemplateAddView(CreateView):
 
         # Filter available templates - exclude those already in this pool
         from apps.questions.models import QuestionTemplate
+        from apps.subjects.models import Subject
 
         existing_template_ids = pool.pool_templates.values_list("template_id", flat=True)
-        context["available_templates"] = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject")
+        available_templates = QuestionTemplate.objects.exclude(
+            id__in=existing_template_ids
+        ).select_related("subject")
+
+        # Filter by subject if provided
+        subject_id = self.request.GET.get("subject")
+        if subject_id:
+            available_templates = available_templates.filter(subject_id=subject_id)
+            context["selected_subject"] = subject_id
+
+        context["available_templates"] = available_templates
+        context["subjects"] = Subject.objects.all().order_by("name")
 
         return context
 
     def form_valid(self, form):
         pool = get_object_or_404(QuestionPool, pk=self.kwargs["pool_pk"])
         form.instance.pool = pool
+        
+        # If template has no variables, set number_of_versions to 1
+        template = form.cleaned_data["template"]
+        if not template.variables:  # Empty string or None
+            form.instance.number_of_versions = 1
+        
         return super().form_valid(form)
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         # Add Bootstrap classes
         form.fields["template"].widget.attrs.update({"class": "form-select"})
-        form.fields["number_of_versions"].widget.attrs.update({"class": "form-control", "min": 1, "value": 1})
+        form.fields["number_of_versions"].widget.attrs.update({"class": "form-control", "min": 1, "value": 5})
 
-        # Filter templates
+        # Filter templates - apply subject filter if provided
         pool = get_object_or_404(QuestionPool, pk=self.kwargs["pool_pk"])
         from apps.questions.models import QuestionTemplate
 
         existing_template_ids = pool.pool_templates.values_list("template_id", flat=True)
-        form.fields["template"].queryset = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject")
+        queryset = QuestionTemplate.objects.exclude(
+            id__in=existing_template_ids
+        ).select_related("subject")
+
+        # Apply subject filter from GET parameter
+        subject_id = self.request.GET.get("subject")
+        if subject_id:
+            queryset = queryset.filter(subject_id=subject_id)
+
+        form.fields["template"].queryset = queryset
 
         return form
 

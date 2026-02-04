@@ -17,7 +17,7 @@
                 
                 {% with pool_count=object.pools.count %}
                     {% if pool_count > 0 %}
-                        <p>This will also delete <strong>{{ pool_count }} question pool{{ pool_count|pluralize }}</strong>.</p>
+                        <p>This will also delete <strong>{{ pool_count }} question{{ pool_count|pluralize }}</strong>.</p>
                     {% endif %}
                 {% endwith %}
                 

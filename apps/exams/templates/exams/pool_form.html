@@ -1,18 +1,18 @@
 {% extends 'common/base.html' %}
 {% load static %}
 
-{% block title %}{% if object %}Edit Pool{% else %}Add Pool{% endif %}{% endblock %}
+{% block title %}{% if object %}Edit Question{% else %}Add Question{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8 offset-md-2">
-            <h1>{% if object %}Edit Pool {{ object.order }}{% else %}Add Pool{% endif %}</h1>
+            <h1>{% if object %}Edit Question {{ object.order }}{% else %}Add Question{% endif %}</h1>
             <p class="text-muted">For exam: <strong>{{ exam.title }}</strong></p>
 
             <div class="alert alert-info">
                 <i class="fa-solid fa-info-circle"></i>
-                Pool order is automatically assigned. After creating the pool, you can add question templates to it.
+                Question order is automatically assigned. After creating the question, you can add template versions to it.
             </div>
 
             <form method="post" class="mt-4">
@@ -20,7 +20,7 @@
                 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-save"></i> {% if object %}Save{% else %}Create Pool{% endif %}
+                        <i class="fa-solid fa-save"></i> {% if object %}Save{% else %}Create Question{% endif %}
                     </button>
                     <a href="{% url 'exams:detail' exam.pk %}" class="btn btn-secondary">
                         Cancel

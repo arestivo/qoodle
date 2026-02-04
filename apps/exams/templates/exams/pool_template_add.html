@@ -1,14 +1,40 @@
 {% extends 'common/base.html' %}
 {% load static %}
 
-{% block title %}Add Template to Pool{% endblock %}
+{% block title %}Add Template Version{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8 offset-md-2">
-            <h1>Add Template to Pool {{ pool.order }}</h1>
+            <h1>Add Template Version to Question {{ pool.order }}</h1>
             <p class="text-muted">Exam: <strong>{{ exam.title }}</strong></p>
+
+            <!-- Subject Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-auto flex-grow-1">
+                            <label for="subject" class="form-label">Filter by Subject</label>
+                            <select name="subject" id="subject" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Subjects</option>
+                                {% for subject in subjects %}
+                                    <option value="{{ subject.pk }}" {% if selected_subject == subject.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ subject.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if selected_subject %}
+                        <div class="col-auto">
+                            <a href="{% url 'exams:pool_template_add' exam.pk pool.pk %}" class="btn btn-secondary">
+                                Clear Filter
+                            </a>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
 
             {% if form.errors %}
                 <div class="alert alert-danger">
@@ -25,6 +51,9 @@
 
             <form method="post" class="mt-4">
                 {% csrf_token %}
+                {% if selected_subject %}
+                    <input type="hidden" name="subject" value="{{ selected_subject }}">
+                {% endif %}
                 
                 <div class="mb-3">
                     <label for="{{ form.template.id_for_label }}" class="form-label">
@@ -32,7 +61,7 @@
                     </label>
                     {{ form.template }}
                     <div class="form-text">
-                        Select a question template to add to this pool. Only templates not already in this pool are shown.
+                        Select a question template to add to this question. Only templates not already in this question are shown.
                     </div>
                 </div>
 
@@ -42,7 +71,7 @@
                     </label>
                     {{ form.number_of_versions }}
                     <div class="form-text">
-                        How many different versions of this template should be available when generating exams?
+                        How many different versions of this template can be used for this question when generating individual exams?
                     </div>
                 </div>
 
@@ -57,14 +86,27 @@
             </form>
 
             {% if available_templates %}
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Available Templates</h5>
+                            Available Templates 
+                            <span class="badge bg-secondary">{{ available_templates.count }}</span>
+                        </h5>
                     </div>
                     <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
                         {% for template in available_templates %}
                             <div class="list-group-item">
                                 <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ template.title }}</strong>
+                                        {% if template.subject %}
+                                            <span class="badge bg-secondary ms-2">{{ template.subject.name }}</span>
+                                        {% endif %}
+                                        {% if template.variables %}
+                                            <span class="badge bg-info ms-1" title="Has variables">
+                                                <i class="fa-solid fa-code"></i>
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>t-between align-items-center">
                                     <div>
                                         <strong>{{ template.title }}</strong>
                                         {% if template.subject %}
@@ -79,7 +121,7 @@
             {% else %}
                 <div class="alert alert-info mt-4">
                     <i class="fa-solid fa-info-circle"></i>
-                    All available templates have already been added to this pool.
+                    All available templates have already been added to this question.
                 </div>
             {% endif %}
         </div>
