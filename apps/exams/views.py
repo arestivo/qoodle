@@ -115,8 +115,6 @@ class PoolReorderView(View):
             pool_order = pool.order
             other_order = other_pool.order
 
-            print(f"Swapping pool {pool.pk} (order {pool_order}) with pool {other_pool.pk} (order {other_order})")
-
             with transaction.atomic():
                 pool.order = 0
                 pool.save()
