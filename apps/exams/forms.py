@@ -14,7 +14,7 @@ from .models import Exam, QuestionPool, QuestionPoolTemplate
 class ExamForm(forms.ModelForm):
     class Meta:
         model = Exam
-        fields = ["title", "date", "description"]
+        fields = ["title", "date", "description", "grading_mode"]
         widgets = {
             "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g., Midterm Exam 2026"}),
             "date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
@@ -25,6 +25,7 @@ class ExamForm(forms.ModelForm):
                     "placeholder": "Optional exam description",
                 }
             ),
+            "grading_mode": forms.RadioSelect(),
         }
 
 
@@ -32,6 +33,21 @@ class QuestionPoolForm(forms.ModelForm):
     class Meta:
         model = QuestionPool
         fields = []  # Order is set automatically, no user-editable fields
+
+
+class PoolGradeForm(forms.ModelForm):
+    """Form for updating pool default grade."""
+    
+    class Meta:
+        model = QuestionPool
+        fields = ["default_grade"]
+        widgets = {
+            "default_grade": forms.NumberInput(attrs={
+                "class": "form-control",
+                "step": "0.1",
+                "min": "0.1"
+            })
+        }
 
 
 QuestionPoolTemplateFormSet = modelformset_factory(

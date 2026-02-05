@@ -4,6 +4,7 @@ This module provides CBVs for CRUD operations on exams and question pools:
 - Exam CRUD: List, Create, Detail, Update, Delete
 - Pool management: Create, Delete, Reorder
 - Pool template management: Add templates via formset, Delete templates
+- Moodle export: Generate and download XML files
 """
 
 from django.db import models, transaction
@@ -218,3 +219,46 @@ class PoolTemplateDeleteView(DeleteView):
 
     def get_success_url(self):
         return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
+
+
+class ExamExportView(View):
+    """Export exam to Moodle XML format."""
+
+    def post(self, request, pk):
+        from .moodle_export import generate_moodle_xml
+
+        exam = get_object_or_404(Exam, pk=pk)
+        language = request.POST.get("language", "en")
+
+        try:
+            xml_content = generate_moodle_xml(exam, language)
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect("exams:detail", pk=exam.pk)
+
+        # Return XML file download
+        response = HttpResponse(xml_content, content_type="application/xml")
+        filename = f"{exam.title.replace(' ', '_')}_{language}.xml"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
+
+
+class PoolUpdateGradeView(UpdateView):
+    """Update the default grade for a question pool."""
+
+    model = QuestionPool
+    form_class = PoolGradeForm
+    template_name = "exams/pool_grade_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["exam"] = get_object_or_404(Exam, pk=self.kwargs["exam_pk"])
+        return context
+
+    def get_success_url(self):
+        return reverse("exams:detail", kwargs={"pk": self.kwargs["exam_pk"]})
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Pool {self.object.order} grade updated to {form.cleaned_data['default_grade']} points")
+        return super().form_valid(form)

@@ -38,4 +38,16 @@ urlpatterns = [
         views.PoolTemplateDeleteView.as_view(),
         name="pool_template_delete",
     ),
+    # Moodle Export
+    path(
+        "<uuid:pk>/export/",
+        views.ExamExportView.as_view(),
+        name="export",
+    ),
+    # Pool Grade Update
+    path(
+        "<uuid:exam_pk>/pools/<uuid:pk>/grade/",
+        views.PoolUpdateGradeView.as_view(),
+        name="pool_update_grade",
+    ),
 ]
