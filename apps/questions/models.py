@@ -2,7 +2,6 @@
 
 import random
 import re
-import string
 from typing import Any
 
 import markdown as markdown_lib
@@ -79,28 +78,23 @@ class VariableGenerator:
         return round(value, decimal_places)
 
     @staticmethod
-    def generate_string(min_length: int, max_length: int) -> str:
+    def generate_string(values: list[str]) -> str:
         """
-        Generate random string with length between min and max.
+        Select a random value from the provided list.
 
         Args:
-            min_length: Minimum string length
-            max_length: Maximum string length
+            values: List of possible string values
 
         Returns:
-            Random lowercase string
+            One randomly selected value from the list
 
         Example:
-            generate_string(3, 5) -> "abc", "wxyz", "hello"
+            generate_string(["apple", "banana", "cherry"]) -> "banana"
         """
-        if min_length > max_length:
-            raise ValueError(f"min_length ({min_length}) cannot be greater than max_length ({max_length})")
+        if not values:
+            raise ValueError("values list cannot be empty")
 
-        if min_length < 0:
-            raise ValueError("min_length cannot be negative")
-
-        length = random.randint(min_length, max_length)
-        return "".join(random.choices(string.ascii_lowercase, k=length))
+        return random.choice(values)
 
     @staticmethod
     def generate_set(items: list[str], size: int) -> list[str]:
@@ -195,13 +189,12 @@ class QuestionTemplate(UUIDModel):
        }
        ```
 
-    2. **String (string)**: Random string with length constraints
+    2. **String (string)**: Random selection from predefined values
        ```python
        {
-           "name": {
+           "category": {
                "type": "string",
-               "min_length": 5,
-               "max_length": 10
+               "values": ["products", "news", "posts", "articles"]
            }
        }
        ```
@@ -390,8 +383,7 @@ class QuestionTemplate(UUIDModel):
                     )
                 elif var_type == "string":
                     value = VariableGenerator.generate_string(
-                        var_def.get("min_length", 1),
-                        var_def.get("max_length", 10),
+                        var_def.get("values", []),
                     )
                 elif var_type == "set":
                     value = VariableGenerator.generate_set(
@@ -604,18 +596,12 @@ class QuestionTemplate(UUIDModel):
                     raise ValidationError(f"Variable '{var_name}': 'precision' must be a number")
 
             elif var_type == "string":
-                if "min_length" not in var_def:
-                    raise ValidationError(f"Variable '{var_name}' missing 'min_length' field")
-                if "max_length" not in var_def:
-                    raise ValidationError(f"Variable '{var_name}' missing 'max_length' field")
-                if not isinstance(var_def["min_length"], int):
-                    raise ValidationError(f"Variable '{var_name}': 'min_length' must be an integer")
-                if not isinstance(var_def["max_length"], int):
-                    raise ValidationError(f"Variable '{var_name}': 'max_length' must be an integer")
-                if var_def["min_length"] < 0:
-                    raise ValidationError(f"Variable '{var_name}': 'min_length' cannot be negative")
-                if var_def["min_length"] > var_def["max_length"]:
-                    raise ValidationError(f"Variable '{var_name}': 'min_length' cannot be greater than 'max_length'")
+                if "values" not in var_def:
+                    raise ValidationError(f"Variable '{var_name}' missing 'values' field")
+                if not isinstance(var_def["values"], list):
+                    raise ValidationError(f"Variable '{var_name}': 'values' must be a list")
+                if not var_def["values"]:
+                    raise ValidationError(f"Variable '{var_name}': 'values' cannot be empty")
 
             elif var_type == "set":
                 if "items" not in var_def:

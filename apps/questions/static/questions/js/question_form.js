@@ -206,11 +206,9 @@ function setVariableConfig(row, type, config) {
         if (maxInput && config.max !== undefined) maxInput.value = config.max;
         if (precisionInput && config.precision !== undefined) precisionInput.value = config.precision;
     } else if (type === 'string') {
-        const minLenInput = row.querySelector('.var-min-length');
-        const maxLenInput = row.querySelector('.var-max-length');
-        
-        if (minLenInput && config.min_length !== undefined) minLenInput.value = config.min_length;
-        if (maxLenInput && config.max_length !== undefined) maxLenInput.value = config.max_length;
+        const valuesInput = row.querySelector('.var-values');
+
+        if (valuesInput && config.values) valuesInput.value = config.values.join(', ');
     } else if (type === 'set') {
         const itemsInput = row.querySelector('.var-items');
         const sizeInput = row.querySelector('.var-size');
@@ -250,11 +248,10 @@ function serializeVariables() {
             config.max = parseFloat(maxInput.value) || 100;
             config.precision = parseFloat(precisionInput.value) || 1;
         } else if (type === 'string') {
-            const minLenInput = row.querySelector('.var-min-length');
-            const maxLenInput = row.querySelector('.var-max-length');
-            
-            config.min_length = parseInt(minLenInput.value) || 1;
-            config.max_length = parseInt(maxLenInput.value) || 10;
+            const valuesInput = row.querySelector('.var-values');
+
+            const valuesText = valuesInput.value.trim();
+            config.values = valuesText ? valuesText.split(',').map(s => s.trim()).filter(s => s) : [];
         } else if (type === 'set') {
             const itemsInput = row.querySelector('.var-items');
             const sizeInput = row.querySelector('.var-size');
