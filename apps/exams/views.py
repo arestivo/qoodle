@@ -35,7 +35,8 @@ class ExamDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Prefetch pools with their templates for efficiency
-        context["pools"] = self.object.pools.prefetch_related("pool_templates__template").all()
+        pools = self.object.pools.prefetch_related("pool_templates__template__choices").all()
+        context["pools"] = pools
         return context
 
 

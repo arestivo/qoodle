@@ -149,13 +149,30 @@
                                 <div class="col-lg-6 mb-3">
                                     <div class="card h-100">
                                         <div class="card-header bg-light">
-                                            <h6 class="mb-0">
-                                                {% if lang == 'none' %}
-                                                    <i class="fa-solid fa-globe"></i> Language Independent
-                                                {% else %}
-                                                    <i class="fa-solid fa-flag"></i> {{ lang|upper }}
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">
+                                                    {% if lang == 'none' %}
+                                                        <i class="fa-solid fa-globe"></i> Language Independent
+                                                    {% else %}
+                                                        <i class="fa-solid fa-flag"></i> {{ lang|upper }}
+                                                    {% endif %}
+                                                </h6>
+                                                {% if translation_issues and lang in translation_issues %}
+                                                    <span class="badge bg-warning text-dark" title="{{ translation_issues|get_item:lang|join:', ' }}">
+                                                        <i class="fa-solid fa-exclamation-triangle"></i> Incomplete
+                                                    </span>
                                                 {% endif %}
-                                            </h6>
+                                            </div>
+                                            {% if translation_issues and lang in translation_issues %}
+                                                <div class="alert alert-warning mt-2 mb-0 py-1 px-2 small">
+                                                    <strong>Missing translations:</strong>
+                                                    <ul class="mb-0 ps-3">
+                                                        {% for issue in translation_issues|get_item:lang %}
+                                                            <li>{{ issue }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            {% endif %}
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3">

@@ -326,6 +326,35 @@ class QuestionPreviewView(DetailView):
 
         context["languages"] = sorted(languages)
 
+        # Check for missing translations per language
+        # For each specific language (not 'none'), check if all parts have that language
+        translation_issues = {}
+        for lang in context["languages"]:
+            if lang == "none":
+                continue
+
+            issues = []
+
+            # Check if question has this language
+            question_langs = set(self.object.text.keys()) if self.object.text else set()
+            has_question_lang = lang in question_langs or "none" in question_langs
+
+            if not has_question_lang:
+                issues.append("Question text missing")
+
+            # Check each choice
+            for choice in self.object.choices.all():
+                choice_langs = set(choice.text.keys()) if choice.text else set()
+                has_choice_lang = lang in choice_langs or "none" in choice_langs
+
+                if not has_choice_lang:
+                    issues.append(f"Choice {choice.order + 1} missing")
+
+            if issues:
+                translation_issues[lang] = issues
+
+        context["translation_issues"] = translation_issues
+
         # Generate a single random preview instance
         import random
 

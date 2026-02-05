@@ -10,10 +10,14 @@ This module provides functions to export exams to Moodle XML format with:
 import hashlib
 import xml.etree.ElementTree as ET
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from xml.dom import minidom
 
 import markdown
+
+if TYPE_CHECKING:
+    from apps.exams.models import Exam
+    from apps.questions.models import QuestionTemplate
 
 
 def calculate_fractions(num_choices: int, grading_mode: str) -> dict[str, Decimal]:
@@ -112,6 +116,11 @@ def generate_variant(template: "QuestionTemplate", version_number: int, language
     # Use template's generate_variables method with deterministic seed
     values = template.generate_variables(seed=seed) if template.variables else {}
 
+    # Strict validation: Check if the exact language or "none" exists (no fallback to other languages)
+    available_langs = template.text.keys() if template.text else []
+    if language not in available_langs and "none" not in available_langs:
+        raise ValueError(f"Question '{template.title}' does not have text in language '{language}' or a language-independent version. Available: {', '.join(sorted(available_langs)) if available_langs else 'none'}")
+
     # Use template's get_text method for language extraction and variable substitution
     text = template.get_text(language_code=language, variables=values)
 
@@ -136,6 +145,11 @@ def get_choices_for_variant(template: "QuestionTemplate", variant: dict, languag
     choices = []
 
     for choice in template.choices.all().order_by("order"):
+        # Strict validation: Check if the exact language or "none" exists (no fallback to other languages)
+        available_langs = choice.text.keys() if choice.text else []
+        if language not in available_langs and "none" not in available_langs:
+            raise ValueError(f"Choice {choice.order + 1} in question '{template.title}' does not have text in language '{language}' or a language-independent version. Available: {', '.join(sorted(available_langs)) if available_langs else 'none'}")
+
         # Use Choice's get_text method for language extraction and variable substitution
         choice_text = choice.get_text(language_code=language, variables=variant["values"])
 
@@ -162,6 +176,11 @@ def generate_all_variants(template: "QuestionTemplate", num_versions: int, langu
 
     Raises:
         ValueError: If unable to generate unique variants after 50 attempts
+
+    Note:
+        Uniqueness is determined by comparing question text + choices as a set.
+        This ensures that questions with the same text but different choices
+        (e.g., using variables only in choices) are considered unique.
     """
     max_attempts = 50
 
@@ -169,9 +188,6 @@ def generate_all_variants(template: "QuestionTemplate", num_versions: int, langu
         variants = []
 
         for version in range(num_versions):
-            # Add attempt offset to seed for retry attempts
-            effective_version = version if attempt == 0 else f"{version}_{attempt}"
-
             # For retry attempts, modify the seed string
             if attempt > 0:
                 import copy
@@ -182,11 +198,23 @@ def generate_all_variants(template: "QuestionTemplate", num_versions: int, langu
             else:
                 variant = generate_variant(template, version, language)
 
+            # Get choices for this variant
+            choices = get_choices_for_variant(template, variant, language)
+            variant["choices"] = choices
+
             variants.append(variant)
 
-        # Check uniqueness
-        texts = [v["text"] for v in variants]
-        if len(texts) == len(set(texts)):  # All unique
+        # Check uniqueness by comparing question text + choices (as a set since order doesn't matter)
+        variant_signatures = []
+        for v in variants:
+            # Create a unique signature: question text + sorted choice texts
+            choice_texts = sorted([c["text"] for c in v["choices"]])
+            signature = (v["text"], tuple(choice_texts))
+            variant_signatures.append(signature)
+
+        unique_signatures = set(variant_signatures)
+
+        if len(variant_signatures) == len(unique_signatures):  # All unique
             return variants
 
     # Failed after max attempts
@@ -254,7 +282,8 @@ def generate_moodle_xml(exam: "Exam", language: str) -> str:
                 text_elem.text = f"<![CDATA[{html}]]>"
 
                 # Answers with fractions
-                choices = get_choices_for_variant(template, variant, language)
+                # Choices are already in the variant dict from generate_all_variants
+                choices = variant["choices"]
                 fractions = calculate_fractions(len(choices), exam.grading_mode)
 
                 for choice in choices:

@@ -817,12 +817,7 @@ class UniquenessValidationTests(TestCase):
         self.subject = Subject.objects.create(name="Test")
 
         # Template with wide range (should succeed) - use 'num' type with precision=1 for integers
-        self.wide_template = QuestionTemplate.objects.create(
-            subject=self.subject, 
-            title="Wide Range", 
-            text={"en": "Number {{x}}"}, 
-            variables={"x": {"type": "num", "min": 1, "max": 100, "precision": 1}}
-        )
+        self.wide_template = QuestionTemplate.objects.create(subject=self.subject, title="Wide Range", text={"en": "Number {{x}}"}, variables={"x": {"type": "num", "min": 1, "max": 100, "precision": 1}})
         Choice.objects.create(template=self.wide_template, order=0, text={"en": "Correct"})
         Choice.objects.create(template=self.wide_template, order=1, text={"en": "Wrong"})
 
@@ -1014,6 +1009,52 @@ class ExamExportViewTests(TestCase):
         response = self.client.post(reverse("exams:export", kwargs={"pk": uuid.uuid4()}), {"language": "en"})
 
         self.assertEqual(response.status_code, 404)
+
+    def test_error_when_question_missing_language(self):
+        """Test error when question text missing requested language."""
+        from apps.questions.models import Choice, QuestionTemplate
+
+        # Create template with only Portuguese text
+        template_pt = QuestionTemplate.objects.create(subject=self.subject, title="PT Only", text={"pt": "Pergunta?"}, variables=None)
+        Choice.objects.create(template=template_pt, order=0, text={"pt": "A"})
+        Choice.objects.create(template=template_pt, order=1, text={"pt": "B"})
+
+        pool2 = QuestionPool.objects.create(exam=self.exam, order=2)
+        QuestionPoolTemplate.objects.create(pool=pool2, template=template_pt, number_of_versions=1)
+
+        # Try to export in English
+        response = self.client.post(reverse("exams:export", kwargs={"pk": self.exam.pk}), {"language": "en"})
+
+        # Should redirect back to exam detail with error
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("exams:detail", kwargs={"pk": self.exam.pk}))
+
+        # Check error message was set
+        messages = list(response.wsgi_request._messages)
+        self.assertTrue(any("PT Only" in str(m) and "does not have text in language 'en'" in str(m) for m in messages))
+
+    def test_error_when_choice_missing_language(self):
+        """Test error when choice missing requested language."""
+        from apps.questions.models import Choice, QuestionTemplate
+
+        # Create template with question in both languages but one choice only in Portuguese
+        template_mixed = QuestionTemplate.objects.create(subject=self.subject, title="Mixed", text={"en": "Question?", "pt": "Pergunta?"}, variables=None)
+        Choice.objects.create(template=template_mixed, order=0, text={"en": "A", "pt": "A"})
+        Choice.objects.create(template=template_mixed, order=1, text={"pt": "B"})  # Missing English
+
+        pool2 = QuestionPool.objects.create(exam=self.exam, order=2)
+        QuestionPoolTemplate.objects.create(pool=pool2, template=template_mixed, number_of_versions=1)
+
+        # Try to export in English
+        response = self.client.post(reverse("exams:export", kwargs={"pk": self.exam.pk}), {"language": "en"})
+
+        # Should redirect back to exam detail with error
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("exams:detail", kwargs={"pk": self.exam.pk}))
+
+        # Check error message was set
+        messages = list(response.wsgi_request._messages)
+        self.assertTrue(any("Choice 2" in str(m) and "Mixed" in str(m) and "does not have text in language 'en'" in str(m) for m in messages))
 
 
 class PoolGradeUpdateTests(TestCase):
