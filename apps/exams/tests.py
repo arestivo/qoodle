@@ -235,9 +235,8 @@ class ExamViewTests(TestCase):
 
     def test_exam_create_post_with_valid_data_creates_exam(self):
         """Test that exam create POST with valid data creates exam."""
-        data = {"title": "New Exam", "description": "Test description"}
+        data = {"title": "New Exam", "description": "Test description", "grading_mode": "single"}
         response = self.client.post(reverse("exams:create"), data)
-
         self.assertTrue(Exam.objects.filter(title="New Exam").exists())
         exam = Exam.objects.get(title="New Exam")
         self.assertRedirects(response, reverse("exams:detail", kwargs={"pk": exam.pk}))
@@ -269,9 +268,8 @@ class ExamViewTests(TestCase):
 
     def test_exam_update_post_saves_changes(self):
         """Test that exam update POST saves changes."""
-        data = {"title": "Updated Exam", "description": "Updated description"}
+        data = {"title": "Updated Exam", "description": "Updated description", "grading_mode": "single"}
         self.client.post(reverse("exams:edit", kwargs={"pk": self.exam1.pk}), data)
-
         self.exam1.refresh_from_db()
         self.assertEqual(self.exam1.title, "Updated Exam")
         self.assertEqual(self.exam1.description, "Updated description")
@@ -465,7 +463,7 @@ class ExamFormTests(TestCase):
 
     def test_exam_form_with_valid_data_is_valid(self):
         """Test that ExamForm with valid data is valid."""
-        form_data = {"title": "Test Exam", "description": "Test description"}
+        form_data = {"title": "Test Exam", "description": "Test description", "grading_mode": "single"}
         form = ExamForm(data=form_data)
         self.assertTrue(form.is_valid())
 
@@ -478,19 +476,19 @@ class ExamFormTests(TestCase):
 
     def test_exam_form_accepts_optional_date_and_description(self):
         """Test that ExamForm accepts optional date and description."""
-        form_data = {"title": "Test Exam"}
+        form_data = {"title": "Test Exam", "grading_mode": "single"}
         form = ExamForm(data=form_data)
         self.assertTrue(form.is_valid())
 
         exam_date = date.today() + timedelta(days=7)
-        form_data = {"title": "Test Exam", "date": exam_date, "description": "Description"}
+        form_data = {"title": "Test Exam", "date": exam_date, "description": "Description", "grading_mode": "single"}
         form = ExamForm(data=form_data)
         self.assertTrue(form.is_valid())
 
     def test_exam_form_date_validation_future_dates_allowed(self):
         """Test that ExamForm allows future dates."""
         future_date = date.today() + timedelta(days=30)
-        form_data = {"title": "Future Exam", "date": future_date}
+        form_data = {"title": "Future Exam", "date": future_date, "grading_mode": "single"}
         form = ExamForm(data=form_data)
         self.assertTrue(form.is_valid())
 
@@ -518,7 +516,7 @@ class ExamWorkflowIntegrationTests(TestCase):
     def test_full_workflow_create_exam_add_pool_add_templates_view_detail(self):
         """Test full workflow: create exam, add pool, add templates, view detail."""
         # Create exam
-        response = self.client.post(reverse("exams:create"), {"title": "Integration Test Exam"})
+        response = self.client.post(reverse("exams:create"), {"title": "Integration Test Exam", "grading_mode": "single"})
         exam = Exam.objects.get(title="Integration Test Exam")
         self.assertRedirects(response, reverse("exams:detail", kwargs={"pk": exam.pk}))
 
