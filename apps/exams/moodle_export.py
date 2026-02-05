@@ -8,7 +8,6 @@ This module provides functions to export exams to Moodle XML format with:
 """
 
 import hashlib
-import random
 import xml.etree.ElementTree as ET
 from decimal import Decimal
 from typing import Any
@@ -61,34 +60,6 @@ def calculate_fractions(num_choices: int, grading_mode: str) -> dict[str, Decima
     return schemes[num_choices]
 
 
-def extract_language_text(json_text: dict, language: str) -> str:
-    """Extract language-specific text with fallback logic.
-
-    Args:
-        json_text: Dictionary with language codes as keys
-        language: Target language code (e.g., 'en', 'pt')
-
-    Returns:
-        Text in requested language or first available language as fallback
-
-    Examples:
-        >>> extract_language_text({'en': 'Hello', 'pt': 'Olá'}, 'en')
-        'Hello'
-
-        >>> extract_language_text({'en': 'Hello', 'pt': 'Olá'}, 'fr')
-        'Hello'  # Falls back to first available
-    """
-    if not json_text:
-        return ""
-
-    # Try requested language first
-    if language in json_text:
-        return json_text[language]
-
-    # Fall back to first available language
-    return next(iter(json_text.values()))
-
-
 def format_html_for_moodle(markdown_text: str) -> str:
     """Convert markdown to HTML suitable for Moodle CDATA sections.
 
@@ -119,63 +90,8 @@ def format_html_for_moodle(markdown_text: str) -> str:
     return html
 
 
-def generate_variable_value(config: dict, rng: random.Random) -> Any:
-    """Generate random value based on variable config.
-
-    Args:
-        config: Variable configuration dict with 'type' and range/options
-        rng: Random instance for deterministic generation
-
-    Returns:
-        Generated value (int, float, str, or list)
-
-    Examples:
-        >>> rng = random.Random(42)
-        >>> generate_variable_value({'type': 'integer', 'min': 1, 'max': 10}, rng)
-        2
-    """
-    var_type = config["type"]
-
-    if var_type == "integer":
-        return rng.randint(config["min"], config["max"])
-    elif var_type == "float":
-        val = rng.uniform(config["min"], config["max"])
-        decimals = config.get("decimals", 2)
-        return round(val, decimals)
-    elif var_type == "choice":
-        return rng.choice(config["options"])
-    elif var_type == "set":
-        # Generate random subset of specified size from items
-        items = config.get("items", [])
-        size = config.get("size", 1)
-        return rng.sample(items, min(size, len(items)))
-    else:
-        raise ValueError(f"Unknown variable type: {var_type}")
-
-
-def substitute_markers(text: str, values: dict[str, Any]) -> str:
-    """Replace {{variable}} markers with values.
-
-    Args:
-        text: Text containing {{var_name}} markers
-        values: Dictionary mapping variable names to replacement values
-
-    Returns:
-        Text with all markers substituted
-
-    Examples:
-        >>> substitute_markers("What is {{x}} + {{y}}?", {'x': 5, 'y': 3})
-        'What is 5 + 3?'
-    """
-    result = text
-    for var_name, value in values.items():
-        marker = f"{{{{{var_name}}}}}"
-        result = result.replace(marker, str(value))
-    return result
-
-
 def generate_variant(template: "QuestionTemplate", version_number: int, language: str) -> dict[str, Any]:
-    """Generate deterministic question variant.
+    """Generate deterministic question variant using template's built-in methods.
 
     Args:
         template: QuestionTemplate instance with text and variables
@@ -186,30 +102,24 @@ def generate_variant(template: "QuestionTemplate", version_number: int, language
         Dictionary with 'text' and 'values' keys
 
     Note:
-        Uses MD5 hash of template.id + version for deterministic seeding
+        Uses MD5 hash of template.id + version for deterministic seeding.
+        Delegates to QuestionTemplate.generate_variables() and get_text().
     """
     # Create deterministic seed from template ID and version
     seed_string = f"{template.id}_{version_number}"
     seed = int(hashlib.md5(seed_string.encode()).hexdigest(), 16) % (2**32)
 
-    rng = random.Random(seed)
+    # Use template's generate_variables method with deterministic seed
+    values = template.generate_variables(seed=seed) if template.variables else {}
 
-    # Generate variable values
-    values = {}
-    if template.variables:
-        for var_name, config in template.variables.items():
-            values[var_name] = generate_variable_value(config, rng)
-
-    # Extract language-specific text and substitute variables
-    text = extract_language_text(template.text, language)
-    if values:
-        text = substitute_markers(text, values)
+    # Use template's get_text method for language extraction and variable substitution
+    text = template.get_text(language_code=language, variables=values)
 
     return {"text": text, "values": values}
 
 
 def get_choices_for_variant(template: "QuestionTemplate", variant: dict, language: str) -> list[dict]:
-    """Get answer choices with variable substitution.
+    """Get answer choices with variable substitution using Choice.get_text().
 
     Args:
         template: QuestionTemplate instance
@@ -220,17 +130,14 @@ def get_choices_for_variant(template: "QuestionTemplate", variant: dict, languag
         List of choice dictionaries with 'text' and 'is_correct' keys
 
     Note:
-        First choice (order=0) is always marked as correct
+        First choice (order=0) is always marked as correct.
+        Uses Choice.get_text() for language extraction and variable substitution.
     """
     choices = []
 
     for choice in template.choices.all().order_by("order"):
-        # Extract language text
-        choice_text = extract_language_text(choice.text, language)
-
-        # Substitute variables if present
-        if variant["values"]:
-            choice_text = substitute_markers(choice_text, variant["values"])
+        # Use Choice's get_text method for language extraction and variable substitution
+        choice_text = choice.get_text(language_code=language, variables=variant["values"])
 
         choices.append(
             {

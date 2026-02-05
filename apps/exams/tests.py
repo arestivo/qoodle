@@ -711,33 +711,6 @@ class CalculateFractionsTests(TestCase):
         self.assertIn("only supports 2-6 choices", str(cm.exception))
 
 
-class LanguageExtractionTests(TestCase):
-    """Test extract_language_text function."""
-
-    def test_extract_existing_language(self):
-        """Test extracting text in requested language."""
-        from apps.exams.moodle_export import extract_language_text
-
-        text_dict = {"en": "Hello", "pt": "Olá"}
-        result = extract_language_text(text_dict, "en")
-        self.assertEqual(result, "Hello")
-
-    def test_fallback_to_first_language(self):
-        """Test fallback when target language missing."""
-        from apps.exams.moodle_export import extract_language_text
-
-        text_dict = {"en": "Hello", "pt": "Olá"}
-        result = extract_language_text(text_dict, "fr")
-        self.assertIn(result, ["Hello", "Olá"])  # Could be either first
-
-    def test_empty_dict_returns_empty_string(self):
-        """Test empty dict returns empty string."""
-        from apps.exams.moodle_export import extract_language_text
-
-        result = extract_language_text({}, "en")
-        self.assertEqual(result, "")
-
-
 class MarkdownConversionTests(TestCase):
     """Test format_html_for_moodle function."""
 
@@ -773,14 +746,22 @@ class VariantGenerationTests(TestCase):
     """Test variant generation with variables."""
 
     def setUp(self):
-        """Create test template with variables."""
+        """Create test template with variables using proper QuestionTemplate types."""
         from apps.questions.models import Choice
 
         self.subject = Subject.objects.create(name="Math")
-        self.template = QuestionTemplate.objects.create(subject=self.subject, title="Addition Question", text={"en": "What is {{x}} + {{y}}?"}, variables={"x": {"type": "integer", "min": 1, "max": 10}, "y": {"type": "integer", "min": 1, "max": 10}})
+        self.template = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Addition Question",
+            text={"en": "What is {{x}} + {{y}}?"},
+            variables={
+                "x": {"type": "num", "min": 1, "max": 10, "precision": 1},  # precision=1 means integer
+                "y": {"type": "num", "min": 1, "max": 10, "precision": 1},
+            },
+        )
         # Add choices
-        Choice.objects.create(template=self.template, order=0, text={"en": "{{x}} + {{y}}"})
-        Choice.objects.create(template=self.template, order=1, text={"en": "{{x}} - {{y}}"})
+        Choice.objects.create(template=self.template, order=0, text={"en": "{{x + y}}"})
+        Choice.objects.create(template=self.template, order=1, text={"en": "{{x - y}}"})
 
     def test_deterministic_generation(self):
         """Test same seed generates same variant."""
@@ -825,27 +806,6 @@ class VariantGenerationTests(TestCase):
         # Text should contain actual numbers
         self.assertIn(str(variant["values"]["x"]), variant["text"])
 
-    def test_set_variable_type(self):
-        """Test 'set' variable type generates random subsets."""
-        import random
-
-        from apps.exams.moodle_export import generate_variable_value
-
-        config = {"type": "set", "items": ["apple", "banana", "cherry", "date"], "size": 2}
-        rng = random.Random(42)
-
-        result = generate_variable_value(config, rng)
-
-        # Should return a list
-        self.assertIsInstance(result, list)
-        # Should have exactly 2 items
-        self.assertEqual(len(result), 2)
-        # All items should be from the original list
-        for item in result:
-            self.assertIn(item, config["items"])
-        # Items should be unique (no duplicates in subset)
-        self.assertEqual(len(result), len(set(result)))
-
 
 class UniquenessValidationTests(TestCase):
     """Test variant uniqueness validation."""
@@ -856,8 +816,13 @@ class UniquenessValidationTests(TestCase):
 
         self.subject = Subject.objects.create(name="Test")
 
-        # Template with wide range (should succeed)
-        self.wide_template = QuestionTemplate.objects.create(subject=self.subject, title="Wide Range", text={"en": "Number {{x}}"}, variables={"x": {"type": "integer", "min": 1, "max": 100}})
+        # Template with wide range (should succeed) - use 'num' type with precision=1 for integers
+        self.wide_template = QuestionTemplate.objects.create(
+            subject=self.subject, 
+            title="Wide Range", 
+            text={"en": "Number {{x}}"}, 
+            variables={"x": {"type": "num", "min": 1, "max": 100, "precision": 1}}
+        )
         Choice.objects.create(template=self.wide_template, order=0, text={"en": "Correct"})
         Choice.objects.create(template=self.wide_template, order=1, text={"en": "Wrong"})
 
