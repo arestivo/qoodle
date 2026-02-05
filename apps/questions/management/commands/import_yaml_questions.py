@@ -194,6 +194,8 @@ class Command(BaseCommand):
         Convert YAML variable definitions to model format.
 
         Converts:
+        - 'type: number' to 'type: num'
+        - 'type: expr' to 'type: expression'
         - 'values' key to 'items' for set type
         - Validates structure matches model requirements
         """
@@ -207,6 +209,23 @@ class Command(BaseCommand):
                 raise ValueError(f"Variable '{var_name}' must be a dictionary")
 
             var_type = var_def.get("type")
+
+            # Convert 'number' to 'num' (YAML uses 'number', model uses 'num')
+            if var_type == "number":
+                var_def = dict(var_def)  # Make a copy
+                var_def["type"] = "num"
+                var_type = "num"
+
+            # Convert 'expr' to 'expression' and strip angle brackets from formula
+            if var_type == "expr" or var_type == "expression":
+                var_def = dict(var_def)  # Make a copy
+                var_def["type"] = "expression"
+                # Convert <var> to var in formula (Python eval uses bare variable names)
+                if "formula" in var_def:
+                    formula = str(var_def["formula"])
+                    formula = formula.replace("<", "").replace(">", "")
+                    var_def["formula"] = formula
+                var_type = "expression"
 
             if var_type == "set":
                 # Convert 'values' to 'items'
