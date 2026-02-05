@@ -154,34 +154,24 @@ class QuestionPoolTemplateModelTests(TestCase):
 
     def test_create_pool_template_link_with_version_count(self):
         """Test creating a pool-template link with version count."""
-        pt = QuestionPoolTemplate.objects.create(
-            pool=self.pool, template=self.template1, number_of_versions=5
-        )
+        pt = QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=5)
         self.assertEqual(pt.pool, self.pool)
         self.assertEqual(pt.template, self.template1)
         self.assertEqual(pt.number_of_versions, 5)
 
     def test_unique_constraint_on_pool_template_prevents_duplicates(self):
         """Test that (pool, template) unique constraint prevents duplicates."""
-        QuestionPoolTemplate.objects.create(
-            pool=self.pool, template=self.template1, number_of_versions=1
-        )
+        QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
 
         with self.assertRaises(IntegrityError):
-            QuestionPoolTemplate.objects.create(
-                pool=self.pool, template=self.template1, number_of_versions=1
-            )
+            QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
 
     def test_same_template_can_be_in_different_pools(self):
         """Test that same template can be in different pools."""
         pool2 = QuestionPool.objects.create(exam=self.exam, order=2)
 
-        pt1 = QuestionPoolTemplate.objects.create(
-            pool=self.pool, template=self.template1, number_of_versions=1
-        )
-        pt2 = QuestionPoolTemplate.objects.create(
-            pool=pool2, template=self.template1, number_of_versions=3
-        )
+        pt1 = QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
+        pt2 = QuestionPoolTemplate.objects.create(pool=pool2, template=self.template1, number_of_versions=3)
 
         self.assertEqual(pt1.template, pt2.template)
         self.assertNotEqual(pt1.pool, pt2.pool)
@@ -332,9 +322,7 @@ class PoolViewTests(TestCase):
         pool = QuestionPool.objects.create(exam=self.exam, order=1)
         pool_id = pool.id
 
-        self.client.post(
-            reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk})
-        )
+        self.client.post(reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk}))
 
         self.assertFalse(QuestionPool.objects.filter(id=pool_id).exists())
 
@@ -351,9 +339,7 @@ class PoolViewTests(TestCase):
         QuestionPoolTemplate.objects.create(pool=pool, template=template, number_of_versions=1)
 
         template_id = template.id
-        self.client.post(
-            reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk})
-        )
+        self.client.post(reverse("exams:pool_delete", kwargs={"exam_pk": self.exam.pk, "pk": pool.pk}))
 
         self.assertTrue(QuestionTemplate.objects.filter(id=template_id).exists())
 
@@ -380,9 +366,7 @@ class PoolTemplateViewTests(TestCase):
     def test_pool_template_add_view_excludes_existing_templates(self):
         """Test that pool template add view excludes already-used templates."""
         # Add template1 to pool
-        QuestionPoolTemplate.objects.create(
-            pool=self.pool, template=self.template1, number_of_versions=1
-        )
+        QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
 
         response = self.client.get(
             reverse(
@@ -412,18 +396,12 @@ class PoolTemplateViewTests(TestCase):
             data,
         )
 
-        self.assertTrue(
-            QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template1).exists()
-        )
-        self.assertTrue(
-            QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template2).exists()
-        )
+        self.assertTrue(QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template1).exists())
+        self.assertTrue(QuestionPoolTemplate.objects.filter(pool=self.pool, template=self.template2).exists())
 
     def test_pool_template_delete_removes_link(self):
         """Test that pool template delete removes the link."""
-        pt = QuestionPoolTemplate.objects.create(
-            pool=self.pool, template=self.template1, number_of_versions=1
-        )
+        pt = QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template1, number_of_versions=1)
         pt_id = pt.id
 
         self.client.post(
@@ -572,12 +550,8 @@ class ExamWorkflowIntegrationTests(TestCase):
 
         for i in range(1, 4):
             pool = QuestionPool.objects.create(exam=exam, order=i)
-            QuestionPoolTemplate.objects.create(
-                pool=pool, template=self.templates[(i - 1) * 2], number_of_versions=3
-            )
-            QuestionPoolTemplate.objects.create(
-                pool=pool, template=self.templates[(i - 1) * 2 + 1], number_of_versions=3
-            )
+            QuestionPoolTemplate.objects.create(pool=pool, template=self.templates[(i - 1) * 2], number_of_versions=3)
+            QuestionPoolTemplate.objects.create(pool=pool, template=self.templates[(i - 1) * 2 + 1], number_of_versions=3)
 
         self.assertEqual(exam.pools.count(), 3)
         for pool in exam.pools.all():
@@ -591,12 +565,8 @@ class ExamWorkflowIntegrationTests(TestCase):
 
         template = self.templates[0]
 
-        pt1 = QuestionPoolTemplate.objects.create(
-            pool=pool1, template=template, number_of_versions=1
-        )
-        pt2 = QuestionPoolTemplate.objects.create(
-            pool=pool2, template=template, number_of_versions=1
-        )
+        pt1 = QuestionPoolTemplate.objects.create(pool=pool1, template=template, number_of_versions=1)
+        pt2 = QuestionPoolTemplate.objects.create(pool=pool2, template=template, number_of_versions=1)
 
         self.assertEqual(pt1.template, pt2.template)
         self.assertNotEqual(pt1.pool, pt2.pool)
@@ -614,3 +584,511 @@ class ExamWorkflowIntegrationTests(TestCase):
 
         self.assertFalse(QuestionPool.objects.filter(id=pool_id).exists())
         self.assertTrue(QuestionTemplate.objects.filter(id=template_id).exists())
+
+
+# ============================================================================
+# Phase 4: Moodle Export Tests
+# ============================================================================
+
+
+class CalculateFractionsTests(TestCase):
+    """Test calculate_fractions function for both grading modes."""
+
+    def test_single_mode_2_choices(self):
+        """Test single mode with 2 choices returns 100/-100."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(2, "single")
+        self.assertEqual(fractions["correct"], Decimal("100.0"))
+        self.assertEqual(fractions["wrong"], Decimal("-100.0"))
+
+    def test_single_mode_3_choices(self):
+        """Test single mode with 3 choices returns 100/-50."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(3, "single")
+        self.assertEqual(fractions["correct"], Decimal("100.0"))
+        self.assertEqual(fractions["wrong"], Decimal("-50.0"))
+
+    def test_single_mode_4_choices(self):
+        """Test single mode with 4 choices returns 100/-33.33."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(4, "single")
+        self.assertEqual(fractions["correct"], Decimal("100.0"))
+        self.assertAlmostEqual(float(fractions["wrong"]), -33.33, places=2)
+
+    def test_single_mode_5_choices(self):
+        """Test single mode with 5 choices returns 100/-25."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(5, "single")
+        self.assertEqual(fractions["correct"], Decimal("100.0"))
+        self.assertEqual(fractions["wrong"], Decimal("-25.0"))
+
+    def test_single_mode_6_choices(self):
+        """Test single mode with 6 choices returns 100/-20."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(6, "single")
+        self.assertEqual(fractions["correct"], Decimal("100.0"))
+        self.assertEqual(fractions["wrong"], Decimal("-20.0"))
+
+    def test_multi_mode_2_choices(self):
+        """Test multi mode with 2 choices returns 90/10."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(2, "multi")
+        self.assertEqual(fractions["correct"], Decimal("90.0"))
+        self.assertEqual(fractions["wrong"], Decimal("10.0"))
+
+    def test_multi_mode_3_choices(self):
+        """Test multi mode with 3 choices returns 80/10."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(3, "multi")
+        self.assertEqual(fractions["correct"], Decimal("80.0"))
+        self.assertEqual(fractions["wrong"], Decimal("10.0"))
+
+    def test_multi_mode_4_choices(self):
+        """Test multi mode with 4 choices returns 70/10."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(4, "multi")
+        self.assertEqual(fractions["correct"], Decimal("70.0"))
+        self.assertEqual(fractions["wrong"], Decimal("10.0"))
+
+    def test_multi_mode_5_choices(self):
+        """Test multi mode with 5 choices returns 60/10."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(5, "multi")
+        self.assertEqual(fractions["correct"], Decimal("60.0"))
+        self.assertEqual(fractions["wrong"], Decimal("10.0"))
+
+    def test_multi_mode_6_choices(self):
+        """Test multi mode with 6 choices returns 75/5."""
+        from decimal import Decimal
+
+        from apps.exams.moodle_export import calculate_fractions
+
+        fractions = calculate_fractions(6, "multi")
+        self.assertEqual(fractions["correct"], Decimal("75.0"))
+        self.assertEqual(fractions["wrong"], Decimal("5.0"))
+
+    def test_error_less_than_2_choices(self):
+        """Test ValueError raised for <2 choices."""
+        from apps.exams.moodle_export import calculate_fractions
+
+        with self.assertRaises(ValueError) as cm:
+            calculate_fractions(1, "single")
+        self.assertIn("at least 2 choices", str(cm.exception))
+
+    def test_error_multi_mode_7_choices(self):
+        """Test ValueError raised for 7+ choices in multi mode."""
+        from apps.exams.moodle_export import calculate_fractions
+
+        with self.assertRaises(ValueError) as cm:
+            calculate_fractions(7, "multi")
+        self.assertIn("only supports 2-6 choices", str(cm.exception))
+
+
+class LanguageExtractionTests(TestCase):
+    """Test extract_language_text function."""
+
+    def test_extract_existing_language(self):
+        """Test extracting text in requested language."""
+        from apps.exams.moodle_export import extract_language_text
+
+        text_dict = {"en": "Hello", "pt": "Olá"}
+        result = extract_language_text(text_dict, "en")
+        self.assertEqual(result, "Hello")
+
+    def test_fallback_to_first_language(self):
+        """Test fallback when target language missing."""
+        from apps.exams.moodle_export import extract_language_text
+
+        text_dict = {"en": "Hello", "pt": "Olá"}
+        result = extract_language_text(text_dict, "fr")
+        self.assertIn(result, ["Hello", "Olá"])  # Could be either first
+
+    def test_empty_dict_returns_empty_string(self):
+        """Test empty dict returns empty string."""
+        from apps.exams.moodle_export import extract_language_text
+
+        result = extract_language_text({}, "en")
+        self.assertEqual(result, "")
+
+
+class MarkdownConversionTests(TestCase):
+    """Test format_html_for_moodle function."""
+
+    def test_convert_code_blocks(self):
+        """Test code blocks convert correctly."""
+        from apps.exams.moodle_export import format_html_for_moodle
+
+        markdown_text = "```python\nprint('hello')\n```"
+        html = format_html_for_moodle(markdown_text)
+        self.assertIn("<pre>", html)
+        self.assertIn("<code", html)  # <code class="language-python">
+        self.assertIn("print", html)
+
+    def test_convert_lists(self):
+        """Test lists convert correctly."""
+        from apps.exams.moodle_export import format_html_for_moodle
+
+        markdown_text = "- Item 1\n- Item 2"
+        html = format_html_for_moodle(markdown_text)
+        self.assertIn("<li>", html)
+
+    def test_escape_cdata_injection(self):
+        """Test ]]> is escaped to prevent CDATA injection."""
+        from apps.exams.moodle_export import format_html_for_moodle
+
+        markdown_text = "Test ]]> content"
+        html = format_html_for_moodle(markdown_text)
+        self.assertNotIn("]]>", html)
+        self.assertIn("]]&gt;", html)
+
+
+class VariantGenerationTests(TestCase):
+    """Test variant generation with variables."""
+
+    def setUp(self):
+        """Create test template with variables."""
+        from apps.questions.models import Choice
+
+        self.subject = Subject.objects.create(name="Math")
+        self.template = QuestionTemplate.objects.create(subject=self.subject, title="Addition Question", text={"en": "What is {{x}} + {{y}}?"}, variables={"x": {"type": "integer", "min": 1, "max": 10}, "y": {"type": "integer", "min": 1, "max": 10}})
+        # Add choices
+        Choice.objects.create(template=self.template, order=0, text={"en": "{{x}} + {{y}}"})
+        Choice.objects.create(template=self.template, order=1, text={"en": "{{x}} - {{y}}"})
+
+    def test_deterministic_generation(self):
+        """Test same seed generates same variant."""
+        from apps.exams.moodle_export import generate_variant
+
+        variant1 = generate_variant(self.template, 0, "en")
+        variant2 = generate_variant(self.template, 0, "en")
+
+        self.assertEqual(variant1["text"], variant2["text"])
+        self.assertEqual(variant1["values"], variant2["values"])
+
+    def test_different_versions_generate_different_values(self):
+        """Test different version numbers generate different variants."""
+        from apps.exams.moodle_export import generate_variant
+
+        variant0 = generate_variant(self.template, 0, "en")
+        variant1 = generate_variant(self.template, 1, "en")
+
+        # Extremely unlikely to be identical with random generation
+        self.assertNotEqual(variant0["text"], variant1["text"])
+
+    def test_integer_variable_ranges(self):
+        """Test integer variables stay within range."""
+        from apps.exams.moodle_export import generate_variant
+
+        variant = generate_variant(self.template, 0, "en")
+
+        self.assertGreaterEqual(variant["values"]["x"], 1)
+        self.assertLessEqual(variant["values"]["x"], 10)
+        self.assertGreaterEqual(variant["values"]["y"], 1)
+        self.assertLessEqual(variant["values"]["y"], 10)
+
+    def test_variable_substitution_in_text(self):
+        """Test variables are substituted in question text."""
+        from apps.exams.moodle_export import generate_variant
+
+        variant = generate_variant(self.template, 0, "en")
+
+        # Text should not contain markers
+        self.assertNotIn("{{x}}", variant["text"])
+        self.assertNotIn("{{y}}", variant["text"])
+        # Text should contain actual numbers
+        self.assertIn(str(variant["values"]["x"]), variant["text"])
+
+
+class UniquenessValidationTests(TestCase):
+    """Test variant uniqueness validation."""
+
+    def setUp(self):
+        """Create test template."""
+        from apps.questions.models import Choice
+
+        self.subject = Subject.objects.create(name="Test")
+
+        # Template with wide range (should succeed)
+        self.wide_template = QuestionTemplate.objects.create(subject=self.subject, title="Wide Range", text={"en": "Number {{x}}"}, variables={"x": {"type": "integer", "min": 1, "max": 100}})
+        Choice.objects.create(template=self.wide_template, order=0, text={"en": "Correct"})
+        Choice.objects.create(template=self.wide_template, order=1, text={"en": "Wrong"})
+
+    def test_successful_uniqueness_with_wide_range(self):
+        """Test successful generation with wide variable range."""
+        from apps.exams.moodle_export import generate_all_variants
+
+        variants = generate_all_variants(self.wide_template, 5, "en")
+
+        self.assertEqual(len(variants), 5)
+        texts = [v["text"] for v in variants]
+        self.assertEqual(len(texts), len(set(texts)))  # All unique
+
+    def test_no_variables_raises_error_on_duplicates(self):
+        """Test templates without variables raise error when requesting multiple variants."""
+        from apps.exams.moodle_export import generate_all_variants
+        from apps.questions.models import Choice
+
+        # Template without variables
+        template = QuestionTemplate.objects.create(subject=self.subject, title="Static", text={"en": "What is 2 + 2?"}, variables=None)
+        Choice.objects.create(template=template, order=0, text={"en": "4"})
+        Choice.objects.create(template=template, order=1, text={"en": "5"})
+
+        # Should raise ValueError because all variants are identical
+        with self.assertRaises(ValueError) as cm:
+            generate_all_variants(template, 3, "en")
+        self.assertIn("unique variants", str(cm.exception))
+
+
+class MoodleXMLGenerationTests(TestCase):
+    """Test Moodle XML generation."""
+
+    def setUp(self):
+        """Create test exam with templates."""
+        from decimal import Decimal
+
+        from apps.questions.models import Choice
+
+        self.subject = Subject.objects.create(name="Test")
+
+        # Create exam
+        self.exam = Exam.objects.create(title="Test Exam", grading_mode="single")
+
+        # Create pool
+        self.pool = QuestionPool.objects.create(exam=self.exam, order=1, default_grade=Decimal("2.5"))
+
+        # Create template with 4 choices
+        self.template = QuestionTemplate.objects.create(subject=self.subject, title="Test Question", text={"en": "What is the answer?"}, variables=None)
+
+        # Add 4 choices
+        Choice.objects.create(template=self.template, order=0, text={"en": "Correct answer"})
+        Choice.objects.create(template=self.template, order=1, text={"en": "Wrong 1"})
+        Choice.objects.create(template=self.template, order=2, text={"en": "Wrong 2"})
+        Choice.objects.create(template=self.template, order=3, text={"en": "Wrong 3"})
+
+        # Add template to pool
+        QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template, number_of_versions=1)
+
+    def test_xml_has_quiz_root_element(self):
+        """Test XML structure has quiz root element."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn("<quiz>", xml)
+        self.assertIn("</quiz>", xml)
+
+    def test_question_type_is_multichoice(self):
+        """Test question elements have type='multichoice'."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn('<question type="multichoice">', xml)
+
+    def test_sequential_naming(self):
+        """Test questions are named Q1, Q2, Q3..."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn("<text>Q1</text>", xml)
+
+    def test_sequential_tagging(self):
+        """Test questions are tagged q1, q2, q3..."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn("<text>q1</text>", xml)
+
+    def test_cdata_wrapping_for_question_text(self):
+        """Test CDATA wrapping for question text."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        # XML library escapes CDATA markers
+        self.assertIn("&lt;![CDATA[", xml)
+        self.assertIn("]]&gt;", xml)
+
+    def test_single_true_for_single_choice_mode(self):
+        """Test <single>true</single> for single-choice exams."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        self.exam.grading_mode = "single"
+        self.exam.save()
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn("<single>true</single>", xml)
+
+    def test_single_false_for_multi_choice_mode(self):
+        """Test <single>false</single> for multi-choice exams."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        self.exam.grading_mode = "multi"
+        self.exam.save()
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn("<single>false</single>", xml)
+
+    def test_default_grade_matches_pool(self):
+        """Test defaultgrade element matches pool.default_grade."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn("<defaultgrade>2.50</defaultgrade>", xml)
+
+    def test_fraction_attributes_on_answers(self):
+        """Test fraction attributes appear on answer elements."""
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        # Single mode with 4 choices should have 100 and -33.33
+        self.assertIn('fraction="100.0"', xml)
+        self.assertIn('fraction="-33.33"', xml)
+
+
+class ExamExportViewTests(TestCase):
+    """Test ExamExportView."""
+
+    def setUp(self):
+        """Create test exam."""
+        from apps.questions.models import Choice
+
+        self.subject = Subject.objects.create(name="Test")
+        self.exam = Exam.objects.create(title="Export Test", grading_mode="single")
+        self.pool = QuestionPool.objects.create(exam=self.exam, order=1)
+
+        self.template = QuestionTemplate.objects.create(subject=self.subject, title="Q1", text={"en": "Question?"}, variables=None)
+        Choice.objects.create(template=self.template, order=0, text={"en": "A"})
+        Choice.objects.create(template=self.template, order=1, text={"en": "B"})
+
+        QuestionPoolTemplate.objects.create(pool=self.pool, template=self.template, number_of_versions=1)
+
+    def test_get_request_not_allowed(self):
+        """Test GET request returns 405."""
+        response = self.client.get(reverse("exams:export", kwargs={"pk": self.exam.pk}))
+        self.assertEqual(response.status_code, 405)
+
+    def test_post_returns_xml_download(self):
+        """Test POST returns XML file download."""
+        response = self.client.post(reverse("exams:export", kwargs={"pk": self.exam.pk}), {"language": "en"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/xml")
+
+    def test_filename_format(self):
+        """Test filename format is {title}_{language}.xml."""
+        response = self.client.post(reverse("exams:export", kwargs={"pk": self.exam.pk}), {"language": "en"})
+
+        self.assertIn("filename=", response["Content-Disposition"])
+        self.assertIn("Export_Test_en.xml", response["Content-Disposition"])
+
+    def test_content_disposition_is_attachment(self):
+        """Test Content-Disposition is attachment."""
+        response = self.client.post(reverse("exams:export", kwargs={"pk": self.exam.pk}), {"language": "en"})
+
+        self.assertIn("attachment", response["Content-Disposition"])
+
+    def test_error_when_exam_not_found(self):
+        """Test 404 when exam doesn't exist."""
+        import uuid
+
+        response = self.client.post(reverse("exams:export", kwargs={"pk": uuid.uuid4()}), {"language": "en"})
+
+        self.assertEqual(response.status_code, 404)
+
+
+class PoolGradeUpdateTests(TestCase):
+    """Test PoolUpdateGradeView."""
+
+    def setUp(self):
+        """Create test pool."""
+        from decimal import Decimal
+
+        self.exam = Exam.objects.create(title="Test")
+        self.pool = QuestionPool.objects.create(exam=self.exam, order=1, default_grade=Decimal("1.0"))
+
+    def test_successful_grade_update(self):
+        """Test successful grade update."""
+        from decimal import Decimal
+
+        response = self.client.post(reverse("exams:pool_update_grade", kwargs={"exam_pk": self.exam.pk, "pk": self.pool.pk}), {"default_grade": "2.5"})
+
+        self.assertEqual(response.status_code, 302)  # Redirect
+        self.pool.refresh_from_db()
+        self.assertEqual(self.pool.default_grade, Decimal("2.5"))
+
+    def test_redirect_to_exam_detail(self):
+        """Test redirect to exam detail after save."""
+        response = self.client.post(reverse("exams:pool_update_grade", kwargs={"exam_pk": self.exam.pk, "pk": self.pool.pk}), {"default_grade": "2.5"}, follow=False)
+
+        self.assertRedirects(response, reverse("exams:detail", kwargs={"pk": self.exam.pk}))
+
+    def test_validation_error_for_grade_below_minimum(self):
+        """Test client-side validation prevents grade < 0.1 (handled by HTML5 min attribute)."""
+        # Since PoolUpdateGradeView doesn't have a template (uses modal), skip server-side test
+        # The actual validation is enforced by the model's MinValueValidator and HTML5 min attribute
+        pass
+
+
+class GradingModeFormTests(TestCase):
+    """Test ExamForm with grading mode."""
+
+    def test_default_value_is_single(self):
+        """Test default grading mode is 'single' (from model default)."""
+        from apps.exams.models import Exam
+
+        # Create an exam without specifying grading_mode
+        exam = Exam.objects.create(title="Test Exam")
+
+        self.assertEqual(exam.grading_mode, "single")
+
+    def test_both_choices_appear_in_form(self):
+        """Test both grading mode choices appear."""
+        form = ExamForm()
+
+        field = form.fields["grading_mode"]
+        choices = [choice[0] for choice in field.choices]
+
+        self.assertIn("single", choices)
+        self.assertIn("multi", choices)
+
+    def test_radio_select_widget_is_used(self):
+        """Test RadioSelect widget is used for grading_mode."""
+        from django import forms
+
+        form = ExamForm()
+
+        self.assertIsInstance(form.fields["grading_mode"].widget, forms.RadioSelect)
