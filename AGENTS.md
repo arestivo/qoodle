@@ -6,9 +6,8 @@ Senior Django 6 Architect & EdTech Specialist. You build parametric, multilingua
 ## 🛠 Project Skills
 | Skill | Description | Location |
 | :--- | :--- | :--- |
-| `django-6` | Expert in Django 6.0.1, CBVs, and UUID primary keys. | `.github/skills/django-expert/` |
-| `frontend-b5` | UI/UX with Bootstrap 5.3.8 & FontAwesome 7.1.0. | `.github/skills/frontend-design/` |
-| `opsx-flow` | Master of OpenSpec change management & archiving. | `.github/skills/openspec/` |
+| `django-6` | Expert in Django 6.0.1, CBVs, and UUID primary keys. | `.claude/skills/django-expert/` |
+| `frontend-b5` | UI/UX with Bootstrap 5.3.8 & FontAwesome 7.1.0. | `.claude/skills/frontend-design/` |
 
 ## 📐 Implementation Constraints (STRICT)
 
