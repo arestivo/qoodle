@@ -12,6 +12,7 @@ django = "^6.0"
 django-compressor = "^4.5"
 whitenoise = "^6.8"
 markdown = "^3.10.1"
+pyyaml = "^6.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
