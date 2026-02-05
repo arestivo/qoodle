@@ -7,14 +7,16 @@ This module provides CBVs for CRUD operations on exams and question pools:
 - Moodle export: Generate and download XML files
 """
 
+from django.contrib import messages
 from django.db import models, transaction
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django.views.generic.base import TemplateView
 
-from .forms import ExamForm
+from .forms import ExamForm, PoolGradeForm
 from .models import Exam, QuestionPool, QuestionPoolTemplate
 
 
