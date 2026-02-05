@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
 
 from apps.questions.models import Choice, QuestionTemplate
+from apps.subjects.models import Subject
 
 
 class MultilingualTextField(forms.CharField):
@@ -145,6 +146,19 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initialize form and populate variables_json from instance."""
         super().__init__(*args, **kwargs)
+
+        # Customize subject field to show full paths and sort by path
+        all_subjects = Subject.objects.select_related("parent").all()
+        subjects_with_paths = [(s, s.get_full_path()) for s in all_subjects]
+        subjects_with_paths.sort(key=lambda x: x[1])
+        sorted_ids = [s.id for s, _ in subjects_with_paths]
+
+        # Create a queryset that preserves the sorted order
+        from django.db.models import Case, When
+
+        preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(sorted_ids)])
+        self.fields["subject"].queryset = Subject.objects.filter(pk__in=sorted_ids).order_by(preserved_order)
+        self.fields["subject"].label_from_instance = lambda obj: obj.get_full_path()
 
         # Populate variables_json field from instance.variables for edit mode
         if self.instance and self.instance.pk and self.instance.variables:
