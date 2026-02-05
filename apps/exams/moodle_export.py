@@ -127,7 +127,7 @@ def generate_variable_value(config: dict, rng: random.Random) -> Any:
         rng: Random instance for deterministic generation
 
     Returns:
-        Generated value (int, float, or str)
+        Generated value (int, float, str, or list)
 
     Examples:
         >>> rng = random.Random(42)
@@ -144,6 +144,11 @@ def generate_variable_value(config: dict, rng: random.Random) -> Any:
         return round(val, decimals)
     elif var_type == "choice":
         return rng.choice(config["options"])
+    elif var_type == "set":
+        # Generate random subset of specified size from items
+        items = config.get("items", [])
+        size = config.get("size", 1)
+        return rng.sample(items, min(size, len(items)))
     else:
         raise ValueError(f"Unknown variable type: {var_type}")
 

@@ -825,6 +825,27 @@ class VariantGenerationTests(TestCase):
         # Text should contain actual numbers
         self.assertIn(str(variant["values"]["x"]), variant["text"])
 
+    def test_set_variable_type(self):
+        """Test 'set' variable type generates random subsets."""
+        import random
+
+        from apps.exams.moodle_export import generate_variable_value
+
+        config = {"type": "set", "items": ["apple", "banana", "cherry", "date"], "size": 2}
+        rng = random.Random(42)
+
+        result = generate_variable_value(config, rng)
+
+        # Should return a list
+        self.assertIsInstance(result, list)
+        # Should have exactly 2 items
+        self.assertEqual(len(result), 2)
+        # All items should be from the original list
+        for item in result:
+            self.assertIn(item, config["items"])
+        # Items should be unique (no duplicates in subset)
+        self.assertEqual(len(result), len(set(result)))
+
 
 class UniquenessValidationTests(TestCase):
     """Test variant uniqueness validation."""
