@@ -50,6 +50,7 @@ class Command(BaseCommand):
         stats = {
             "processed": 0,
             "successful": 0,
+            "skipped": 0,
             "failed": 0,
             "choices_created": 0,
             "language_independent": 0,
@@ -66,13 +67,33 @@ class Command(BaseCommand):
                 en_data = self.parse_yaml_file(en_files[filename])
                 pt_data = self.parse_yaml_file(pt_files[filename])
 
+                # Check for duplicate
+                title = self.derive_title_from_filename(filename)
+                if QuestionTemplate.objects.filter(title=title, subject=uncategorized_subject).exists():
+                    stats["skipped"] += 1
+                    self.stdout.write(self.style.WARNING(f"  ⊘ Skipped (duplicate): {title}"))
+                    stats["processed"] += 1
+                    continue
+
                 # Convert and create question
                 if not dry_run:
                     with transaction.atomic():
-                        template, choices_count, lang_stats = self.create_question(filename, en_data, pt_data, uncategorized_subject)
+                        template, choices_count, lang_stats = self.create_question(
+                            filename, en_data, pt_data, uncategorized_subject
+                        )
                         stats["choices_created"] += choices_count
                         stats["language_independent"] += lang_stats["independent"]
                         stats["language_specific"] += lang_stats["specific"]
+
+                        # Validate template can render
+                        try:
+                            variables = template.generate_variables(seed=0)
+                            template.get_text(variables=variables)
+                            for choice in template.choices.all():
+                                choice.get_text(variables=variables)
+                        except Exception as e:
+                            raise ValueError(f"Validation failed: {e}")
+
                         self.stdout.write(self.style.SUCCESS(f"  ✓ Created: {template.title}"))
                 else:
                     self.stdout.write(self.style.WARNING(f"  [DRY RUN] Would create question from {filename}"))
@@ -268,6 +289,37 @@ class Command(BaseCommand):
 
         return re.sub(pattern, replace_brackets, text)
 
+    def convert_conditions(self, conditions: list) -> list:
+        """
+        Convert YAML conditions to validation_rules format.
+
+        Converts:
+        - Variable references: <var> → var (but not < or > operators)
+        - JavaScript equality: === → ==, !== → !=
+
+        Examples:
+        - "<r> % 2 === 0" → "r % 2 == 0"
+        - "<a> > <b>" → "a > b"
+        """
+        if not conditions:
+            return []
+
+        rules = []
+        for condition in conditions:
+            rule = str(condition)
+
+            # Convert JavaScript equality operators
+            rule = rule.replace("===", "==")
+            rule = rule.replace("!==", "!=")
+
+            # Convert variable references <var> → var
+            # Match <word> or <word[index]> but not standalone < or >
+            rule = re.sub(r"<(\w+(?:\[\d+\])?)>", r"\1", rule)
+
+            rules.append(rule)
+
+        return rules
+
     def create_multilingual_text(self, en_text: str, pt_text: str) -> tuple[dict, str]:
         """
         Create multilingual text structure.
@@ -324,6 +376,9 @@ class Command(BaseCommand):
         # Convert variables
         variables = self.convert_variables(en_data.get("vars", {}))
 
+        # Convert conditions to validation_rules
+        validation_rules = self.convert_conditions(en_data.get("conditions", []))
+
         # Create multilingual question text
         en_question_text = en_data.get("text", "").strip()
         pt_question_text = pt_data.get("text", "").strip()
@@ -343,6 +398,7 @@ class Command(BaseCommand):
             title=title,
             text=question_text,
             variables=variables,
+            validation_rules=validation_rules if validation_rules else [],
         )
 
         # Create choices
@@ -385,6 +441,9 @@ class Command(BaseCommand):
         self.stdout.write("=" * 60)
         self.stdout.write(f"Files processed:     {stats['processed']}")
         self.stdout.write(self.style.SUCCESS(f"Successful:          {stats['successful']}"))
+
+        if stats["skipped"] > 0:
+            self.stdout.write(self.style.WARNING(f"Skipped (duplicates): {stats['skipped']}"))
 
         if stats["failed"] > 0:
             self.stdout.write(self.style.ERROR(f"Failed:              {stats['failed']}"))
