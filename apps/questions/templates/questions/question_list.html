@@ -56,11 +56,21 @@
 
         {% if questions %}
             <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <strong>{{ questions|length }}</strong> template(s)
+                    </span>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAllBtn">Select All</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="selectNoneBtn">Select None</button>
+                    </div>
+                </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
+                                    <th style="width: 40px;"></th>
                                     <th>Title</th>
                                     <th>Subject</th>
                                     <th class="text-center">Choices</th>
@@ -70,13 +80,17 @@
                             </thead>
                             <tbody>
                                 {% for question in questions %}
-                                <tr style="cursor: pointer;" onclick="window.location='{% url 'questions:preview' question.pk %}'">
-                                    <td class="align-middle">
+                                <tr>
+                                    <td class="align-middle" onclick="event.stopPropagation();">
+                                        <input type="checkbox" class="form-check-input template-checkbox"
+                                               value="{{ question.pk }}" data-template-id="{{ question.pk }}">
+                                    </td>
+                                    <td class="align-middle" style="cursor: pointer;" onclick="window.location='{% url 'questions:preview' question.pk %}'">
                                         <i class="fa-solid fa-file text-primary me-1"></i>
                                         <strong>{{ question.title }}</strong>
                                     </td>
                                     <td class="align-middle">
-                                        <a href="{% url 'questions:list' %}?subject={{ question.subject.pk }}" class="text-decoration-none">
+                                        <a href="{% url 'questions:list' %}?subject={{ question.subject.pk }}" class="text-decoration-none" onclick="event.stopPropagation();">
                                             <i class="fa-solid fa-folder text-primary"></i>
                                             {{ question.subject.name }}
                                         </a>
@@ -89,19 +103,19 @@
                                             {{ question.available_languages|join:", " }}
                                         </small>
                                     </td>
-                                    <td class="text-end">
+                                    <td class="text-end" onclick="event.stopPropagation();">
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{% url 'questions:preview' question.pk %}" 
+                                            <a href="{% url 'questions:preview' question.pk %}"
                                                class="btn btn-outline-info"
                                                title="Preview question">
                                                 <i class="fa-solid fa-eye"></i>
                                             </a>
-                                            <a href="{% url 'questions:edit' question.pk %}" 
+                                            <a href="{% url 'questions:edit' question.pk %}"
                                                class="btn btn-outline-primary"
                                                title="Edit question">
                                                 <i class="fa-solid fa-edit"></i>
                                             </a>
-                                            <a href="{% url 'questions:delete' question.pk %}" 
+                                            <a href="{% url 'questions:delete' question.pk %}"
                                                class="btn btn-outline-danger"
                                                title="Delete question">
                                                 <i class="fa-solid fa-trash"></i>
@@ -118,7 +132,7 @@
 
             {# Pagination #}
             {% if is_paginated %}
-            <nav aria-label="Page navigation" class="mt-4">
+            <nav aria-label="Page navigation" class="mt-4 mb-5">
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
@@ -152,8 +166,69 @@
         {% endif %}
     </div>
 </div>
+
+{# Bulk Action Bar - sticky at bottom #}
+<div id="bulkActionBar" class="position-fixed bottom-0 start-0 end-0 bg-dark text-white p-3 d-none" style="z-index: 1050;">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span id="selectedCount" class="badge bg-primary me-2">0</span>
+                <span>template(s) selected</span>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                {# Move to Subject Form #}
+                <form id="bulkMoveForm" method="post" action="{% url 'questions:bulk_move' %}" class="d-flex gap-2 align-items-center">
+                    {% csrf_token %}
+                    <select name="subject_id" id="moveSubjectSelect" class="form-select form-select-sm" style="width: 200px;">
+                        <option value="">Move to...</option>
+                        {% for subject in subjects %}
+                            <option value="{{ subject.pk }}">{{ subject.get_full_path }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fa-solid fa-folder-open"></i> Move
+                    </button>
+                </form>
+
+                {# Delete Button #}
+                <button type="button" class="btn btn-sm btn-danger" id="bulkDeleteBtn">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+
+                {# Clear Selection #}
+                <button type="button" class="btn btn-sm btn-outline-light" id="clearSelectionBtn">
+                    <i class="fa-solid fa-times"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Delete Confirmation Modal #}
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Delete <strong id="deleteCount">0</strong> template(s)?</p>
+                <p class="text-danger"><i class="fa-solid fa-exclamation-triangle"></i> This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="bulkDeleteForm" method="post" action="{% url 'questions:bulk_delete' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'questions/js/question_list.js' %}" defer></script>
+<script src="{% static 'questions/js/bulk_actions.js' %}" defer></script>
 {% endblock %}

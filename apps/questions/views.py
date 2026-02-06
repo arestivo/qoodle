@@ -6,8 +6,9 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch, QuerySet
-from django.http import HttpResponse
-from django.urls import reverse_lazy
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.urls import reverse, reverse_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from apps.questions.forms import ChoiceFormSet, QuestionForm
@@ -439,3 +440,54 @@ class QuestionDeleteView(DeleteView):
                 f"Cannot delete question template '{question_text}...' due to protected relationships.",
             )
             return self.render_to_response(self.get_context_data())
+
+
+@require_POST
+def bulk_move_templates(request: HttpRequest) -> HttpResponse:
+    """Move multiple templates to a different subject."""
+    template_ids = request.POST.getlist("template_ids")
+    subject_id = request.POST.get("subject_id")
+
+    if not template_ids:
+        messages.warning(request, "Please select at least one template.")
+        return HttpResponseRedirect(reverse("questions:list"))
+
+    if not subject_id:
+        messages.warning(request, "Please select a destination subject.")
+        return HttpResponseRedirect(reverse("questions:list"))
+
+    try:
+        subject = Subject.objects.get(pk=subject_id)
+    except Subject.DoesNotExist:
+        messages.error(request, "Selected subject does not exist.")
+        return HttpResponseRedirect(reverse("questions:list"))
+
+    # Update templates
+    updated_count = QuestionTemplate.objects.filter(pk__in=template_ids).update(subject=subject)
+
+    if updated_count > 0:
+        messages.success(request, f"{updated_count} template(s) moved to {subject.name}.")
+    else:
+        messages.warning(request, "No templates were moved.")
+
+    return HttpResponseRedirect(reverse("questions:list"))
+
+
+@require_POST
+def bulk_delete_templates(request: HttpRequest) -> HttpResponse:
+    """Delete multiple templates at once."""
+    template_ids = request.POST.getlist("template_ids")
+
+    if not template_ids:
+        messages.warning(request, "Please select at least one template.")
+        return HttpResponseRedirect(reverse("questions:list"))
+
+    # Delete templates (choices are deleted via CASCADE)
+    deleted_count, _ = QuestionTemplate.objects.filter(pk__in=template_ids).delete()
+
+    if deleted_count > 0:
+        messages.success(request, f"{deleted_count} template(s) deleted.")
+    else:
+        messages.warning(request, "No templates were deleted.")
+
+    return HttpResponseRedirect(reverse("questions:list"))
