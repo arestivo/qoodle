@@ -291,6 +291,12 @@ class QuestionTemplate(UUIDModel):
         blank=True,
         help_text="List of validation expressions (e.g., ['a > b', 'a + b > c'])",
     )
+    tags = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Comma-separated tags (e.g. easy, exam-2024, review)",
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -315,6 +321,10 @@ class QuestionTemplate(UUIDModel):
     def get_all_texts(self) -> dict[str, str]:
         """Return dict of all language versions."""
         return dict(self.text) if self.text else {}
+
+    def tag_list(self) -> list[str]:
+        """Return tags as a list of stripped strings, filtering out empty entries."""
+        return [t.strip() for t in self.tags.split(",") if t.strip()]
 
     def generate_variables(self, seed: int = None, max_validation_attempts: int = 100) -> dict[str, Any]:
         """

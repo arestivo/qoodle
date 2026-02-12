@@ -60,20 +60,23 @@
                                                    name="templates" value="{{ template.pk }}" id="template_{{ template.pk }}">
                                         </div>
                                         <div class="flex-grow-1">
-                                            <div>
+                                            <div class="d-flex gap-1 flex-wrap align-items-center">
                                                 <strong>{{ template.title }}</strong>
                                                 {% if template.subject %}
-                                                    <span class="badge bg-secondary ms-2">{{ template.subject.name }}</span>
+                                                    <span class="badge bg-secondary">{{ template.subject.name }}</span>
                                                 {% endif %}
                                                 {% if template.variables %}
-                                                    <span class="badge bg-info ms-1" title="Has variables - will use {{ default_versions|default:"5" }} versions">
+                                                    <span class="badge bg-info" title="Has variables - will use {{ default_versions|default:"5" }} versions">
                                                         <i class="fa-solid fa-code"></i> Variables
                                                     </span>
                                                 {% else %}
-                                                    <span class="badge bg-warning text-dark ms-1" title="No variables - will use 1 version">
+                                                    <span class="badge bg-warning text-dark" title="No variables - will use 1 version">
                                                         <i class="fa-solid fa-circle-exclamation"></i> No variables
                                                     </span>
                                                 {% endif %}
+                                                {% for tag in template.tag_list %}
+                                                    <span class="badge bg-secondary">{{ tag }}</span>
+                                                {% endfor %}
                                             </div>
                                         </div>
                                     </div>

@@ -72,6 +72,7 @@
                                 <tr>
                                     <th style="width: 40px;"></th>
                                     <th>Title</th>
+                                    <th>Tags</th>
                                     <th>Subject</th>
                                     <th class="text-center">Choices</th>
                                     <th class="text-center">Languages</th>
@@ -88,6 +89,15 @@
                                     <td class="align-middle" style="cursor: pointer;" onclick="window.location='{% url 'questions:preview' question.pk %}'">
                                         <i class="fa-solid fa-file text-primary me-1"></i>
                                         <strong>{{ question.title }}</strong>
+                                    </td>
+                                    <td class="align-middle">
+                                        {% if question.tag_list %}
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            {% for tag in question.tag_list %}
+                                            <span class="badge bg-secondary">{{ tag }}</span>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
                                     </td>
                                     <td class="align-middle">
                                         <a href="{% url 'questions:list' %}?subject={{ question.subject.pk }}" class="text-decoration-none" onclick="event.stopPropagation();">

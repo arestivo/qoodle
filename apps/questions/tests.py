@@ -160,6 +160,58 @@ class QuestionModelTests(TestCase):
             self.subject.delete()
 
 
+class TagListTests(TestCase):
+    """Test cases for the tag_list() method on QuestionTemplate."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.subject = Subject.objects.create(name="Mathematics")
+
+    def test_tag_list_empty_string(self):
+        """Test tag_list returns empty list for empty tags."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject, title="No Tags", text={"none": "Question?"}, tags=""
+        )
+        self.assertEqual(question.tag_list(), [])
+
+    def test_tag_list_single_tag(self):
+        """Test tag_list with a single tag."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject, title="One Tag", text={"none": "Question?"}, tags="easy"
+        )
+        self.assertEqual(question.tag_list(), ["easy"])
+
+    def test_tag_list_multiple_tags(self):
+        """Test tag_list with multiple comma-separated tags."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Multiple Tags",
+            text={"none": "Question?"},
+            tags="easy, exam-2024, review",
+        )
+        self.assertEqual(question.tag_list(), ["easy", "exam-2024", "review"])
+
+    def test_tag_list_strips_whitespace(self):
+        """Test tag_list strips whitespace from tags."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Whitespace Tags",
+            text={"none": "Question?"},
+            tags="  easy ,  exam-2024 , review ",
+        )
+        self.assertEqual(question.tag_list(), ["easy", "exam-2024", "review"])
+
+    def test_tag_list_filters_empty_entries(self):
+        """Test tag_list filters out empty entries from consecutive commas."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Empty Entries",
+            text={"none": "Question?"},
+            tags="easy, , hard",
+        )
+        self.assertEqual(question.tag_list(), ["easy", "hard"])
+
+
 class ChoiceModelTests(TestCase):
     """Test cases for the Choice model."""
 
