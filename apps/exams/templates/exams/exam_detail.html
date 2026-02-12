@@ -152,6 +152,9 @@
                                                     {{ pt.number_of_versions }} version{{ pt.number_of_versions|pluralize }}
                                                 </span>
                                             {% endif %}
+                                            {% for tag in pt.template.tag_list %}
+                                                <span class="badge bg-secondary ms-1">{{ tag }}</span>
+                                            {% endfor %}
                                         </div>
                                         <div class="btn-group btn-group-sm">
                                             <a href="{% url 'questions:preview' pt.template.pk %}" 
