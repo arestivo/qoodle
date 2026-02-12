@@ -52,11 +52,11 @@
                     {% endif %}
                 </p>
                 {% if question.tag_list %}
-                <div class="d-flex gap-1 mt-2">
+                <p class="mb-1 d-flex gap-1 mt-2"><strong>Tags:</strong>
                     {% for tag in question.tag_list %}
                     <span class="badge bg-secondary">{{ tag }}</span>
                     {% endfor %}
-                </div>
+                </p>
                 {% endif %}
             </div>
         </div>
