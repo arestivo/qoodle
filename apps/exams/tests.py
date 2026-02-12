@@ -354,11 +354,13 @@ class PoolTemplateViewTests(TestCase):
             title="Template 1",
             subject=self.subject,
             text="Question 1",
+            state="reviewed",
         )
         self.template2 = QuestionTemplate.objects.create(
             title="Template 2",
             subject=self.subject,
             text="Question 2",
+            state="reviewed",
         )
 
     def test_pool_template_add_view_excludes_existing_templates(self):
@@ -451,6 +453,29 @@ class PoolTemplateViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.pool.refresh_from_db()
         self.assertEqual(self.pool.order, 1)  # Order unchanged
+
+    def test_pool_template_add_only_shows_reviewed_templates(self):
+        """Test that pool template add only shows reviewed templates."""
+        draft_template = QuestionTemplate.objects.create(
+            title="Draft Template",
+            subject=self.subject,
+            text="Draft Q",
+            state="draft",
+        )
+
+        response = self.client.get(
+            reverse(
+                "exams:pool_template_add",
+                kwargs={"exam_pk": self.exam.pk, "pool_pk": self.pool.pk},
+            )
+        )
+
+        available_templates = response.context["available_templates"]
+        template_ids = [t.id for t in available_templates]
+
+        self.assertNotIn(draft_template.id, template_ids)
+        self.assertIn(self.template1.id, template_ids)
+        self.assertIn(self.template2.id, template_ids)
 
 
 # ============================================================================

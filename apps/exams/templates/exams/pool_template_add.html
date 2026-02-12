@@ -62,6 +62,9 @@
                                         <div class="flex-grow-1">
                                             <div class="d-flex gap-1 flex-wrap align-items-center">
                                                 <strong>{{ template.title }}</strong>
+                                                {% if template.state == "reviewed" %}
+                                                    <i class="fa-solid fa-circle-check text-success" title="Reviewed"></i>
+                                                {% endif %}
                                                 {% if template.subject %}
                                                     <span class="badge bg-secondary">{{ template.subject.name }}</span>
                                                 {% endif %}

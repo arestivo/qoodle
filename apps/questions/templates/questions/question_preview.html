@@ -42,6 +42,15 @@
                     </a>
                 </p>
                 <p class="mb-1"><strong>Updated:</strong> {{ question.updated_at|date:"Y-m-d H:i" }}</p>
+                <p class="mb-1"><strong>State:</strong>
+                    {% if question.state == "reviewed" %}
+                        <span class="badge bg-success">{{ question.get_state_display }}</span>
+                    {% elif question.state == "completed" %}
+                        <span class="badge bg-info">{{ question.get_state_display }}</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">{{ question.get_state_display }}</span>
+                    {% endif %}
+                </p>
                 {% if question.tag_list %}
                 <div class="d-flex gap-1 mt-2">
                     {% for tag in question.tag_list %}

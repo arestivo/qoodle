@@ -141,6 +141,9 @@
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <div class="d-flex align-items-center flex-grow-1 m-2">
                                             <strong>{{ pt.template.title }}</strong>
+                                            {% if pt.template.state == "reviewed" %}
+                                                <i class="fa-solid fa-circle-check text-success ms-1" title="Reviewed"></i>
+                                            {% endif %}
                                             {% if pt.template.subject %}
                                                 <a href="{% url 'questions:list' %}?subject={{ pt.template.subject.pk %}" class="text-decoration-none ms-2">
                                                   <i class="fa-solid fa-folder text-primary"></i>

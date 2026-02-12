@@ -16,4 +16,11 @@ if (filterForm) {
             filterForm.submit();
         });
     }
+
+    const stateSelect = document.getElementById('state');
+    if (stateSelect) {
+        stateSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
 }

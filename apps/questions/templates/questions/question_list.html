@@ -25,7 +25,7 @@
         <div class="card mb-4">
             <div class="card-body">
                 <form method="get" class="row g-3" id="filterForm">
-                    <div class="col-md-8">
+                    <div class="col-md-4">
                         <label for="subject" class="form-label">Filter by Subject</label>
                         <select name="subject" id="subject" class="form-select">
                             <option value="">-- All Subjects --</option>
@@ -34,6 +34,15 @@
                                     {{ subject.get_full_path }}
                                 </option>
                             {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="state" class="form-label">Filter by State</label>
+                        <select name="state" id="state" class="form-select">
+                            <option value="">-- All States --</option>
+                            <option value="draft" {% if selected_state == "draft" %}selected{% endif %}>Draft</option>
+                            <option value="completed" {% if selected_state == "completed" %}selected{% endif %}>Completed</option>
+                            <option value="reviewed" {% if selected_state == "reviewed" %}selected{% endif %}>Reviewed</option>
                         </select>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
@@ -89,6 +98,9 @@
                                     <td class="align-middle" style="cursor: pointer;" onclick="window.location='{% url 'questions:preview' question.pk %}'">
                                         <i class="fa-solid fa-file text-primary me-1"></i>
                                         <strong>{{ question.title }}</strong>
+                                        {% if question.state == "reviewed" %}
+                                            <i class="fa-solid fa-circle-check text-success ms-1" title="Reviewed"></i>
+                                        {% endif %}
                                     </td>
                                     <td class="align-middle">
                                         {% if question.tag_list %}
@@ -146,7 +158,7 @@
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}">Previous</a>
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}{% if selected_state %}&state={{ selected_state }}{% endif %}">Previous</a>
                         </li>
                     {% endif %}
 
@@ -156,7 +168,7 @@
 
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}">Next</a>
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}{% if selected_state %}&state={{ selected_state }}{% endif %}">Next</a>
                         </li>
                     {% endif %}
                 </ul>

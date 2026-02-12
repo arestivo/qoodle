@@ -45,6 +45,11 @@ class QuestionListView(ListView):
             except Subject.DoesNotExist:
                 pass
 
+        # Filter by state if specified
+        state = self.request.GET.get("state")
+        if state:
+            qs = qs.filter(state=state)
+
         return qs.order_by("title")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -67,6 +72,7 @@ class QuestionListView(ListView):
                 pass
 
         context["include_sub"] = self.request.GET.get("include_sub") == "on"
+        context["selected_state"] = self.request.GET.get("state", "")
         return context
 
 

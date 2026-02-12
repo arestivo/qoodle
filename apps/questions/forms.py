@@ -128,7 +128,7 @@ class QuestionForm(forms.ModelForm):
 
     class Meta:
         model = QuestionTemplate
-        fields = ["title", "subject", "tags", "text", "variables_json", "validation_rules_json"]
+        fields = ["title", "subject", "tags", "state", "text", "variables_json", "validation_rules_json"]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -145,6 +145,11 @@ class QuestionForm(forms.ModelForm):
                 attrs={
                     "class": "form-control",
                     "placeholder": "easy, exam-2024, review",
+                }
+            ),
+            "state": forms.Select(
+                attrs={
+                    "class": "form-select",
                 }
             ),
         }

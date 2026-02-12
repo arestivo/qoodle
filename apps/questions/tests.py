@@ -6,7 +6,9 @@ import uuid
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from apps.questions.models import Choice, QuestionTemplate, validate_multilingual_text
+from django.urls import reverse
+
+from apps.questions.models import Choice, QuestionTemplate, TemplateState, validate_multilingual_text
 from apps.subjects.models import Subject
 
 
@@ -210,6 +212,78 @@ class TagListTests(TestCase):
             tags="easy, , hard",
         )
         self.assertEqual(question.tag_list(), ["easy", "hard"])
+
+
+class TemplateStateTests(TestCase):
+    """Test cases for the state field on QuestionTemplate."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.subject = Subject.objects.create(name="Mathematics")
+
+    def test_default_state_is_draft(self):
+        """Test new templates default to draft state."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject, title="Test", text={"none": "Question?"}
+        )
+        self.assertEqual(question.state, TemplateState.DRAFT)
+
+    def test_state_can_be_set_to_reviewed(self):
+        """Test state can be set to reviewed."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject, title="Test", text={"none": "Question?"}, state=TemplateState.REVIEWED
+        )
+        self.assertEqual(question.state, "reviewed")
+        self.assertEqual(question.get_state_display(), "Reviewed")
+
+    def test_state_can_be_set_to_completed(self):
+        """Test state can be set to completed."""
+        question = QuestionTemplate.objects.create(
+            subject=self.subject, title="Test", text={"none": "Question?"}, state=TemplateState.COMPLETED
+        )
+        self.assertEqual(question.state, "completed")
+
+
+class TemplateStateFilterTests(TestCase):
+    """Test cases for filtering templates by state in list view."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.subject = Subject.objects.create(name="Mathematics")
+        self.draft = QuestionTemplate.objects.create(
+            subject=self.subject, title="Draft Q", text={"none": "Q?"}, state=TemplateState.DRAFT
+        )
+        self.reviewed = QuestionTemplate.objects.create(
+            subject=self.subject, title="Reviewed Q", text={"none": "Q?"}, state=TemplateState.REVIEWED
+        )
+        self.completed = QuestionTemplate.objects.create(
+            subject=self.subject, title="Completed Q", text={"none": "Q?"}, state=TemplateState.COMPLETED
+        )
+
+    def test_no_state_filter_shows_all(self):
+        """Test that no state filter shows all templates."""
+        response = self.client.get(reverse("questions:list"))
+        questions = response.context["questions"]
+        self.assertEqual(len(questions), 3)
+
+    def test_filter_by_reviewed(self):
+        """Test filtering by reviewed state."""
+        response = self.client.get(reverse("questions:list") + "?state=reviewed")
+        questions = response.context["questions"]
+        self.assertEqual(len(questions), 1)
+        self.assertEqual(questions[0].state, "reviewed")
+
+    def test_filter_by_draft(self):
+        """Test filtering by draft state."""
+        response = self.client.get(reverse("questions:list") + "?state=draft")
+        questions = response.context["questions"]
+        self.assertEqual(len(questions), 1)
+        self.assertEqual(questions[0].state, "draft")
+
+    def test_selected_state_in_context(self):
+        """Test that selected_state is passed to template context."""
+        response = self.client.get(reverse("questions:list") + "?state=reviewed")
+        self.assertEqual(response.context["selected_state"], "reviewed")
 
 
 class ChoiceModelTests(TestCase):
@@ -936,6 +1010,7 @@ class VariableFormTests(TestCase):
             "title": "Test Question",
             "text": '{"none": "What is {{x}}?"}',
             "variables_json": '{"x": {"type": "num", "min": 1, "max": 10, "precision": 1}}',
+            "state": "draft",
         }
 
         form = self.form_class(data=form_data)
@@ -965,6 +1040,7 @@ class VariableFormTests(TestCase):
             "title": "Test Question",
             "text": '{"none": "What is {{x}}?"}',
             "variables_json": '{"x": {"type": "num", "min": 1, "max": 10, "precision": 1}}',
+            "state": "draft",
         }
 
         form = self.form_class(data=form_data)
@@ -982,6 +1058,7 @@ class VariableFormTests(TestCase):
             "title": "Test Question",
             "text": '{"none": "Simple question"}',
             "variables_json": "",
+            "state": "draft",
         }
 
         form = self.form_class(data=form_data)
@@ -1033,6 +1110,7 @@ class ValidationRulesFormTests(TestCase):
             "text": '{"none": "What is {{a}} + {{b}}?"}',
             "variables_json": '{"a": {"type": "num", "min": 1, "max": 10, "precision": 1}, "b": {"type": "num", "min": 1, "max": 10, "precision": 1}}',
             "validation_rules_json": '["a > b", "a + b > 0"]',
+            "state": "draft",
         }
 
         form = self.form_class(data=form_data)
@@ -1065,6 +1143,7 @@ class ValidationRulesFormTests(TestCase):
             "text": '{"none": "Test"}',
             "variables_json": "{}",
             "validation_rules_json": ["a > 0", "b < 100"],  # List directly
+            "state": "draft",
         }
 
         form = self.form_class(data=form_data)
@@ -1081,6 +1160,7 @@ class ValidationRulesFormTests(TestCase):
             "text": '{"none": "Test"}',
             "variables_json": "{}",
             "validation_rules_json": "",  # Empty
+            "state": "draft",
         }
 
         form = self.form_class(data=form_data)
@@ -1234,13 +1314,12 @@ class ValidationRulesIntegrationTests(TestCase):
 
     def test_question_create_with_validation_rules(self):
         """Test creating a question with validation rules via form."""
-        from django.urls import reverse
-
         url = reverse("questions:create")
         form_data = {
             "subject": self.subject.id,
             "title": "Triangle Inequality Question",
             "text": '{"none": "Triangle with sides {{a}}, {{b}}, {{c}}"}',
+            "state": "draft",
             "variables_json": json.dumps(
                 {
                     "a": {"type": "num", "min": 1, "max": 20, "precision": 1},
@@ -1300,13 +1379,12 @@ class ValidationRulesIntegrationTests(TestCase):
         Choice.objects.create(template=question, text={"none": "Correct"}, order=0)
         Choice.objects.create(template=question, text={"none": "Incorrect"}, order=1)
 
-        from django.urls import reverse
-
         url = reverse("questions:edit", args=[question.pk])
         form_data = {
             "subject": self.subject.id,
             "title": "Updated Question",
             "text": '{"none": "What is {{a}} + {{b}}?"}',
+            "state": "draft",
             "variables_json": json.dumps(
                 {
                     "a": {"type": "num", "min": 1, "max": 10, "precision": 1},

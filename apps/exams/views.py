@@ -158,7 +158,7 @@ class PoolTemplateAddView(TemplateView):
         # Get all template IDs already used in any pool in this exam
         existing_template_ids = QuestionPoolTemplate.objects.filter(pool__exam=exam).values_list("template_id", flat=True)
 
-        available_templates = QuestionTemplate.objects.exclude(id__in=existing_template_ids).select_related("subject").order_by("title")
+        available_templates = QuestionTemplate.objects.exclude(id__in=existing_template_ids).filter(state="reviewed").select_related("subject").order_by("title")
 
         # Filter by subject if provided
         subject_id = self.request.GET.get("subject")

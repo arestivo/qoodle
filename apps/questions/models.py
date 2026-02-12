@@ -162,6 +162,14 @@ class VariableGenerator:
             raise ValidationError(f"Expression evaluation failed: {e}")
 
 
+class TemplateState(models.TextChoices):
+    """Lifecycle state for question templates."""
+
+    DRAFT = "draft", "Draft"
+    COMPLETED = "completed", "Completed"
+    REVIEWED = "reviewed", "Reviewed"
+
+
 class QuestionTemplate(UUIDModel):
     """
     Question template with multilingual and parametric variable support.
@@ -297,6 +305,12 @@ class QuestionTemplate(UUIDModel):
         default="",
         help_text="Comma-separated tags (e.g. easy, exam-2024, review)",
     )
+    state = models.CharField(
+        max_length=20,
+        choices=TemplateState.choices,
+        default=TemplateState.DRAFT,
+        help_text="Lifecycle state: draft, completed, or reviewed",
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -304,6 +318,7 @@ class QuestionTemplate(UUIDModel):
         verbose_name_plural = "Templates"
         indexes = [
             models.Index(fields=["subject", "-created_at"]),
+            models.Index(fields=["state"]),
         ]
 
     def __str__(self) -> str:
