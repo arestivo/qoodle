@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.subjects",
     "apps.questions",
     "apps.exams",
+    "apps.data",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,38 @@
+{% extends 'common/base.html' %}
+
+{% block title %}Confirm Import{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="fa-solid fa-triangle-exclamation text-warning"></i> Confirm Data Import</h1>
+
+    <div class="alert alert-warning mt-4">
+        <h5 class="alert-heading">
+            <i class="fa-solid fa-exclamation-circle"></i> Warning: Existing data will be deleted
+        </h5>
+        <p>The database already contains data. Importing will <strong>delete all existing records</strong> and replace them with the uploaded file's contents.</p>
+        <hr>
+        <p class="mb-0"><strong>The following data will be deleted:</strong></p>
+        <ul class="mb-0 mt-2">
+            {% for model_name, count in existing_counts.items %}
+                {% if count > 0 %}
+                    <li>{{ model_name }}: <strong>{{ count }}</strong> record{{ count|pluralize }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+        <form method="post" action="{% url 'data:import' %}">
+            {% csrf_token %}
+            <input type="hidden" name="confirm" value="true">
+            <button type="submit" class="btn btn-danger">
+                <i class="fa-solid fa-trash"></i> Confirm Import
+            </button>
+        </form>
+        <a href="{% url 'data:index' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Cancel
+        </a>
+    </div>
+</div>
+{% endblock %}

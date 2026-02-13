@@ -54,6 +54,11 @@
                             <i class="fa-solid fa-file-lines"></i> Exams
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'data:index' %}">
+                            <i class="fa-solid fa-database"></i> Data
+                        </a>
+                    </li>
                     {% block nav_items %}
                     {# Additional navigation items can be added here #}
                     {% endblock %}
