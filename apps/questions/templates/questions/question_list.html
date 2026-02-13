@@ -100,6 +100,8 @@
                                         <strong>{{ question.title }}</strong>
                                         {% if question.state == "reviewed" %}
                                             <i class="fa-solid fa-circle-check text-success ms-1" title="Reviewed"></i>
+                                        {% elif question.state == "completed" %}
+                                            <i class="fa-solid fa-circle-dot text-muted ms-1" title="Completed"></i>
                                         {% endif %}
                                     </td>
                                     <td class="align-middle">

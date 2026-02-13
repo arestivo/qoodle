@@ -143,6 +143,8 @@
                                             <strong>{{ pt.template.title }}</strong>
                                             {% if pt.template.state == "reviewed" %}
                                                 <i class="fa-solid fa-circle-check text-success ms-1" title="Reviewed"></i>
+                                            {% elif pt.template.state == "completed" %}
+                                                <i class="fa-solid fa-circle-dot text-muted ms-1" title="Completed"></i>
                                             {% endif %}
                                             {% if pt.template.subject %}
                                                 <a href="{% url 'questions:list' %}?subject={{ pt.template.subject.pk %}" class="text-decoration-none ms-2">

@@ -64,6 +64,8 @@
                                                 <strong>{{ template.title }}</strong>
                                                 {% if template.state == "reviewed" %}
                                                     <i class="fa-solid fa-circle-check text-success" title="Reviewed"></i>
+                                                {% elif template.state == "completed" %}
+                                                    <i class="fa-solid fa-circle-dot text-muted" title="Completed"></i>
                                                 {% endif %}
                                                 {% if template.subject %}
                                                     <span class="badge bg-secondary">{{ template.subject.name }}</span>
