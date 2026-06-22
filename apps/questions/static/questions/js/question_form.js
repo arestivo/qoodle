@@ -213,7 +213,7 @@ function setVariableConfig(row, type, config) {
         const itemsInput = row.querySelector('.var-items');
         const sizeInput = row.querySelector('.var-size');
         
-        if (itemsInput && config.items) itemsInput.value = config.items.join(', ');
+        if (itemsInput && config.items) itemsInput.value = config.items.join('\n');
         if (sizeInput && config.size !== undefined) sizeInput.value = config.size;
     } else if (type === 'expression') {
         const formulaInput = row.querySelector('.var-formula');
@@ -257,7 +257,7 @@ function serializeVariables() {
             const sizeInput = row.querySelector('.var-size');
             
             const itemsText = itemsInput.value.trim();
-            config.items = itemsText ? itemsText.split(',').map(s => s.trim()).filter(s => s) : [];
+            config.items = itemsText ? itemsText.split(/\r?\n/).map(s => s.trim()).filter(s => s) : [];
             config.size = parseInt(sizeInput.value) || 1;
         } else if (type === 'expression') {
             const formulaInput = row.querySelector('.var-formula');

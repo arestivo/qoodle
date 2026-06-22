@@ -338,15 +338,16 @@
 <template id="fields-set-template">
     <div class="row g-1">
         <div class="col-8">
-            <input type="text" class="form-control form-control-sm var-items" placeholder="Items (comma-separated)" required
-                   title="Comma-separated list of items to choose from">
+            <textarea class="form-control form-control-sm var-items" rows="4"
+                      placeholder="One item per line" required
+                      title="Enter one item per line. Commas are preserved as part of an item."></textarea>
         </div>
         <div class="col-4">
             <input type="number" class="form-control form-control-sm var-size" placeholder="Size" min="1" required
                    title="Number of items to select">
         </div>
     </div>
-    <small class="text-muted">Items: apple, banana, cherry (comma-separated). Access with {% templatetag openvariable %}var[0]{% templatetag closevariable %}, {% templatetag openvariable %}var[1]{% templatetag closevariable %}, etc.</small>
+    <small class="text-muted">Enter one item per line. Commas inside a line are preserved, e.g. <code>Paris, France</code>. Access with {% templatetag openvariable %}var[0]{% templatetag closevariable %}, {% templatetag openvariable %}var[1]{% templatetag closevariable %}, etc.</small>
 </template>
 
 {# Template for expression type fields #}

@@ -2,6 +2,7 @@
 
 import json
 import uuid
+from pathlib import Path
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -1171,6 +1172,80 @@ class VariableFormTests(TestCase):
             initial_variables = json.loads(initial_variables)
 
         self.assertIn("x", initial_variables)
+
+
+class SetVariableFormTests(TestCase):
+    """Regression tests for one-item-per-line set variable input."""
+
+    def setUp(self):
+        """Create a subject and a set variable with comma-containing items."""
+        self.subject = Subject.objects.create(name="Geography")
+        self.question = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Cities",
+            text={"none": "Choose {{cities[0]}}"},
+            variables={
+                "cities": {
+                    "type": "set",
+                    "items": ["Paris, France", "Porto, Portugal", "London"],
+                    "size": 1,
+                }
+            },
+        )
+
+    def test_set_variable_uses_one_item_per_line_textarea(self):
+        """Test the set editor communicates newline-separated input."""
+        response = self.client.get(reverse("questions:edit", args=[self.question.pk]))
+
+        self.assertContains(response, 'class="form-control form-control-sm var-items"')
+        self.assertContains(response, 'placeholder="One item per line"')
+        self.assertContains(response, "Commas inside a line are preserved")
+
+    def test_set_variable_script_preserves_commas_inside_lines(self):
+        """Test JavaScript uses newline boundaries for loading and saving."""
+        script_path = (
+            Path(__file__).parent
+            / "static"
+            / "questions"
+            / "js"
+            / "question_form.js"
+        )
+        script = script_path.read_text()
+
+        self.assertIn("config.items.join('\\n')", script)
+        self.assertIn("itemsText.split(/\\r?\\n/)", script)
+        self.assertNotIn("itemsText.split(',')", script)
+
+    def test_form_preserves_comma_containing_set_items(self):
+        """Test the backend stores complete comma-containing array items."""
+        from apps.questions.forms import QuestionForm
+
+        form = QuestionForm(
+            data={
+                "subject": self.subject.id,
+                "title": "Cities",
+                "text": '{"none": "Choose {{cities[0]}}"}',
+                "variables_json": json.dumps(self.question.variables),
+                "state": "draft",
+            },
+            instance=self.question,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        question = form.save()
+        self.assertEqual(
+            question.variables["cities"]["items"],
+            ["Paris, France", "Porto, Portugal", "London"],
+        )
+
+    def test_set_generator_preserves_item_punctuation(self):
+        """Test generation returns comma-containing items unchanged."""
+        self.question.variables["cities"]["items"] = ["Paris, France"]
+        self.question.save()
+
+        generated = self.question.generate_variables(seed=1)
+
+        self.assertEqual(generated["cities"], ["Paris, France"])
 
 
 class ValidationRulesFormTests(TestCase):
