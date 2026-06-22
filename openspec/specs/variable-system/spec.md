@@ -315,58 +315,24 @@ Variable substitution MUST work correctly with the existing multilingual text sy
 
 ### Requirement: Form UI for Variable Definition
 
-The question create and edit form MUST provide type-specific fields for each
-variable type. For a set variable, items MUST be entered one per line in a
-Bootstrap 5.3.8 `textarea.form-control.form-control-sm.var-items`. Each
-non-empty trimmed line MUST become one string in the set variable's `items`
-array, and commas inside a line MUST remain part of that item.
+The variable-definition form MUST use one-value-per-line textareas for both
+string-variable `values` and set-variable `items`. Commas inside a line MUST be
+preserved as content. The existing deferred question-form JavaScript remains in
+the inherited `extra_js` block covered by `{% compress js %}` in
+`common/base.html`.
 
-The form remains available at `GET` and `POST /questions/create/` and
-`GET` and `POST /questions/<uuid:pk>/edit/`, for example
-`/questions/123e4567-e89b-12d3-a456-426614174000/edit/`.
-No model fields change: `QuestionTemplate.variables` remains a JSONField and
-set definitions retain `{"type": "set", "items": list[str], "size": int}`.
+#### Scenario: String type fields
 
-The existing deferred
-`apps/questions/static/questions/js/question_form.js` script MUST remain in the
-`extra_js` block inherited from `common/base.html`, where it is already enclosed
-by `{% compress js %}`.
+- **GIVEN** the teacher selects variable type `string`
+- **WHEN** type-specific fields are displayed
+- **THEN** a multiline textarea appears for entering one possible value per line
+- **AND** help text explains that commas inside a line are preserved
 
-#### Scenario: Set item contains a comma
+#### Scenario: Set type fields remain unchanged
 
-- **GIVEN** a teacher is editing a set variable
-- **WHEN** the items textarea contains:
-
-  ```text
-  Paris, France
-  Porto, Portugal
-  London
-  ```
-
-- **THEN** the serialized `items` value is
-  `["Paris, France", "Porto, Portugal", "London"]`
-- **AND** no item is split at a comma
-
-#### Scenario: Blank lines and surrounding whitespace
-
-- **GIVEN** a set items textarea contains blank lines and surrounding whitespace
-- **WHEN** the variable definition is serialized
-- **THEN** surrounding whitespace is removed from each item
-- **AND** blank lines do not create empty items
-
-#### Scenario: Existing set variable is loaded for editing
-
-- **GIVEN** a saved set variable has
-  `items = ["Paris, France", "Porto, Portugal"]`
-- **WHEN** the question edit form is loaded
-- **THEN** the textarea displays `Paris, France` and `Porto, Portugal` on separate lines
-- **AND** saving without edits preserves both complete items
-
-#### Scenario: Set generation preserves item punctuation
-
-- **GIVEN** a set variable stores an item `"Paris, France"`
-- **WHEN** the variable generator selects that item
-- **THEN** the generated value is exactly `"Paris, France"`
+- **GIVEN** the teacher selects variable type `set`
+- **WHEN** type-specific fields are displayed
+- **THEN** the existing one-item-per-line textarea and subset-size input remain available
 
 ### Requirement: Variable Preview and Testing
 

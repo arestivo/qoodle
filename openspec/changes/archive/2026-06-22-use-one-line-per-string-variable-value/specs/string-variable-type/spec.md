@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-Define, validate, edit, and generate string variables from predefined values.
-## Requirements
 ### Requirement: String Variable Definition
 
 String variables MUST select a random value from a predefined `values` list.
@@ -42,30 +40,3 @@ MUST remain part of that value.
 - **GIVEN** an existing variable stores a JSON list of string values
 - **WHEN** values are generated
 - **THEN** generation continues selecting complete entries from that list
-
-### Requirement: String Variable Generation
-
-The generator MUST select one random value from the values list.
-
-#### Scenario: Random selection
-- **WHEN** generating a string variable with `values: ["apple", "banana", "cherry"]`
-- **THEN** one of the three values is returned
-- **THEN** each value has equal probability of selection
-
-#### Scenario: Single value list
-- **WHEN** generating a string variable with `values: ["only"]`
-- **THEN** "only" is always returned
-
-#### Scenario: Reproducible with seed
-- **WHEN** generating with the same seed
-- **THEN** the same value is returned each time
-
----
-
-### Requirement: Backward Compatibility
-
-The system MUST reject the unsupported legacy string-variable format.
-
-#### Scenario: Old format rejected
-- **WHEN** a variable uses `{"type": "string", "min_length": 5, "max_length": 10}`
-- **THEN** validation fails with error "Variable 'name' missing 'values' field"

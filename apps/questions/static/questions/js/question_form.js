@@ -208,7 +208,7 @@ function setVariableConfig(row, type, config) {
     } else if (type === 'string') {
         const valuesInput = row.querySelector('.var-values');
 
-        if (valuesInput && config.values) valuesInput.value = config.values.join(', ');
+        if (valuesInput && config.values) valuesInput.value = config.values.join('\n');
     } else if (type === 'set') {
         const itemsInput = row.querySelector('.var-items');
         const sizeInput = row.querySelector('.var-size');
@@ -251,7 +251,7 @@ function serializeVariables() {
             const valuesInput = row.querySelector('.var-values');
 
             const valuesText = valuesInput.value.trim();
-            config.values = valuesText ? valuesText.split(',').map(s => s.trim()).filter(s => s) : [];
+            config.values = valuesText ? valuesText.split(/\r?\n/).map(s => s.trim()).filter(s => s) : [];
         } else if (type === 'set') {
             const itemsInput = row.querySelector('.var-items');
             const sizeInput = row.querySelector('.var-size');

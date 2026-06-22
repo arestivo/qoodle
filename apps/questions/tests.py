@@ -1323,6 +1323,79 @@ class SetVariableFormTests(TestCase):
         self.assertEqual(generated["cities"], ["Paris, France"])
 
 
+class StringVariableFormTests(TestCase):
+    """Regression tests for one-value-per-line string variable input."""
+
+    def setUp(self):
+        """Create a string variable containing comma-separated place names."""
+        self.subject = Subject.objects.create(name="Geography")
+        self.question = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Places",
+            text={"none": "Visit {{place}}"},
+            variables={
+                "place": {
+                    "type": "string",
+                    "values": ["Paris, France", "Porto, Portugal", "London"],
+                }
+            },
+        )
+
+    def test_string_variable_uses_one_value_per_line_textarea(self):
+        """Test the editor communicates newline-separated values."""
+        response = self.client.get(reverse("questions:edit", args=[self.question.pk]))
+
+        self.assertContains(response, 'class="form-control form-control-sm var-values"')
+        self.assertContains(response, 'placeholder="One value per line"')
+        self.assertContains(response, "Commas inside a line are preserved")
+
+    def test_string_variable_script_uses_newline_boundaries(self):
+        """Test JavaScript loads and saves values using line boundaries."""
+        script_path = (
+            Path(__file__).parent
+            / "static"
+            / "questions"
+            / "js"
+            / "question_form.js"
+        )
+        script = script_path.read_text()
+
+        self.assertIn("config.values.join('\\n')", script)
+        self.assertIn("valuesText.split(/\\r?\\n/)", script)
+        self.assertNotIn("valuesText.split(',')", script)
+
+    def test_form_preserves_comma_containing_string_values(self):
+        """Test complete comma-containing options remain stored."""
+        from apps.questions.forms import QuestionForm
+
+        form = QuestionForm(
+            data={
+                "subject": self.subject.id,
+                "title": "Places",
+                "text": '{"none": "Visit {{place}}"}',
+                "variables_json": json.dumps(self.question.variables),
+                "state": "draft",
+            },
+            instance=self.question,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        question = form.save()
+        self.assertEqual(
+            question.variables["place"]["values"],
+            ["Paris, France", "Porto, Portugal", "London"],
+        )
+
+    def test_string_generator_preserves_value_punctuation(self):
+        """Test generation returns comma-containing values unchanged."""
+        self.question.variables["place"]["values"] = ["Paris, France"]
+        self.question.save()
+
+        generated = self.question.generate_variables(seed=1)
+
+        self.assertEqual(generated["place"], "Paris, France")
+
+
 class ValidationRulesFormTests(TestCase):
     """Form tests for validation rules."""
 
