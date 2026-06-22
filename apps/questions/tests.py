@@ -286,6 +286,87 @@ class TemplateStateFilterTests(TestCase):
         self.assertEqual(response.context["selected_state"], "reviewed")
 
 
+class QuestionListToggleTests(TestCase):
+    """Test question text rendering for the template-list global toggle."""
+
+    def setUp(self):
+        """Create a multilingual template with Markdown and choices."""
+        self.subject = Subject.objects.create(name="Mathematics")
+        self.question = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Addition",
+            text={
+                "none": "Calculate **{{a}} + {{b}}**.",
+                "pt": "Calcule **{{a}} + {{b}}**.",
+            },
+        )
+        Choice.objects.create(
+            template=self.question,
+            text={"none": "SECRET CORRECT CHOICE"},
+            order=0,
+        )
+        Choice.objects.create(
+            template=self.question,
+            text={"none": "SECRET WRONG CHOICE"},
+            order=1,
+        )
+
+    def test_list_has_one_global_toggle_and_hidden_question_row(self):
+        """Test the list renders one hidden-by-default global toggle target."""
+        response = self.client.get(reverse("questions:list"))
+
+        self.assertContains(response, 'id="toggleQuestionTextBtn"', count=1)
+        self.assertContains(response, "Show Questions", count=1)
+        self.assertContains(
+            response,
+            'id="toggleQuestionTextBtn"\n                                aria-expanded="false"',
+            count=1,
+        )
+        self.assertContains(response, 'class="question-text-row d-none"', count=1)
+
+    def test_list_uses_model_fallback_and_preserves_variables(self):
+        """Test display text uses fallback without generating variables."""
+        response = self.client.get(reverse("questions:list"))
+        listed_question = response.context["questions"][0]
+
+        self.assertEqual(
+            listed_question.display_question_text,
+            "Calculate **{{a}} + {{b}}**.",
+        )
+        self.assertContains(response, "{{a}} + {{b}}")
+
+    def test_list_renders_question_markdown_without_choices(self):
+        """Test expanded content contains rendered question text only."""
+        response = self.client.get(reverse("questions:list"))
+
+        self.assertContains(response, "<strong>{{a}} + {{b}}</strong>", html=True)
+        self.assertNotContains(response, "SECRET CORRECT CHOICE")
+        self.assertNotContains(response, "SECRET WRONG CHOICE")
+
+    def test_list_falls_back_to_first_available_language(self):
+        """Test templates without none text use first language alphabetically."""
+        self.question.text = {
+            "pt": "Pergunta em português",
+            "en": "English question",
+        }
+        self.question.save()
+
+        response = self.client.get(reverse("questions:list"))
+        listed_question = response.context["questions"][0]
+
+        self.assertEqual(listed_question.display_question_text, "English question")
+        self.assertContains(response, "English question")
+        self.assertNotContains(response, "Pergunta em português")
+
+    def test_empty_list_has_no_question_toggle(self):
+        """Test an empty list does not render the global toggle."""
+        self.question.delete()
+
+        response = self.client.get(reverse("questions:list"))
+
+        self.assertNotContains(response, 'id="toggleQuestionTextBtn"')
+
+
 class ChoiceModelTests(TestCase):
     """Test cases for the Choice model."""
 

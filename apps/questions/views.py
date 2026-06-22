@@ -73,6 +73,10 @@ class QuestionListView(ListView):
 
         context["include_sub"] = self.request.GET.get("include_sub") == "on"
         context["selected_state"] = self.request.GET.get("state", "")
+
+        for question in context["questions"]:
+            question.display_question_text = question.get_text()
+
         return context
 
 
