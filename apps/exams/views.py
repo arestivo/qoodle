@@ -7,8 +7,11 @@ This module provides CBVs for CRUD operations on exams and question pools:
 - Moodle export: Generate and download XML files
 """
 
+from decimal import Decimal
+
 from django.contrib import messages
 from django.db import models, transaction
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -37,6 +40,7 @@ class ExamDetailView(DetailView):
         # Prefetch pools with their templates for efficiency
         pools = self.object.pools.prefetch_related("pool_templates__template__choices").all()
         context["pools"] = pools
+        context["total_points"] = self.object.pools.aggregate(total=Sum("default_grade"))["total"] or Decimal("0.00")
         return context
 
 

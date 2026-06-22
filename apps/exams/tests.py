@@ -290,6 +290,84 @@ class ExamViewTests(TestCase):
         self.assertRedirects(response, reverse("exams:list"))
 
 
+class ExamTotalPointsTests(TestCase):
+    """Test total points on the exam detail page."""
+
+    def setUp(self):
+        """Create an exam used by total-point scenarios."""
+        self.exam = Exam.objects.create(title="Points Exam")
+
+    def get_detail(self):
+        """Return the exam detail response."""
+        return self.client.get(reverse("exams:detail", kwargs={"pk": self.exam.pk}))
+
+    def test_total_points_sums_all_pool_grades(self):
+        """Test pool grades are summed once each."""
+        from decimal import Decimal
+
+        QuestionPool.objects.create(exam=self.exam, order=1, default_grade=Decimal("1.00"))
+        QuestionPool.objects.create(exam=self.exam, order=2, default_grade=Decimal("2.50"))
+        QuestionPool.objects.create(exam=self.exam, order=3, default_grade=Decimal("0.50"))
+
+        response = self.get_detail()
+
+        self.assertEqual(response.context["total_points"], Decimal("4.00"))
+        self.assertContains(response, "Total: 4.00 points")
+
+    def test_empty_exam_displays_zero_points(self):
+        """Test an exam without pools displays a zero total."""
+        from decimal import Decimal
+
+        response = self.get_detail()
+
+        self.assertEqual(response.context["total_points"], Decimal("0.00"))
+        self.assertContains(response, "Total: 0.00 points")
+
+    def test_templates_and_versions_do_not_multiply_points(self):
+        """Test alternatives in one pool do not increase the total."""
+        from decimal import Decimal
+
+        subject = Subject.objects.create(name="Mathematics")
+        pool = QuestionPool.objects.create(
+            exam=self.exam,
+            order=1,
+            default_grade=Decimal("2.50"),
+        )
+        for index in range(2):
+            template = QuestionTemplate.objects.create(
+                subject=subject,
+                title=f"Alternative {index}",
+                text={"none": "Question?"},
+            )
+            QuestionPoolTemplate.objects.create(
+                pool=pool,
+                template=template,
+                number_of_versions=3,
+            )
+
+        response = self.get_detail()
+
+        self.assertEqual(response.context["total_points"], Decimal("2.50"))
+        self.assertContains(response, "Total: 2.50 points")
+
+    def test_total_reflects_updated_pool_grade(self):
+        """Test the total is recalculated after a grade update."""
+        from decimal import Decimal
+
+        pool = QuestionPool.objects.create(
+            exam=self.exam,
+            order=1,
+            default_grade=Decimal("1.00"),
+        )
+        pool.default_grade = Decimal("3.25")
+        pool.save()
+
+        response = self.get_detail()
+
+        self.assertEqual(response.context["total_points"], Decimal("3.25"))
+        self.assertContains(response, "Total: 3.25 points")
+
+
 class PoolViewTests(TestCase):
     """Test pool views."""
 
