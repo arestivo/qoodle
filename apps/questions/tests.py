@@ -438,6 +438,81 @@ class ChoiceModelTests(TestCase):
         self.assertFalse(Choice.objects.filter(id=choice_id).exists())
 
 
+class DollarDelimitedChoiceExpressionTests(TestCase):
+    """Test restricted dollar-delimited expression evaluation in choices."""
+
+    def setUp(self):
+        """Create a reusable question template."""
+        self.subject = Subject.objects.create(name="Mathematics")
+        self.template = QuestionTemplate.objects.create(
+            subject=self.subject,
+            text={"none": "$x + y$ remains literal in question text"},
+        )
+
+    def create_choice(self, text: str) -> Choice:
+        """Create a choice with language-independent text."""
+        return Choice.objects.create(
+            template=self.template,
+            text={"none": text},
+            order=0,
+        )
+
+    def test_entire_choice_expression_is_evaluated(self):
+        """Test a choice containing only an expression."""
+        choice = self.create_choice("$x + y$")
+
+        self.assertEqual(choice.get_text(variables={"x": 5, "y": 3}), "8")
+
+    def test_embedded_and_multiple_expressions_are_evaluated(self):
+        """Test expressions embedded in surrounding choice text."""
+        choice = self.create_choice("Results: $x * y$ and $x - y$")
+
+        self.assertEqual(
+            choice.get_text(variables={"x": 5, "y": 3}),
+            "Results: 15 and 2",
+        )
+
+    def test_set_item_expression_preserves_punctuation(self):
+        """Test indexed set values retain commas."""
+        choice = self.create_choice("$items[0]$")
+
+        self.assertEqual(
+            choice.get_text(variables={"items": ["Paris, France"]}),
+            "Paris, France",
+        )
+
+    def test_brace_substitution_runs_before_dollar_evaluation(self):
+        """Test normal placeholders are resolved before expression evaluation."""
+        choice = self.create_choice('$int("{{x}}") / y$')
+
+        self.assertEqual(choice.get_text(variables={"x": 4, "y": 2}), "2.0")
+
+    def test_constant_expression_uses_empty_variable_context(self):
+        """Test constant expressions evaluate during static variant generation."""
+        choice = self.create_choice("$2 + 2$")
+
+        self.assertEqual(choice.get_text(variables={}), "4")
+
+    def test_invalid_and_unmatched_expressions_remain_literal(self):
+        """Test malformed or incomplete expressions fail softly."""
+        invalid = self.create_choice("$missing + 1$")
+        unmatched = Choice.objects.create(
+            template=self.template,
+            text={"none": "Price is $5"},
+            order=1,
+        )
+
+        self.assertEqual(invalid.get_text(variables={"x": 1}), "$missing + 1$")
+        self.assertEqual(unmatched.get_text(variables={"x": 1}), "Price is $5")
+
+    def test_question_text_does_not_evaluate_dollar_expressions(self):
+        """Test dollar semantics remain limited to choices."""
+        self.assertEqual(
+            self.template.get_text(variables={"x": 5, "y": 3}),
+            "$x + y$ remains literal in question text",
+        )
+
+
 class QuestionChoiceIntegrationTests(TestCase):
     """Integration tests for Question and Choice models."""
 

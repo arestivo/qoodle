@@ -515,6 +515,24 @@ class QuestionTemplate(UUIDModel):
         pattern = r"\{\{([^}]+)\}\}"
         return re.sub(pattern, replace_placeholder, text)
 
+    def _evaluate_dollar_expressions(self, text: str, variables: dict[str, Any]) -> str:
+        """Evaluate complete dollar-delimited expressions in choice text."""
+        if not text:
+            return text
+
+        def replace_expression(match):
+            expression = match.group(1).strip()
+
+            try:
+                result = VariableGenerator.evaluate_expression(expression, variables)
+                if isinstance(result, list):
+                    return ", ".join(str(value) for value in result)
+                return str(result)
+            except ValidationError:
+                return match.group(0)
+
+        return re.sub(r"\$([^$\n]+)\$", replace_expression, text)
+
     def get_text(self, language_code: str = None, variables: dict[str, Any] = None) -> str:
         """
         Get text for specific language with variable substitution.
@@ -825,9 +843,10 @@ class Choice(UUIDModel):
             else:
                 raise ValueError("No text available in any language")
 
-        # Substitute variables if provided (reuse QuestionTemplate's method)
-        if variables and self.template:
+        # Process expressions only when the caller supplies a variable context.
+        if variables is not None and self.template:
             text = self.template._substitute_variables(text, variables)
+            text = self.template._evaluate_dollar_expressions(text, variables)
 
         return text
 

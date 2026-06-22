@@ -1023,6 +1023,23 @@ class MoodleXMLGenerationTests(TestCase):
         self.assertIsNotNone(question_text)
         self.assertIn("]]&gt;", question_text.text)
 
+    def test_dollar_delimited_choice_expression_is_evaluated(self):
+        """Test Moodle XML receives evaluated choice expressions."""
+        import xml.etree.ElementTree as ET
+
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        correct_choice = self.template.choices.get(order=0)
+        correct_choice.text = {"en": "$2 + 2$"}
+        correct_choice.save()
+
+        xml = generate_moodle_xml(self.exam, "en")
+        root = ET.fromstring(xml)
+        answer_text = root.findtext("./question/answer/text")
+
+        self.assertEqual(answer_text, "<p>4</p>")
+        self.assertNotIn("$2 + 2$", xml)
+
     def test_single_true_for_single_choice_mode(self):
         """Test <single>true</single> for single-choice exams."""
         from apps.exams.moodle_export import generate_moodle_xml

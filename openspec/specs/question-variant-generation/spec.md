@@ -10,12 +10,11 @@ Generate multiple variants of question templates by substituting variable placeh
 - Prevent cheating through question variation
 - Ensure reproducible generation (same seed = same output)
 - Support variable substitution in question text and answer choices
-
-## ADDED Requirements
-
+## Requirements
 ### Requirement: Variable Substitution Engine
 
-Generate question variants by replacing `{{variable}}` markers with randomly generated values.
+The system MUST generate question variants by replacing `{{variable}}` markers
+with randomly generated values.
 
 #### Variable Marker Format
 - Pattern: `{{variable_name}}`
@@ -53,7 +52,8 @@ This ensures:
 
 ### Requirement: Variant Uniqueness Validation
 
-Ensure generated variants are unique (no duplicate question text).
+The system MUST ensure generated variants are unique with no duplicate question
+text.
 
 #### Uniqueness Check
 After generating all variants for a template:
@@ -78,7 +78,8 @@ After generating all variants for a template:
 
 ### Requirement: Variable Type Support
 
-Support multiple variable types with appropriate random generation.
+The system MUST support multiple variable types with appropriate random
+generation.
 
 #### Type: Integer
 ```json
@@ -134,29 +135,38 @@ Randomly selects one option from the list.
 
 ### Requirement: Choice Text Variable Substitution
 
-Apply variable substitution to answer choice text as well as question text.
+Generated answer choices MUST apply the same `{{...}}` variable substitution as
+question text and MUST then evaluate complete `$expression$` segments using the
+same generated variable values. Invalid or unmatched dollar expressions MUST
+remain literal.
 
-#### Process
-For each choice in template:
-1. Extract choice text in target language
-2. Apply same variable substitution as question text
-3. Use same seed/random state for consistency
-4. Render markdown to HTML
+For each choice in the template, the system extracts text in the target
+language, applies substitution with the question variant's generated values,
+and renders the result as Markdown HTML.
 
 #### Scenario: Substitute variables in choices
+
 - **GIVEN** question: "Calculate {{x}} + {{y}}"
 - **AND** choice texts: "{{x}}", "{{y}}", "{{x}} + {{y}}", "0"
 - **AND** seed generates x=5, y=3
-- **WHEN** variant is generated
-- **THEN** question text: "Calculate 5 + 3"
-- **AND** choice 1: "5"
-- **AND** choice 2: "3"
-- **AND** choice 3: "8"
-- **AND** choice 4: "0" (no variables)
+- **WHEN** variant choices are generated
+- **THEN** question text is "Calculate 5 + 3"
+- **AND** choice 1 is "5"
+- **AND** choice 2 is "3"
+- **AND** choice 3 is "8"
+- **AND** choice 4 is "0"
+
+#### Scenario: Moodle variant evaluates dollar-delimited choice
+
+- **GIVEN** a question variant generates `x=5` and `y=3`
+- **AND** a choice contains `$x + y$`
+- **WHEN** the variant choices are generated
+- **THEN** that choice text is `8`
+- **AND** Moodle XML contains the evaluated value rather than `$x + y$`
 
 ### Requirement: No-Variable Template Handling
 
-Handle templates without variables gracefully.
+The system MUST handle templates without variables gracefully.
 
 #### Scenario: Generate variant from template without variables
 - **GIVEN** template text: "What is HTML?"
