@@ -924,23 +924,104 @@ class MoodleXMLGenerationTests(TestCase):
 
         self.assertIn("<text>Q1</text>", xml)
 
-    def test_sequential_tagging(self):
-        """Test questions are tagged q1, q2, q3..."""
+    def test_variants_are_tagged_by_question_pool(self):
+        """Test all alternatives for a question share the pool tag."""
+        import xml.etree.ElementTree as ET
+
         from apps.exams.moodle_export import generate_moodle_xml
+        from apps.questions.models import Choice
+
+        self.template.text = {"en": "What is {{x}}?"}
+        self.template.variables = {"x": {"type": "num", "min": 1, "max": 100, "precision": 1}}
+        self.template.save()
+
+        membership = self.pool.pool_templates.get(template=self.template)
+        membership.number_of_versions = 3
+        membership.save()
+
+        alternative = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Alternative Question",
+            text={"en": "Alternative"},
+            variables=None,
+        )
+        Choice.objects.create(template=alternative, order=0, text={"en": "Correct"})
+        Choice.objects.create(template=alternative, order=1, text={"en": "Wrong"})
+        QuestionPoolTemplate.objects.create(
+            pool=self.pool,
+            template=alternative,
+            number_of_versions=1,
+        )
+
+        second_pool = QuestionPool.objects.create(
+            exam=self.exam,
+            order=2,
+            default_grade=self.pool.default_grade,
+        )
+        QuestionPoolTemplate.objects.create(
+            pool=second_pool,
+            template=alternative,
+            number_of_versions=1,
+        )
 
         xml = generate_moodle_xml(self.exam, "en")
+        root = ET.fromstring(xml)
 
-        self.assertIn("<text>q1</text>", xml)
+        names = [question.findtext("./name/text") for question in root.findall("question")]
+        tags = [question.findtext("./tags/tag/text") for question in root.findall("question")]
+
+        self.assertEqual(names, ["Q1", "Q2", "Q3", "Q4", "Q5"])
+        self.assertEqual(tags, ["q1", "q1", "q1", "q1", "q2"])
 
     def test_cdata_wrapping_for_question_text(self):
         """Test CDATA wrapping for question text."""
+        import xml.etree.ElementTree as ET
+
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        self.template.text = {"en": "In an HTML document..."}
+        self.template.save()
+
+        xml = generate_moodle_xml(self.exam, "en")
+
+        self.assertIn("<text><![CDATA[<p>In an HTML document...</p>]]></text>", xml)
+        self.assertNotIn("&lt;![CDATA[", xml)
+
+        root = ET.fromstring(xml)
+        question_text = root.find("./question/questiontext/text")
+        self.assertIsNotNone(question_text)
+        self.assertEqual(question_text.text, "<p>In an HTML document...</p>")
+
+    def test_cdata_wrapping_for_answer_text(self):
+        """Test CDATA wrapping for answer text."""
+        import xml.etree.ElementTree as ET
+
         from apps.exams.moodle_export import generate_moodle_xml
 
         xml = generate_moodle_xml(self.exam, "en")
 
-        # XML library escapes CDATA markers
-        self.assertIn("&lt;![CDATA[", xml)
-        self.assertIn("]]&gt;", xml)
+        self.assertIn("<text><![CDATA[<p>Correct answer</p>]]></text>", xml)
+
+        root = ET.fromstring(xml)
+        answer_texts = root.findall("./question/answer/text")
+        self.assertEqual(len(answer_texts), 4)
+        self.assertEqual(answer_texts[0].text, "<p>Correct answer</p>")
+
+    def test_cdata_terminator_content_remains_valid_xml(self):
+        """Test embedded CDATA terminators cannot break the export."""
+        import xml.etree.ElementTree as ET
+
+        from apps.exams.moodle_export import generate_moodle_xml
+
+        self.template.text = {"en": "Test ]]> content"}
+        self.template.save()
+
+        xml = generate_moodle_xml(self.exam, "en")
+        root = ET.fromstring(xml)
+        question_text = root.find("./question/questiontext/text")
+
+        self.assertIsNotNone(question_text)
+        self.assertIn("]]&gt;", question_text.text)
 
     def test_single_true_for_single_choice_mode(self):
         """Test <single>true</single> for single-choice exams."""

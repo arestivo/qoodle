@@ -52,12 +52,10 @@ class QuestionPool(UUIDModel):
         help_text="Point value for questions in this pool (default: 1.0)"
     )
 ```
-
-## ADDED Requirements
-
+## Requirements
 ### Requirement: Export View with Language Selection
 
-Teachers must be able to export exams to Moodle XML format by selecting a target language.
+Teachers MUST be able to export exams to Moodle XML format by selecting a target language.
 
 #### Field: Language Selection
 - **TYPE:** CharField with choices
@@ -87,59 +85,40 @@ path('exams/<uuid:pk>/export/', ExamMoodleExportView.as_view(), name='export')
 
 ### Requirement: Moodle XML Generation
 
-System must generate valid Moodle 4.x XML format with proper structure, CDATA sections, and metadata.
+The system MUST tag every exported question variant with the identifier of its
+source `QuestionPool`. `QuestionPool.order` is a positive integer and the
+Moodle tag MUST be formatted as `q{order}`. Exported question names MAY remain
+globally sequential and unique.
 
-#### XML Root Structure
-```xml
-<?xml version="1.0" ?>
-<quiz>
-  <!-- questions here -->
-</quiz>
-```
+The existing export URL remains
+`/exams/<uuid:pk>/export/`, for example
+`/exams/123e4567-e89b-12d3-a456-426614174000/export/`.
+This change has no Bootstrap components, templates, static files, CSS, or
+JavaScript and therefore requires no `{% compress %}` blocks.
 
-#### Question Structure
-Each question variant must include:
-- `<question type="multichoice">` - Always multichoice type
-- `<tags><tag><text>q{order}</text></tag></tags>` - Pool order (q1, q2, q3...)
-- `<name><text>Q{order}</text></name>` - Display name matching pool order
-- `<defaultgrade>` - From QuestionPool.default_grade
-- `<questiontext format="html">` - Rendered markdown as HTML in CDATA
-- `<answer fraction="{percent}">` - One per choice with calculated fraction
-- `<shuffleanswers>1</shuffleanswers>` - Always shuffle
-- `<single>true|false</single>` - true for single-choice, false for multi-choice
-- `<answernumbering>abc</answernumbering>` - Always use abc numbering
+#### Scenario: Multiple versions of question one share q1
 
-#### Scenario: Generate XML for single-choice question
-- **GIVEN** exam with grading_mode="single"
-- **AND** pool Q1 with 1 template having 4 choices
-- **AND** number_of_versions=1
-- **WHEN** export is triggered
-- **THEN** XML contains exactly 1 question with tag "q1" and name "Q1"
-- **AND** question has `<single>true</single>`
-- **AND** first choice (order=0) has `fraction="100"`
-- **AND** other choices have `fraction="-33.33333"`
+- **GIVEN** question pool 1 contains one template configured for three versions
+- **WHEN** the Moodle XML export is generated
+- **THEN** all three exported questions contain the tag `q1`
+- **AND** none of those variants is tagged `q2` or `q3`
 
-#### Scenario: Generate XML for multi-choice question (4 choices)
-- **GIVEN** exam with grading_mode="multi"
-- **AND** pool Q2 with 1 template having 4 choices
-- **AND** number_of_versions=1
-- **WHEN** export is triggered
-- **THEN** XML contains exactly 1 question with tag "q2" and name "Q2"
-- **AND** question has `<single>false</single>`
-- **AND** first choice (order=0) has `fraction="70"`
-- **AND** other choices have `fraction="10"`
+#### Scenario: Multiple templates in one pool share the pool tag
 
-#### Scenario: Generate XML for multi-choice question (6 choices)
-- **GIVEN** exam with grading_mode="multi"
-- **AND** pool Q3 with 1 template having 6 choices
-- **AND** number_of_versions=1
-- **WHEN** export is triggered
-- **THEN** first choice (order=0) has `fraction="75"`
-- **AND** other choices have `fraction="5"`
+- **GIVEN** question pool 1 contains multiple templates and versions
+- **WHEN** the Moodle XML export is generated
+- **THEN** every exported question produced by that pool contains the tag `q1`
+
+#### Scenario: Later question pool uses its own tag
+
+- **GIVEN** question pool 1 and question pool 2 both produce variants
+- **WHEN** the Moodle XML export is generated
+- **THEN** variants from pool 1 contain the tag `q1`
+- **AND** variants from pool 2 contain the tag `q2`
 
 ### Requirement: Fraction Calculation
 
-System must calculate answer fractions based on grading mode and number of choices.
+The system MUST calculate answer fractions based on grading mode and number of choices.
 
 #### Function: `calculate_fractions(num_choices: int, grading_mode: str) -> dict`
 
@@ -188,14 +167,15 @@ Examples:
 
 ### Requirement: Markdown to HTML Conversion
 
-Convert markdown text to HTML and wrap in CDATA sections for XML safety.
+The system MUST convert Markdown text to HTML suitable for placement in CDATA
+sections by the Moodle XML serializer.
 
 #### Function: `format_html_for_moodle(markdown_text: str) -> str`
 
 Process:
 1. Convert markdown to HTML using `markdown.markdown()`
-2. Wrap result in `<![CDATA[{html}]]>`
-3. Return wrapped string
+2. Escape any `]]>` terminator in the rendered HTML
+3. Return the HTML string
 
 #### Markdown Features Support
 - **Paragraphs:** `<p>` tags
@@ -208,7 +188,7 @@ Process:
 #### Scenario: Convert simple markdown with code
 - **GIVEN** markdown text: "Use `<article>` tag"
 - **WHEN** format_html_for_moodle() is called
-- **THEN** returns: `<![CDATA[<p>Use <code>&lt;article&gt;</code> tag</p>]]>`
+- **THEN** returns: `<p>Use <code>&lt;article&gt;</code> tag</p>`
 
 #### Scenario: Convert markdown with special characters
 - **GIVEN** markdown text: `Code: <div id="test">`
@@ -218,7 +198,8 @@ Process:
 
 ### Requirement: Language Selection and Fallback
 
-Extract text content in specified language using multilingual question fallback logic.
+The system MUST extract text content in the specified language using the
+multilingual question fallback logic.
 
 #### Function: `extract_language_text(json_field: dict, language: str) -> str`
 
@@ -243,7 +224,8 @@ Process:
 
 ### Requirement: Export Download Response
 
-Serve generated XML file as downloadable response with proper headers.
+The system MUST serve generated XML files as downloadable responses with proper
+headers.
 
 #### HTTP Response Configuration
 - **Content-Type:** `application/xml`
@@ -455,7 +437,7 @@ def calculate_fractions(num_choices: int, grading_mode: str) -> Dict[str, int]:
 ## Testing
 
 ### Location
-`apps/exams/tests_moodle_export.py`
+`apps/exams/tests.py`
 
 ### Test Coverage
 
@@ -491,10 +473,14 @@ class MoodleExportTests(TestCase):
         """Test markdown conversion with code blocks."""
         markdown_text = "Use `<article>` tag"
         result = format_html_for_moodle(markdown_text)
-        self.assertIn('<![CDATA[', result)
         self.assertIn('<code>', result)
         self.assertIn('</code>', result)
-        self.assertIn(']]>', result)
+
+    def test_export_uses_real_cdata(self):
+        """Test exported HTML is serialized in a genuine CDATA section."""
+        xml = generate_moodle_xml(self.exam, 'en')
+        self.assertIn('<![CDATA[', xml)
+        self.assertNotIn('&lt;![CDATA[', xml)
     
     def test_export_view_returns_xml_file(self):
         """Test export view returns downloadable XML."""

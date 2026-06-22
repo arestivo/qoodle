@@ -94,6 +94,28 @@ def format_html_for_moodle(markdown_text: str) -> str:
     return html
 
 
+def _replace_text_with_cdata(document: minidom.Document, parent_tag: str) -> None:
+    """Replace nested Moodle text content with genuine CDATA nodes."""
+    for parent in document.getElementsByTagName(parent_tag):
+        text_elements = [
+            node
+            for node in parent.childNodes
+            if node.nodeType == node.ELEMENT_NODE and node.tagName == "text"
+        ]
+
+        for text_element in text_elements:
+            content = "".join(
+                node.data
+                for node in text_element.childNodes
+                if node.nodeType in (node.TEXT_NODE, node.CDATA_SECTION_NODE)
+            )
+
+            while text_element.firstChild:
+                text_element.removeChild(text_element.firstChild)
+
+            text_element.appendChild(document.createCDATASection(content))
+
+
 def generate_variant(template: "QuestionTemplate", version_number: int, language: str) -> dict[str, Any]:
     """Generate deterministic question variant using template's built-in methods.
 
@@ -273,13 +295,13 @@ def generate_moodle_xml(exam: "Exam", language: str) -> str:
                 tags = ET.SubElement(question, "tags")
                 tag = ET.SubElement(tags, "tag")
                 tag_text = ET.SubElement(tag, "text")
-                tag_text.text = f"q{question_number}"
+                tag_text.text = f"q{pool.order}"
 
-                # Question text (CDATA-wrapped HTML)
+                # Question text (converted to CDATA during DOM serialization)
                 html = format_html_for_moodle(variant["text"])
                 questiontext = ET.SubElement(question, "questiontext", format="html")
                 text_elem = ET.SubElement(questiontext, "text")
-                text_elem.text = f"<![CDATA[{html}]]>"
+                text_elem.text = html
 
                 # Answers with fractions
                 # Choices are already in the variant dict from generate_all_variants
@@ -292,7 +314,7 @@ def generate_moodle_xml(exam: "Exam", language: str) -> str:
 
                     html_choice = format_html_for_moodle(choice["text"])
                     choice_text = ET.SubElement(answer, "text")
-                    choice_text.text = f"<![CDATA[{html_choice}]]>"
+                    choice_text.text = html_choice
 
                 # Single attribute (true for single-choice, false for multi-choice)
                 single_value = "true" if exam.grading_mode == "single" else "false"
@@ -316,4 +338,6 @@ def generate_moodle_xml(exam: "Exam", language: str) -> str:
     # Pretty-print XML
     xml_string = ET.tostring(quiz, encoding="unicode")
     dom = minidom.parseString(xml_string)
+    _replace_text_with_cdata(dom, "questiontext")
+    _replace_text_with_cdata(dom, "answer")
     return dom.toprettyxml(indent="  ", encoding="UTF-8").decode("utf-8")
