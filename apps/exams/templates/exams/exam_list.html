@@ -47,6 +47,12 @@
                                         <a href="{% url 'exams:edit' exam.pk %}" class="btn btn-outline-primary" title="Edit">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
+                                        <form method="post" action="{% url 'exams:duplicate' exam.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-secondary rounded-0" title="Duplicate">
+                                                <i class="fa-solid fa-copy"></i>
+                                            </button>
+                                        </form>
                                         <a href="{% url 'exams:delete' exam.pk %}" class="btn btn-outline-danger" title="Delete">
                                             <i class="fa-solid fa-trash"></i>
                                         </a>

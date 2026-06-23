@@ -10,6 +10,7 @@ urlpatterns = [
     path("create/", views.ExamCreateView.as_view(), name="create"),
     path("<uuid:pk>/", views.ExamDetailView.as_view(), name="detail"),
     path("<uuid:pk>/edit/", views.ExamUpdateView.as_view(), name="edit"),
+    path("<uuid:pk>/duplicate/", views.ExamDuplicateView.as_view(), name="duplicate"),
     path("<uuid:pk>/delete/", views.ExamDeleteView.as_view(), name="delete"),
     # Pool Management
     path(

@@ -368,6 +368,195 @@ class ExamTotalPointsTests(TestCase):
         self.assertContains(response, "Total: 3.25 points")
 
 
+class ExamDuplicationTests(TestCase):
+    """Test duplication of exams and their question structure."""
+
+    def setUp(self):
+        """Create a populated source exam."""
+        from decimal import Decimal
+
+        from apps.questions.models import Choice
+
+        self.subject = Subject.objects.create(name="Mathematics")
+        self.source = Exam.objects.create(
+            title="Original Exam",
+            date=date(2026, 6, 23),
+            description="Original description",
+            grading_mode="multi",
+        )
+        self.template1 = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Template 1",
+            text={"none": "Question 1"},
+        )
+        self.template2 = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Template 2",
+            text={"none": "Question 2"},
+        )
+        for template in (self.template1, self.template2):
+            Choice.objects.create(template=template, text={"none": "Correct"}, order=0)
+            Choice.objects.create(template=template, text={"none": "Wrong"}, order=1)
+
+        pool1 = QuestionPool.objects.create(
+            exam=self.source,
+            order=1,
+            default_grade=Decimal("2.50"),
+        )
+        pool2 = QuestionPool.objects.create(
+            exam=self.source,
+            order=2,
+            default_grade=Decimal("1.25"),
+        )
+        QuestionPoolTemplate.objects.create(
+            pool=pool1,
+            template=self.template1,
+            number_of_versions=3,
+        )
+        QuestionPoolTemplate.objects.create(
+            pool=pool1,
+            template=self.template2,
+            number_of_versions=2,
+        )
+        QuestionPoolTemplate.objects.create(
+            pool=pool2,
+            template=self.template2,
+            number_of_versions=1,
+        )
+
+    def duplicate(self, exam=None):
+        """Submit the duplicate action for an exam."""
+        exam = exam or self.source
+        return self.client.post(
+            reverse("exams:duplicate", kwargs={"pk": exam.pk}),
+        )
+
+    def test_duplicate_copies_metadata_and_redirects_to_new_exam(self):
+        """Test metadata, redirect, and success message."""
+        from django.contrib.messages import get_messages
+
+        response = self.duplicate()
+        duplicate = Exam.objects.exclude(pk=self.source.pk).get()
+        messages = [str(message) for message in get_messages(response.wsgi_request)]
+
+        self.assertRedirects(
+            response,
+            reverse("exams:detail", kwargs={"pk": duplicate.pk}),
+        )
+        self.assertEqual(duplicate.title, "Original Exam (Copy)")
+        self.assertEqual(duplicate.date, self.source.date)
+        self.assertEqual(duplicate.description, self.source.description)
+        self.assertEqual(duplicate.grading_mode, self.source.grading_mode)
+        self.assertIn('Exam duplicated as "Original Exam (Copy)".', messages)
+
+    def test_duplicate_copies_pools_memberships_and_versions(self):
+        """Test the complete exam-owned question structure is copied."""
+        self.duplicate()
+        duplicate = Exam.objects.exclude(pk=self.source.pk).get()
+
+        source_pools = list(self.source.pools.order_by("order"))
+        duplicate_pools = list(duplicate.pools.order_by("order"))
+        self.assertEqual(len(duplicate_pools), 2)
+
+        for source_pool, duplicate_pool in zip(
+            source_pools,
+            duplicate_pools,
+            strict=True,
+        ):
+            self.assertNotEqual(source_pool.pk, duplicate_pool.pk)
+            self.assertEqual(duplicate_pool.order, source_pool.order)
+            self.assertEqual(
+                duplicate_pool.default_grade,
+                source_pool.default_grade,
+            )
+            source_memberships = list(
+                source_pool.pool_templates.order_by("template_id").values_list(
+                    "template_id",
+                    "number_of_versions",
+                )
+            )
+            duplicate_memberships = list(
+                duplicate_pool.pool_templates.order_by("template_id").values_list(
+                    "template_id",
+                    "number_of_versions",
+                )
+            )
+            self.assertEqual(duplicate_memberships, source_memberships)
+
+        self.assertEqual(QuestionTemplate.objects.count(), 2)
+
+    def test_duplicate_does_not_modify_source(self):
+        """Test source records remain unchanged."""
+        source_pool_ids = list(
+            self.source.pools.order_by("order").values_list("pk", flat=True)
+        )
+        source_membership_count = QuestionPoolTemplate.objects.filter(
+            pool__exam=self.source
+        ).count()
+
+        self.duplicate()
+
+        self.source.refresh_from_db()
+        self.assertEqual(self.source.title, "Original Exam")
+        self.assertEqual(
+            list(self.source.pools.order_by("order").values_list("pk", flat=True)),
+            source_pool_ids,
+        )
+        self.assertEqual(
+            QuestionPoolTemplate.objects.filter(pool__exam=self.source).count(),
+            source_membership_count,
+        )
+
+    def test_duplicate_empty_exam(self):
+        """Test an exam without pools duplicates successfully."""
+        empty_exam = Exam.objects.create(title="Empty")
+
+        response = self.duplicate(empty_exam)
+        duplicate = Exam.objects.exclude(
+            pk__in=[self.source.pk, empty_exam.pk]
+        ).get()
+
+        self.assertRedirects(
+            response,
+            reverse("exams:detail", kwargs={"pk": duplicate.pk}),
+        )
+        self.assertEqual(duplicate.title, "Empty (Copy)")
+        self.assertFalse(duplicate.pools.exists())
+
+    def test_duplicate_title_is_bounded_to_255_characters(self):
+        """Test copy suffix does not exceed the title field limit."""
+        self.source.title = "x" * 255
+        self.source.save()
+
+        self.duplicate()
+        duplicate = Exam.objects.exclude(pk=self.source.pk).get()
+
+        self.assertEqual(len(duplicate.title), 255)
+        self.assertTrue(duplicate.title.endswith(" (Copy)"))
+
+    def test_duplicate_endpoint_rejects_get(self):
+        """Test database mutation is POST-only."""
+        response = self.client.get(
+            reverse("exams:duplicate", kwargs={"pk": self.source.pk})
+        )
+
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(Exam.objects.count(), 1)
+
+    def test_list_and_detail_render_duplicate_post_controls(self):
+        """Test both exam views expose CSRF-protected duplicate forms."""
+        list_response = self.client.get(reverse("exams:list"))
+        detail_response = self.client.get(
+            reverse("exams:detail", kwargs={"pk": self.source.pk})
+        )
+        duplicate_url = reverse("exams:duplicate", kwargs={"pk": self.source.pk})
+
+        self.assertContains(list_response, f'action="{duplicate_url}"')
+        self.assertContains(detail_response, f'action="{duplicate_url}"')
+        self.assertContains(list_response, "fa-copy")
+        self.assertContains(detail_response, "fa-copy")
+
+
 class PoolViewTests(TestCase):
     """Test pool views."""
 

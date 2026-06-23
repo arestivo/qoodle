@@ -62,6 +62,45 @@ class ExamUpdateView(UpdateView):
         return reverse("exams:detail", kwargs={"pk": self.object.pk})
 
 
+class ExamDuplicateView(View):
+    """Duplicate an exam's structure while reusing question templates."""
+
+    def post(self, request, pk):
+        source = get_object_or_404(
+            Exam.objects.prefetch_related("pools__pool_templates"),
+            pk=pk,
+        )
+        copy_suffix = " (Copy)"
+
+        with transaction.atomic():
+            duplicate = Exam.objects.create(
+                title=f"{source.title[: 255 - len(copy_suffix)]}{copy_suffix}",
+                date=source.date,
+                description=source.description,
+                grading_mode=source.grading_mode,
+            )
+
+            for source_pool in source.pools.all():
+                duplicate_pool = QuestionPool.objects.create(
+                    exam=duplicate,
+                    order=source_pool.order,
+                    default_grade=source_pool.default_grade,
+                )
+                QuestionPoolTemplate.objects.bulk_create(
+                    [
+                        QuestionPoolTemplate(
+                            pool=duplicate_pool,
+                            template_id=membership.template_id,
+                            number_of_versions=membership.number_of_versions,
+                        )
+                        for membership in source_pool.pool_templates.all()
+                    ]
+                )
+
+        messages.success(request, f'Exam duplicated as "{duplicate.title}".')
+        return redirect("exams:detail", pk=duplicate.pk)
+
+
 class ExamDeleteView(DeleteView):
     model = Exam
     template_name = "exams/exam_confirm_delete.html"
