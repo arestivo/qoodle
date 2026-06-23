@@ -25,6 +25,20 @@
         <div class="card mb-4">
             <div class="card-body">
                 <form method="get" class="row g-3" id="filterForm">
+                    <div class="col-12">
+                        <label for="search" class="form-label">Search Templates</label>
+                        <div class="input-group">
+                            <input type="search"
+                                   name="q"
+                                   id="search"
+                                   class="form-control"
+                                   value="{{ search_query }}"
+                                   placeholder="Search title or question text">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
+                            </button>
+                        </div>
+                    </div>
                     <div class="col-md-4">
                         <label for="subject" class="form-label">Filter by Subject</label>
                         <select name="subject" id="subject" class="form-select">
@@ -174,7 +188,7 @@
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}{% if selected_state %}&state={{ selected_state }}{% endif %}">Previous</a>
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}{% if selected_state %}&state={{ selected_state }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">Previous</a>
                         </li>
                     {% endif %}
 
@@ -184,7 +198,7 @@
 
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}{% if selected_state %}&state={{ selected_state }}{% endif %}">Next</a>
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_subject %}&subject={{ selected_subject.pk }}{% endif %}{% if include_sub %}&include_sub=on{% endif %}{% if selected_state %}&state={{ selected_state }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">Next</a>
                         </li>
                     {% endif %}
                 </ul>

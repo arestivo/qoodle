@@ -287,6 +287,149 @@ class TemplateStateFilterTests(TestCase):
         self.assertEqual(response.context["selected_state"], "reviewed")
 
 
+class TemplateTextSearchTests(TestCase):
+    """Test search across all visible template content."""
+
+    def setUp(self):
+        """Create templates with distinct searchable content."""
+        self.subject = Subject.objects.create(name="Computing")
+        self.other_subject = Subject.objects.create(name="Mathematics")
+        self.binary = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Binary Search",
+            text={
+                "en": "How does binary lookup work?",
+                "pt": "Como funciona a pesquisa binária?",
+            },
+            state=TemplateState.REVIEWED,
+        )
+        self.capital = QuestionTemplate.objects.create(
+            subject=self.subject,
+            title="Geography",
+            text={
+                "en": "Name the city.",
+                "pt": "Qual é a capital de Portugal?",
+            },
+            state=TemplateState.DRAFT,
+        )
+        self.http = QuestionTemplate.objects.create(
+            subject=self.other_subject,
+            title="Protocols",
+            text={"none": "Explain the HTTP Protocol."},
+            state=TemplateState.REVIEWED,
+        )
+        Choice.objects.create(
+            template=self.http,
+            text={"none": "CHOICE-ONLY-NEEDLE"},
+            order=0,
+        )
+        Choice.objects.create(
+            template=self.capital,
+            text={"en": "Lisbon", "pt": "Lisboa"},
+            order=0,
+        )
+
+    def search(self, query: str):
+        """Return the list response for a search query."""
+        return self.client.get(reverse("questions:list"), {"q": query})
+
+    def test_search_matches_template_title_case_insensitively(self):
+        """Test title matching ignores case."""
+        response = self.search("binary search")
+
+        self.assertEqual(list(response.context["questions"]), [self.binary])
+
+    def test_search_matches_any_multilingual_question_text(self):
+        """Test search includes non-display language content."""
+        response = self.search("capital de portugal")
+
+        self.assertEqual(list(response.context["questions"]), [self.capital])
+
+    def test_search_matches_language_independent_question_text(self):
+        """Test search matches the none language value."""
+        response = self.search("http protocol")
+
+        self.assertEqual(list(response.context["questions"]), [self.http])
+
+    def test_search_matches_choice_text_case_insensitively(self):
+        """Test answer-choice wording is searchable."""
+        response = self.search("CHOICE-ONLY-NEEDLE")
+
+        self.assertEqual(list(response.context["questions"]), [self.http])
+
+    def test_search_matches_any_multilingual_choice_text(self):
+        """Test choices are searched across all stored languages."""
+        response = self.search("lisboa")
+
+        self.assertEqual(list(response.context["questions"]), [self.capital])
+
+    def test_search_returns_template_once_when_multiple_choices_match(self):
+        """Test matching choices do not duplicate their template."""
+        Choice.objects.create(
+            template=self.http,
+            text={"pt": "Outra choice-only-needle"},
+            order=1,
+        )
+
+        response = self.search("choice-only-needle")
+
+        self.assertEqual(list(response.context["questions"]), [self.http])
+
+    def test_blank_search_does_not_filter(self):
+        """Test whitespace-only search returns all templates."""
+        response = self.search("   ")
+
+        self.assertEqual(len(response.context["questions"]), 3)
+        self.assertEqual(response.context["search_query"], "")
+
+    def test_search_combines_with_subject_and_state_filters(self):
+        """Test text matching composes with existing filters."""
+        response = self.client.get(
+            reverse("questions:list"),
+            {
+                "q": "protocol",
+                "subject": self.other_subject.pk,
+                "state": "reviewed",
+            },
+        )
+
+        self.assertEqual(list(response.context["questions"]), [self.http])
+
+        excluded = self.client.get(
+            reverse("questions:list"),
+            {
+                "q": "protocol",
+                "subject": self.subject.pk,
+                "state": "reviewed",
+            },
+        )
+        self.assertEqual(list(excluded.context["questions"]), [])
+
+    def test_search_control_preserves_current_term(self):
+        """Test search UI and context retain the submitted value."""
+        response = self.search("  binary  ")
+
+        self.assertEqual(response.context["search_query"], "binary")
+        self.assertContains(response, 'id="search"')
+        self.assertContains(response, 'name="q"')
+        self.assertContains(response, 'value="binary"')
+        self.assertContains(response, "fa-magnifying-glass")
+
+    def test_pagination_preserves_encoded_search_term(self):
+        """Test search query remains in pagination links."""
+        for index in range(21):
+            QuestionTemplate.objects.create(
+                subject=self.subject,
+                title=f"Network Template {index:02d}",
+                text={"none": "network routing"},
+            )
+
+        response = self.search("network routing")
+
+        self.assertTrue(response.context["is_paginated"])
+        self.assertContains(response, "&q=network%20routing")
+
+
 class QuestionListToggleTests(TestCase):
     """Test question text rendering for the template-list global toggle."""
 

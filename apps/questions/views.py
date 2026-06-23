@@ -5,7 +5,7 @@ from typing import Any
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch, QuerySet
+from django.db.models import Prefetch, Q, QuerySet
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
@@ -50,6 +50,14 @@ class QuestionListView(ListView):
         if state:
             qs = qs.filter(state=state)
 
+        search_query = self.request.GET.get("q", "").strip()
+        if search_query:
+            qs = qs.filter(
+                Q(title__icontains=search_query)
+                | Q(text__icontains=search_query)
+                | Q(choices__text__icontains=search_query)
+            ).distinct()
+
         return qs.order_by("title")
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -73,6 +81,7 @@ class QuestionListView(ListView):
 
         context["include_sub"] = self.request.GET.get("include_sub") == "on"
         context["selected_state"] = self.request.GET.get("state", "")
+        context["search_query"] = self.request.GET.get("q", "").strip()
 
         for question in context["questions"]:
             question.display_question_text = question.get_text()
