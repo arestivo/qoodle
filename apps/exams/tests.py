@@ -259,6 +259,26 @@ class ExamViewTests(TestCase):
         self.assertContains(response, "Exam 1")
         self.assertIn("pools", response.context)
 
+    def test_exam_detail_subject_link_filters_templates_by_subject(self):
+        """Test pool template subject link includes the rendered subject UUID."""
+        subject = Subject.objects.create(name="Algebra")
+        template = QuestionTemplate.objects.create(
+            title="Linear equations",
+            subject=subject,
+            text={"none": "Solve x + 1 = 2."},
+        )
+        pool = QuestionPool.objects.create(exam=self.exam1, order=1)
+        QuestionPoolTemplate.objects.create(
+            pool=pool,
+            template=template,
+            number_of_versions=1,
+        )
+
+        response = self.client.get(reverse("exams:detail", kwargs={"pk": self.exam1.pk}))
+
+        expected_href = f'{reverse("questions:list")}?subject={subject.pk}'
+        self.assertContains(response, f'href="{expected_href}"')
+
     def test_exam_update_view_prepopulates_form(self):
         """Test that exam update view pre-populates form."""
         response = self.client.get(reverse("exams:edit", kwargs={"pk": self.exam1.pk}))

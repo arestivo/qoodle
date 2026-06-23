@@ -159,7 +159,7 @@
                                                 <i class="fa-solid fa-circle-dot text-muted ms-1" title="Completed"></i>
                                             {% endif %}
                                             {% if pt.template.subject %}
-                                                <a href="{% url 'questions:list' %}?subject={{ pt.template.subject.pk %}" class="text-decoration-none ms-2">
+                                                <a href="{% url 'questions:list' %}?subject={{ pt.template.subject.pk }}" class="text-decoration-none ms-2">
                                                   <i class="fa-solid fa-folder text-primary"></i>
                                                   {{ pt.template.subject.name }}
                                                 </a>
